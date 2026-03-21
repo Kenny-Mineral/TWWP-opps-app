@@ -1,0 +1,33 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+*.swp
+
+# Logs
+*.log
+
+# Node
+node_modules/
+dist/
+
+# Ruby / Rails
+.bundle/
+vendor/bundle/
+tmp/
+storage/
+coverage/
+.env
+.env.*
+config/master.key
+config/credentials/*.key
+
+# Archives / exports
+*.zip
+*.sql
+*.sqlite3
+*.db
+
+# Private local notes
+private-local-only/
+
