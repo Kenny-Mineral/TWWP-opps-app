@@ -31,3 +31,6 @@ config/credentials/*.key
 # Private local notes
 private-local-only/
 
+# Private AI context — never commit
+CLAUDE_CONTEXT.md
+
