@@ -112,10 +112,11 @@
 - ✅ Rails API deployed at https://twwp-ops-api.fly.dev
 - ✅ oauth_states fix applied — PKCE stored in DB not session
 - ✅ Rails API OAuth confirmed working end to end (Mar 22 2026)
-- ⬜ Auto-save backup JSON to Drive on logout (code written, now unblocked)
-- ⬜ Silent sync from server on login (code written, now unblocked)
-- ⬜ Auto-save every 30 minutes (timer set, now unblocked)
-- ⬜ Upload documents directly to Drive from Document Library
+- ⬜ Auto-save backup JSON to Drive on logout (code written, scope fixed — activate next session)
+- ⬜ Silent sync from server on login (code written, scope fixed — activate next session)
+- ⬜ Auto-save every 30 minutes (timer set, scope fixed — activate next session)
+- ✅ Upload HTML documents to Drive from Doc Builder — DONE (session 11)
+- ⬜ Upload documents directly to Drive from Document Library (general)
 
 ---
 

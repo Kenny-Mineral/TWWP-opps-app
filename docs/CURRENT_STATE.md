@@ -1,6 +1,6 @@
 # TWWP Ops App — Current State
 
-**Last updated:** 2026-03-23 (session 11)
+**Last updated:** 2026-03-23 (sprint end — sessions 9–11)
 
 ---
 
@@ -235,10 +235,13 @@ Rails API at `https://twwp-ops-api.fly.dev`.
 
 ## Next up
 
-1. Re-authorise Google OAuth (users must re-connect after scope change from `drive.file` → `drive`)
-2. Test Drive upload end-to-end once OAuth is re-connected
-3. Flip GitHub Pages source to GitHub Actions (manual step: repo Settings → Pages → Source → GitHub Actions)
-4. `dtk_I1` duplicate seed (minor)
-5. User management page (admin only) — invite, deactivate, change role
-6. `callModelForFeature()` — wire into autofill and import wizard
-7. Wire Receipt Inbox AI Parse tab
+1. **Re-authorise Google OAuth** — scope changed from `drive.file` → `drive`; re-connect in AI & Integrations → Connect via Rails API
+2. **Test Drive upload end-to-end** — Doc Builder → Preview → Upload to Drive
+3. **Activate Drive auto-backup + silent sync** — code written, unblocked by scope fix
+4. **Flip GitHub Pages source to GitHub Actions** (manual: repo Settings → Pages → Source → GitHub Actions)
+5. **User management page** (admin only) — invite, deactivate, change role
+6. **Wire `callModelForFeature()`** — into autofill and import wizard
+7. **Wire Receipt Inbox AI Parse tab**
+8. **`dtk_I1` duplicate seed** (minor)
+
+See `docs/handoff/session-handoff-march23d.md` for full sprint summary and next-task breakdown.
