@@ -1,6 +1,6 @@
 # TWWP Ops App — Current State
 
-**Last updated:** 2026-03-23 (session 10)
+**Last updated:** 2026-03-23 (session 11)
 
 ---
 
@@ -173,11 +173,72 @@ Rails API at `https://twwp-ops-api.fly.dev`.
 
 ---
 
+## Session 11 changes (2026-03-23)
+
+### Task 1 — Fix `/api/drive/upload` Rails endpoint
+- Added `?fields=id,webViewLink,name` to Drive API multipart upload URL
+- Changed default `mime_type` from `application/json` to `text/html`
+- Returns clean `{ id, webViewLink, filename }` response
+- Deployed to Fly.io
+
+### Task 2 — Fix Google OAuth scope
+- Changed `SCOPES` in `auth_controller.rb` from `drive.file` to full `drive` scope
+- Deployed to Fly.io (same deploy as Task 1)
+
+### Task 3 — Frontend drive upload fix
+- `uploadDocBuilderToDrive()` now sends JSON `{filename, content, mime_type}` instead of FormData blob
+- Uses `webViewLink` (not `url`) from the response for the "Open in Drive" link
+
+### Task 4 — Maintenance → financial auto-create
+- `completeMaintJob()` now auto-creates a `reimbursement` financial entry when `total > 0`
+- Entry includes: type=reimbursement, category=Guardian Reimbursement, wh_id, contact_name, description, pay_method, status=pending
+- Shows `showDbToast()` confirming entry created with amount
+
+### Task 5 — Email Registry
+- `emailRegistry` store added to KS (`twwp_email_v1`)
+- Sidebar item "Email Registry" added under People section (`ni-emailregistry`)
+- `page-emailregistry` page: list view with search + status filter
+- Email compose modal: contact picker, subject, body, status, notes
+- Three starter templates: Guardian Welcome, Maintenance Reminder, Reimbursement Approved
+- `EMAIL_TEMPLATES` object with `{{name}}` / `{{amount}}` / `{{method}}` / `{{ref}}` substitution
+- `renderEmailRegistry()`, `openEmailMo()`, `editEmail()`, `applyEmailTemplate()`, `saveEmail()`
+
+### Task 6 — Campaigns page
+- `campaigns` store added to KS (`twwp_campaigns_v1`)
+- Sidebar item "Campaigns" added under Projects section (`ni-campaigns`)
+- `page-campaigns` page: list view with search + stage filter
+- Campaign modal: name, type, stage (6 stages), start/end, goal, owner, description, notes, delete button
+- `CAMP_STAGES` and `CAMP_STAGE_COLORS` constants
+- `seedCampaigns()` creates 2 demo campaigns on first visit
+- `renderCampaigns()`, `openCampaignMo()`, `saveCampaign()`, `deleteCampaign()`
+
+### Task 7 — Dashboard campaign + inventory panels (Row 8)
+- Campaign panel: stage counts as coloured pills, most recent active campaign name + goal
+- Inventory panel: 4 stats (parts, kits, active deployments, out-of-stock) as clickable cards
+- Low stock warning shows if any items are at or below reorder qty
+- Both panels sit in a 2-column row below the Organisations section
+
+### Task 8 — Contact multi-tag roles (`twwp_roles`)
+- New multi-checkbox `twwp_roles` field in contact modal (9 roles: Guardian, Host, Facilitator, Technician, Quencher, Sponsor, Supplier, Trustee, Member)
+- `TWWP_ROLE_COLORS` map for coloured role badges on contact cards
+- `ctGetRoles()`, `ctSetRoles()`, `ctToggleTrusteeFields()`, `ctCalcTermExpiry()`
+- Contact cards now display role badges alongside the type badge
+- Role filter now also matches `twwp_roles` array (in addition to `type`)
+- `saveContact()` stores `twwp_roles` array
+
+### Task 9 — Trustee-specific contact fields + Governance tab
+- Contact modal shows `appointment_date`, `term_length`, `term_expiry` (auto-calculated) when Trustee role is checked
+- `renderTrusteeSummary()` updated: includes contacts with `twwp_roles` containing 'Trustee', counts expired/expiring-soon terms, shows stat cards for those
+- New `trusteeTarmCards` container in Governance tab shows trustee term cards with colour-coded expiry status (red=expired, amber=expires within 90 days)
+
+---
+
 ## Next up
 
-1. Flip GitHub Pages source to GitHub Actions (manual step: repo Settings → Pages → Source → GitHub Actions)
-2. Add `/api/drive/upload` endpoint to Rails API (accepts multipart HTML, uploads to Drive)
-3. Resolve Google OAuth `drive.file` scope (external blocker — see known-issues A1)
+1. Re-authorise Google OAuth (users must re-connect after scope change from `drive.file` → `drive`)
+2. Test Drive upload end-to-end once OAuth is re-connected
+3. Flip GitHub Pages source to GitHub Actions (manual step: repo Settings → Pages → Source → GitHub Actions)
 4. `dtk_I1` duplicate seed (minor)
 5. User management page (admin only) — invite, deactivate, change role
 6. `callModelForFeature()` — wire into autofill and import wizard
+7. Wire Receipt Inbox AI Parse tab

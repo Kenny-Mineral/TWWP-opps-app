@@ -1,6 +1,6 @@
 # TWWP Ops App — Build Backlog
 
-**Last updated:** 2026-03-23 (session 8)
+**Last updated:** 2026-03-23 (session 11)
 
 **Labels:** `[EXPLICIT]` `[IMPLIED]` `[FIX]` `[OPEN]` ✅ done
 
@@ -14,6 +14,9 @@
 - ✅ `[FIX]` Wire `updateFinForm()` — DONE (session 9): contact label/placeholder + category + waterhouse row adapt to type
 - ✅ `[FIX]` Contacts CSV import — DONE (session 9): file picker, parseCsvText, email dedup, confirm dialog
 - `[FIX]` Duplicate `dtk_I1` dev task seed
+- ✅ `[FIX]` `/api/drive/upload` Rails endpoint — fields=id,webViewLink,name, default mime_type text/html, clean response — DONE (session 11)
+- ✅ `[FIX]` Google OAuth scope changed from drive.file to full drive — DONE (session 11)
+- ✅ `[FIX]` Maintenance jobs auto-create reimbursement financial entry — DONE (session 11)
 - `[FIX]` Wire `callModelForFeature()` into autofill, AI helper, import wizard, classify
 - ✅ `[FIX]` CRITICAL — Rails API OAuth: oauth_states DB fix — DONE
 - ✅ `[FIX]` Add Test button for Cloudflare Proxy URL field in AI & Integrations — DONE
@@ -66,14 +69,14 @@
 
 ## GROUP H — Campaigns
 
-- ⬜ `campaigns` store + Campaigns page — 11-step lifecycle
+- ✅ `campaigns` store + Campaigns page — 6-stage lifecycle — DONE (session 11)
 
 ---
 
 ## GROUP I — Dashboard ✅ DONE
 
-- ⬜ Campaign status panel (needs H)
-- ⬜ Inventory summary panel
+- ✅ Campaign status panel — DONE (session 11)
+- ✅ Inventory summary panel — DONE (session 11)
 
 ---
 
@@ -81,15 +84,15 @@
 
 - ✅ 5-tab Financials, Services & Expenses, Import wizard, Ledger, Assets
 - ⬜ `entity_id` on financial entries
-- ⬜ Wire maintenance + monitor reimbursements → auto-create financial entries
+- ✅ Wire maintenance reimbursements → auto-create financial entries — DONE (session 11)
 
 ---
 
 ## GROUP L — Contacts / CRM ✅ MOSTLY DONE
 
-- ⬜ `twwp_role` multi-tag field
+- ✅ `twwp_roles` multi-tag field (9 roles, checkboxes) — DONE (session 11)
 - ⬜ `referrer_id` link
-- ⬜ Trustee-specific fields: `appointment_date`, `term_length`
+- ✅ Trustee-specific fields: `appointment_date`, `term_length`, `term_expiry` — DONE (session 11)
 
 ---
 
@@ -208,9 +211,9 @@ branding, users and config — without touching the code.
 
 ## GROUP Z — Unbuilt Tabs
 
-- ⬜ Email Registry tab
+- ✅ Email Registry tab — DONE (session 11)
 - ⬜ Document Creation tab
-- ⬜ Campaigns page (GROUP H)
+- ✅ Campaigns page (GROUP H) — DONE (session 11)
 - ⬜ Waterhouse digital twin (GROUP F)
 
 ---

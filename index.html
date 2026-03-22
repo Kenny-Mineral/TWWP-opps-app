@@ -837,6 +837,27 @@ tbody tr:hover{background:var(--surface2);}
         <div class="fg"><label>Status</label><select id="ct-status"><option>Active</option><option>Prospect</option><option>Inactive</option><option>VIP</option></select></div>
         <div class="fg"><label>Membership ID</label><input type="text" id="ct-memid" placeholder="e.g. 0000100"></div>
       </div>
+      <div class="fg">
+        <label>TWWP Roles <span style="font-size:10px;color:var(--text3)">(select all that apply)</span></label>
+        <div id="ct-roles-wrap" style="display:flex;flex-wrap:wrap;gap:6px;padding:8px;border:1px solid var(--border);border-radius:6px;background:var(--surface2)">
+          <label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;padding:3px 8px;border-radius:4px;border:1px solid var(--border);background:var(--surface)"><input type="checkbox" class="ct-role-cb" value="Guardian"> Guardian</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;padding:3px 8px;border-radius:4px;border:1px solid var(--border);background:var(--surface)"><input type="checkbox" class="ct-role-cb" value="Host"> Host</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;padding:3px 8px;border-radius:4px;border:1px solid var(--border);background:var(--surface)"><input type="checkbox" class="ct-role-cb" value="Facilitator"> Facilitator</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;padding:3px 8px;border-radius:4px;border:1px solid var(--border);background:var(--surface)"><input type="checkbox" class="ct-role-cb" value="Technician"> Technician</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;padding:3px 8px;border-radius:4px;border:1px solid var(--border);background:var(--surface)"><input type="checkbox" class="ct-role-cb" value="Quencher"> Quencher</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;padding:3px 8px;border-radius:4px;border:1px solid var(--border);background:var(--surface)"><input type="checkbox" class="ct-role-cb" value="Sponsor"> Sponsor</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;padding:3px 8px;border-radius:4px;border:1px solid var(--border);background:var(--surface)"><input type="checkbox" class="ct-role-cb" value="Supplier"> Supplier</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;padding:3px 8px;border-radius:4px;border:1px solid var(--border);background:var(--surface)"><input type="checkbox" class="ct-role-cb" value="Trustee"> Trustee</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;padding:3px 8px;border-radius:4px;border:1px solid var(--border);background:var(--surface)"><input type="checkbox" class="ct-role-cb" value="Member"> Member</label>
+        </div>
+      </div>
+      <div id="ct-trustee-fields" style="display:none">
+        <div class="fr">
+          <div class="fg"><label>Appointment Date</label><input type="date" id="ct-appt-date"></div>
+          <div class="fg"><label>Term Length (years)</label><input type="number" id="ct-term-length" min="1" max="10" step="1" placeholder="e.g. 2"></div>
+        </div>
+        <div class="fg"><label>Term Expiry <span style="font-size:10px;color:var(--text3)">(auto-calculated)</span></label><input type="text" id="ct-term-expiry" readonly style="background:var(--surface2);color:var(--text3)"></div>
+      </div>
       <div class="fg"><label>Tags (comma-separated)</label><input type="text" id="ct-tags" placeholder="e.g. vip, tauranga, phase-2"></div>
       <div class="fg"><label>Notes</label><textarea id="ct-notes" rows="3" placeholder="Background, preferences, history..."></textarea></div>
     </div>
@@ -1154,11 +1175,13 @@ tbody tr:hover{background:var(--surface2);}
     <div class="sb-item" id="ni-reports" onclick="go('reports',this)"><span class="sb-icon">&#128203;</span><span class="sb-lbl">Reports</span></div>
     <div class="sb-sect">People</div>
     <div class="sb-item" id="ni-contacts" onclick="go('contacts',this)"><span class="sb-icon">&#128101;</span><span class="sb-lbl">Contacts / CRM</span><span class="sb-badge hid" id="crmBadge">0</span></div>
+    <div class="sb-item" id="ni-emailregistry" onclick="go('emailregistry',this)"><span class="sb-icon">&#9993;</span><span class="sb-lbl">Email Registry</span></div>
     <div class="sb-sect">Projects</div>
     <div class="sb-item" id="ni-projects" onclick="go('projects',this)"><span class="sb-icon">&#127919;</span><span class="sb-lbl">Projects</span><span class="sb-badge hid" id="projBadge">0</span></div>
     <div class="sb-item" id="ni-tasks" onclick="go('tasks',this)"><span class="sb-icon">&#9989;</span><span class="sb-lbl">Tasks</span></div>
     <div class="sb-item" id="ni-rd" onclick="go('rd',this)"><span class="sb-icon">&#128300;</span><span class="sb-lbl">R&amp;D</span></div>
     <div class="sb-item" id="ni-trustees" onclick="go('trustees',this)"><span class="sb-icon">&#9878;</span><span class="sb-lbl">Trustees / Legal</span><span class="sb-badge hid" id="trusteeBadge">0</span></div>
+    <div class="sb-item" id="ni-campaigns" onclick="go('campaigns',this)"><span class="sb-icon">&#127942;</span><span class="sb-lbl">Campaigns</span></div>
     <div class="sb-item" id="ni-docbuilder" onclick="go('docbuilder',this)"><span class="sb-icon">&#128196;</span><span class="sb-lbl">Doc Builder</span></div>
     <div class="sb-sect">Finance</div>
     <div class="sb-item" id="ni-financials" onclick="go('financials',this)"><span class="sb-icon">&#128180;</span><span class="sb-lbl">Financials</span></div>
@@ -1654,6 +1677,7 @@ tbody tr:hover{background:var(--surface2);}
     <div id="trustees-tab-governance">
       <div class="helper-bubble"><div class="hb-icon">&#9878;</div><div><strong>Trustees / Legal</strong> tracks governance items, charity trust setup, PMA compliance, and legal documents. Trustee contacts are managed in Contacts.</div></div>
       <div style="margin-bottom:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px" id="trusteeSummary"></div>
+      <div id="trusteeTarmCards"></div>
       <div class="pills" id="legalTypePills" style="margin-bottom:16px">
         <div class="pill on" data-s="" onclick="setPill(this,'legalTypePills','legalSF');renderLegal()">All</div>
         <div class="pill" data-s="open" onclick="setPill(this,'legalTypePills','legalSF');renderLegal()">Open</div>
@@ -1789,6 +1813,136 @@ tbody tr:hover{background:var(--surface2);}
     <div id="dbForm" style="max-width:600px"></div>
     <div style="margin-top:20px">
       <button class="btn btn-p" onclick="previewDocBuilder()">Preview Document</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== EMAIL REGISTRY PAGE ====== -->
+<div class="page" id="page-emailregistry">
+  <div class="ph">
+    <div><div class="ph-ey">People</div><div class="ph-title">Email Registry</div></div>
+    <div class="ph-right">
+      <button class="btn btn-p btn-sm" onclick="openEmailMo()">+ Compose Email</button>
+    </div>
+  </div>
+  <div class="pb">
+    <div class="helper-bubble"><div class="hb-icon">&#9993;</div><div><strong>Email Registry</strong> tracks outbound emails to contacts. Compose using templates, log sent emails, and track status.</div></div>
+    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+      <input class="inp" id="email-search" placeholder="Search by contact, subject…" style="flex:1;min-width:160px" oninput="renderEmailRegistry()">
+      <select class="inp" id="email-status-filter" style="width:140px" onchange="renderEmailRegistry()">
+        <option value="">All Statuses</option>
+        <option value="draft">Draft</option>
+        <option value="sent">Sent</option>
+        <option value="failed">Failed</option>
+      </select>
+    </div>
+    <div id="emailList"></div>
+  </div>
+</div>
+
+<!-- EMAIL COMPOSE MODAL -->
+<div class="mo" id="emailMo">
+  <div class="md" style="max-width:600px">
+    <div class="md-h"><div class="md-t" id="emailMoTitle">// COMPOSE EMAIL</div><button class="md-x" onclick="CM('emailMo')">x</button></div>
+    <div class="md-b">
+      <div class="fg">
+        <label>Template</label>
+        <select class="inp" id="em-template" onchange="applyEmailTemplate()">
+          <option value="">— blank —</option>
+          <option value="guardian-welcome">Guardian Welcome</option>
+          <option value="maintenance-reminder">Maintenance Reminder</option>
+          <option value="reimbursement-approved">Reimbursement Approved</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>To (Contact)</label>
+        <select class="inp" id="em-contact"></select>
+      </div>
+      <div class="fg"><label>Subject</label><input class="inp" id="em-subject" placeholder="Email subject"></div>
+      <div class="fg"><label>Body</label><textarea class="inp" id="em-body" rows="10" style="font-family:monospace;font-size:12px"></textarea></div>
+      <div class="fg">
+        <label>Status</label>
+        <select class="inp" id="em-status">
+          <option value="draft">Draft</option>
+          <option value="sent">Sent</option>
+          <option value="failed">Failed</option>
+        </select>
+      </div>
+      <div class="fg"><label>Notes</label><input class="inp" id="em-notes" placeholder="Optional notes"></div>
+    </div>
+    <div class="md-f">
+      <button class="btn btn-g btn-sm" onclick="CM('emailMo')">Cancel</button>
+      <button class="btn btn-p btn-sm" onclick="saveEmail()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== CAMPAIGNS PAGE ====== -->
+<div class="page" id="page-campaigns">
+  <div class="ph">
+    <div><div class="ph-ey">Projects</div><div class="ph-title">Campaigns</div></div>
+    <div class="ph-right">
+      <button class="btn btn-p btn-sm" onclick="openCampaignMo()">+ New Campaign</button>
+    </div>
+  </div>
+  <div class="pb">
+    <div class="helper-bubble"><div class="hb-icon">&#127942;</div><div><strong>Campaigns</strong> track multi-step outreach efforts — from planning through to completion. Each campaign progresses through 6 stages.</div></div>
+    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+      <input class="inp" id="camp-search" placeholder="Search campaigns…" style="flex:1;min-width:160px" oninput="renderCampaigns()">
+      <select class="inp" id="camp-status-filter" style="width:160px" onchange="renderCampaigns()">
+        <option value="">All Stages</option>
+        <option value="planning">Planning</option>
+        <option value="outreach">Outreach</option>
+        <option value="active">Active</option>
+        <option value="review">Review</option>
+        <option value="complete">Complete</option>
+        <option value="archived">Archived</option>
+      </select>
+    </div>
+    <div id="campaignList"></div>
+  </div>
+</div>
+
+<!-- CAMPAIGN MODAL -->
+<div class="mo" id="campaignMo">
+  <div class="md" style="max-width:560px">
+    <div class="md-h"><div class="md-t" id="campaignMoTitle">// NEW CAMPAIGN</div><button class="md-x" onclick="CM('campaignMo')">x</button></div>
+    <div class="md-b">
+      <input type="hidden" id="camp-id">
+      <div class="fg"><label>Campaign Name</label><input class="inp" id="camp-name" placeholder="e.g. Autumn 2026 Guardian Drive"></div>
+      <div class="fg"><label>Type</label>
+        <select class="inp" id="camp-type">
+          <option value="guardian-recruitment">Guardian Recruitment</option>
+          <option value="member-drive">Member Drive</option>
+          <option value="fundraising">Fundraising</option>
+          <option value="awareness">Awareness</option>
+          <option value="maintenance">Maintenance Blitz</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div class="fg"><label>Stage</label>
+        <select class="inp" id="camp-status">
+          <option value="planning">Planning</option>
+          <option value="outreach">Outreach</option>
+          <option value="active">Active</option>
+          <option value="review">Review</option>
+          <option value="complete">Complete</option>
+          <option value="archived">Archived</option>
+        </select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="fg"><label>Start Date</label><input class="inp" id="camp-start" type="date"></div>
+        <div class="fg"><label>End Date</label><input class="inp" id="camp-end" type="date"></div>
+      </div>
+      <div class="fg"><label>Goal / Target</label><input class="inp" id="camp-goal" placeholder="e.g. Sign up 5 new guardians"></div>
+      <div class="fg"><label>Owner</label><input class="inp" id="camp-owner" placeholder="Person responsible"></div>
+      <div class="fg"><label>Description</label><textarea class="inp" id="camp-desc" rows="3" placeholder="What is this campaign trying to achieve?"></textarea></div>
+      <div class="fg"><label>Notes</label><textarea class="inp" id="camp-notes" rows="2" placeholder="Internal notes, blockers, links…"></textarea></div>
+    </div>
+    <div class="md-f">
+      <button class="btn btn-g btn-sm" onclick="CM('campaignMo')">Cancel</button>
+      <button class="btn btn-r btn-sm" id="campDeleteBtn" onclick="deleteCampaign()" style="display:none">Delete</button>
+      <button class="btn btn-p btn-sm" onclick="saveCampaign()">Save</button>
     </div>
   </div>
 </div>
@@ -2554,7 +2708,9 @@ const KS={
   ppsr:'twwp_ppsr_v1',
   docs:'twwp_docs_v1',
   workflow_flags:'twwp_wf_flags_v1',
-  knowledgeBase:'twwp_kb_v1'
+  knowledgeBase:'twwp_kb_v1',
+  emailRegistry:'twwp_email_v1',
+  campaigns:'twwp_campaigns_v1'
 };
 const S={
   get:k=>{try{return JSON.parse(localStorage.getItem(KS[k])||'[]');}catch{return[];}},
@@ -2665,6 +2821,8 @@ function go(page,el){
   if(page==='projects')renderProjects();
   if(page==='rd')renderRD();
   if(page==='docbuilder')renderDocBuilder();
+  if(page==='emailregistry')renderEmailRegistry();
+  if(page==='campaigns'){seedCampaigns();renderCampaigns();}
   if(page==='trustees'){renderTrusteeSummary();renderLegal();renderWorkflowFlags('trustees','trusteesWorkflowFlags');}
   if(page==='financials'){seedServices();renderFinancials();}
   if(page==='shops'){renderOrgsPage();}
@@ -3023,7 +3181,7 @@ function mwReadingVal(inp){mwState.readings[inp.dataset.key]=inp.value;}
 function toggleCheck(catId,itemId,cb){const key=catId+'.'+itemId;mwState.checks[key]=cb.checked;const row=G('ci-'+catId+'-'+itemId);if(row)row.classList.toggle('done',cb.checked);}
 function prefillMwReport(){const wh=S.find('locations',mwState.whId);const jobs=S.get('maintJobs').filter(j=>j.wh_id===mwState.whId).sort((a,b)=>b.date.localeCompare(a.date));const lastJob=jobs[0];const tod=todayStr();if(G('mw-rdate'))G('mw-rdate').value=tod;const pstart=lastJob?lastJob.date:addDays(tod,-89);if(G('mw-pstart'))G('mw-pstart').value=pstart;if(G('mw-nextvisit'))G('mw-nextvisit').value=addDays(tod,89);if(G('mw-by')&&wh&&wh.guardian_name)G('mw-by').value=wh.guardian_name;if(G('mw-wrate')&&wh&&wh.water_rate)G('mw-wrate').value=wh.water_rate;const recipients=[];if(wh&&wh.guardian_email)recipients.push(wh.guardian_email);recipients.push('admin@thewholeywaterproject.com');if(G('mw-recipients'))G('mw-recipients').value=recipients.join(', ');calcMwReimb();}
 function calcMwReimb(){const wm3=parseFloat(G('mw-wm3')?.value)||0;const rate=parseFloat(G('mw-wrate')?.value)||3.54;const power=parseFloat(G('mw-power')?.value)||0;const guardian=parseFloat(G('mw-guardian')?.value)||0;const goodwill=parseFloat(G('mw-goodwill')?.value)||0;const setup=parseFloat(G('mw-setup')?.value)||0;const waterCost=wm3*rate;const waterReimb=waterCost*1.15;const total=waterReimb+power+guardian+goodwill+setup;const el=G('mwReimbSummary');if(!el)return;el.innerHTML='<div style="display:grid;grid-template-columns:1fr auto;gap:4px 16px;color:var(--text2)"><span>Water cost ('+wm3+' m3 x $'+rate+')</span><span>'+fmtNZD(waterCost)+'</span><span>Water reimb (x1.15)</span><span style="color:var(--cyan)">'+fmtNZD(waterReimb)+'</span><span>Power</span><span>'+fmtNZD(power)+'</span><span>Guardian</span><span>'+fmtNZD(guardian)+'</span><span>Goodwill</span><span>'+fmtNZD(goodwill)+'</span>'+(setup?'<span>Setup reward</span><span>'+fmtNZD(setup)+'</span>':'')+'<span style="font-weight:700;color:var(--text);border-top:1px solid var(--border);padding-top:4px;margin-top:2px">Total</span><span style="font-weight:700;color:var(--green);border-top:1px solid var(--border);padding-top:4px;margin-top:2px">'+fmtNZD(total)+'</span></div>';}
-function completeMaintJob(){const wh=S.find('locations',mwState.whId);if(!wh){alert('No Waterhouse selected.');return;}const rdate=G('mw-rdate')?.value||todayStr();const wm3=parseFloat(G('mw-wm3')?.value)||0;const rate=parseFloat(G('mw-wrate')?.value)||3.54;const power=parseFloat(G('mw-power')?.value)||0;const guardian=parseFloat(G('mw-guardian')?.value)||0;const goodwill=parseFloat(G('mw-goodwill')?.value)||0;const setup=parseFloat(G('mw-setup')?.value)||0;const waterCost=wm3*rate;const waterReimb=waterCost*1.15;const total=waterReimb+power+guardian+goodwill+setup;const job={id:uid(),wh_id:mwState.whId,wh_name:wh.name,wh_address:wh.address||'',date:rdate,period_start:G('mw-pstart')?.value||'',performed_by:G('mw-by')?.value||'',next_visit:G('mw-nextvisit')?.value||'',cats:mwState.cats,checks:mwState.checks,readings:mwState.readings,obs:G('mw-obs')?.value||'',work:G('mw-work')?.value||'',pending:G('mw-pending')?.value||'',vips:parseInt(G('mw-vips')?.value)||0,pay_method:G('mw-paymethod')?.value||'Cash',reimb:{wm3,rate,waterCost,waterReimb,power,guardian,goodwill,setup,total},recipients:G('mw-recipients')?.value||'',status:'complete',created:new Date().toISOString()};S.upsert('maintJobs',job);if(job.next_visit){S.upsert('calEvents',{id:uid(),title:'Maintenance Visit -- '+wh.name,type:'Maintenance Visit',wh_id:wh.id,date:job.next_visit,time:'',assigned_to:job.performed_by,assigned_email:wh.guardian_email||'',notes:'Auto-scheduled from maintenance job.',remind:true,created:new Date().toISOString()});}updMaintBadge();showMaintReport(job);}
+function completeMaintJob(){const wh=S.find('locations',mwState.whId);if(!wh){alert('No Waterhouse selected.');return;}const rdate=G('mw-rdate')?.value||todayStr();const wm3=parseFloat(G('mw-wm3')?.value)||0;const rate=parseFloat(G('mw-wrate')?.value)||3.54;const power=parseFloat(G('mw-power')?.value)||0;const guardian=parseFloat(G('mw-guardian')?.value)||0;const goodwill=parseFloat(G('mw-goodwill')?.value)||0;const setup=parseFloat(G('mw-setup')?.value)||0;const waterCost=wm3*rate;const waterReimb=waterCost*1.15;const total=waterReimb+power+guardian+goodwill+setup;const job={id:uid(),wh_id:mwState.whId,wh_name:wh.name,wh_address:wh.address||'',date:rdate,period_start:G('mw-pstart')?.value||'',performed_by:G('mw-by')?.value||'',next_visit:G('mw-nextvisit')?.value||'',cats:mwState.cats,checks:mwState.checks,readings:mwState.readings,obs:G('mw-obs')?.value||'',work:G('mw-work')?.value||'',pending:G('mw-pending')?.value||'',vips:parseInt(G('mw-vips')?.value)||0,pay_method:G('mw-paymethod')?.value||'Cash',reimb:{wm3,rate,waterCost,waterReimb,power,guardian,goodwill,setup,total},recipients:G('mw-recipients')?.value||'',status:'complete',created:new Date().toISOString()};S.upsert('maintJobs',job);if(total>0){var guardianContact=S.get('contacts').find(function(c){return c.name&&job.performed_by&&c.name.toLowerCase()===job.performed_by.toLowerCase();});S.upsert('financials',{id:uid(),type:'reimbursement',date:rdate,amount:total,currency:'NZD',category:'Guardian Reimbursement',contact_id:guardianContact?guardianContact.id:'',contact_name:job.performed_by||'',wh_id:mwState.whId,wh_name:wh.name,description:'Guardian reimbursement — '+wh.name+' ('+fmtDate(rdate)+')',pay_method:job.pay_method||'Cash',status:'pending',notes:'Auto-created from maintenance job '+job.id.slice(0,8).toUpperCase(),created:new Date().toISOString(),updated:new Date().toISOString()});showDbToast('Reimbursement entry ($'+total.toFixed(2)+') auto-created in Financials.');}if(job.next_visit){S.upsert('calEvents',{id:uid(),title:'Maintenance Visit -- '+wh.name,type:'Maintenance Visit',wh_id:wh.id,date:job.next_visit,time:'',assigned_to:job.performed_by,assigned_email:wh.guardian_email||'',notes:'Auto-scheduled from maintenance job.',remind:true,created:new Date().toISOString()});}updMaintBadge();showMaintReport(job);}
 function showMaintReport(job){const wh=S.find('locations',job.wh_id)||{name:job.wh_name,address:job.wh_address,wh_id:''};const r=job.reimb||{};const catLabels=job.cats.map(c=>{const cat=MW_CATS.find(x=>x.id===c);return cat?cat.icon+' '+cat.title:c;});let readingsRows='';job.cats.forEach(catId=>{const cl=MW_CHECKLISTS[catId];if(!cl||!cl.readings.length)return;cl.readings.forEach(rd=>{const val=job.readings[catId+'.'+rd.id];if(val)readingsRows+='<tr><td>'+(MW_CATS.find(c=>c.id===catId)?.icon||'')+' '+rd.label+'</td><td style="font-family:monospace;text-align:right">'+val+' '+rd.unit+'</td></tr>';});});const html='<div class="print-doc" id="maintReportDoc"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;padding-bottom:16px;border-bottom:2px solid var(--cyan)"><div><div style="font-size:10px;font-weight:700;color:var(--cyan);text-transform:uppercase;letter-spacing:.1em">The Wholey Water Project</div><div style="font-size:18px;font-weight:700;color:var(--text);margin-top:4px">Waterhouse Guardian Lunar Cycle Report</div></div><div style="text-align:right;font-size:11px;color:var(--text3)"><div>Date: '+fmtDate(job.date)+'</div><div>Report #'+job.id.slice(0,8).toUpperCase()+'</div></div></div><div class="rpt-section"><h3>Waterhouse Details</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px"><div><span style="color:var(--text3)">Name:</span> '+esc(wh.name)+'</div><div><span style="color:var(--text3)">ID:</span> '+(wh.wh_id||'--')+'</div><div><span style="color:var(--text3)">Address:</span> '+(wh.address||'--')+'</div><div><span style="color:var(--text3)">Guardian:</span> '+(job.performed_by||'--')+'</div><div><span style="color:var(--text3)">Period:</span> '+fmtDate(job.period_start)+' - '+fmtDate(job.date)+'</div><div><span style="color:var(--text3)">Next Visit:</span> '+fmtDate(job.next_visit)+'</div></div></div>'+(readingsRows?'<div class="rpt-section"><h3>Readings</h3><table class="rpt-tbl"><thead><tr><th>Parameter</th><th style="text-align:right">Value</th></tr></thead><tbody>'+readingsRows+'</tbody></table></div>':'')+'<div class="rpt-section"><h3>Observations</h3><div style="font-size:12px;color:var(--text);line-height:1.6">'+(job.obs||'--')+'</div></div><div class="rpt-section"><h3>Work Completed</h3><div style="font-size:12px;color:var(--text);line-height:1.6">'+(job.work||'--')+'</div></div><div class="rpt-section"><h3>Reimbursement Summary</h3><table class="rpt-tbl"><thead><tr><th>Item</th><th style="text-align:right">Calc</th><th style="text-align:right">NZD</th></tr></thead><tbody><tr><td>Water Usage</td><td style="text-align:right;font-size:10px">'+(r.wm3||0)+' m3 x $'+(r.rate||3.54)+'</td><td style="text-align:right;font-family:monospace">'+fmtNZD(r.waterCost)+'</td></tr><tr><td>Water Reimb (x1.15)</td><td></td><td style="text-align:right;font-family:monospace;color:var(--cyan)">'+fmtNZD(r.waterReimb)+'</td></tr><tr><td>Power</td><td></td><td style="text-align:right;font-family:monospace">'+fmtNZD(r.power)+'</td></tr><tr><td>Guardian</td><td></td><td style="text-align:right;font-family:monospace">'+fmtNZD(r.guardian)+'</td></tr><tr><td>Goodwill</td><td></td><td style="text-align:right;font-family:monospace">'+fmtNZD(r.goodwill)+'</td></tr><tr style="font-weight:700"><td>TOTAL</td><td></td><td style="text-align:right;font-family:monospace;color:var(--green)">'+fmtNZD(r.total)+'</td></tr></tbody></table></div><div style="margin-top:20px;padding-top:14px;border-top:1px solid var(--border);font-size:10px;color:var(--text3);text-align:center">The Wholey Water Project PMA -- admin@thewholeywaterproject.com -- 02041333855</div></div>';const el=G('maintReportBody');if(el)el.innerHTML=html;OM('maintReportMo');setTimeout(()=>showMaintReceipt(job),400);}
 function printMaintReport(){const doc=G('maintReportDoc');if(!doc)return;const w=window.open('','_blank');w.document.write('<html><head><title>TWWP Maintenance Report</title><style>body{font-family:Georgia,serif;max-width:700px;margin:20px auto;color:#111;background:#fff;padding:20px}.print-doc{color:#111}table{width:100%;border-collapse:collapse;font-size:12px}th{background:#f0f0f0;padding:6px 10px;text-align:left;font-size:10px}td{padding:6px 10px;border-bottom:1px solid #ddd}.rpt-section{margin-bottom:20px}.rpt-section h3{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#666;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid #ddd}@media print{button{display:none}}</style></head><body>');w.document.write(doc.outerHTML);w.document.write('</body></html>');w.document.close();w.focus();setTimeout(()=>w.print(),500);}
 function showMaintReceiptFromJob(jobId){const job=S.find('maintJobs',jobId);if(job)showMaintReceipt(job);}
@@ -3384,7 +3542,8 @@ function renderContacts(){
   var typeFil=G('crmTypeFil')&&G('crmTypeFil').value||crmTF||'';
   var contacts=S.get('contacts').filter(function(c){
     var mq=!q||[c.name,c.email,c.phone,c.org,c.addr,c.notes,c.tags].join(' ').toLowerCase().includes(q);
-    return mq&&(!typeFil||c.type===typeFil);
+    var tf=!typeFil||c.type===typeFil||(c.twwp_roles||[]).some(function(r){return r.toLowerCase()===typeFil.toLowerCase();});
+    return mq&&tf;
   });
   var all=S.get('contacts');
   var statEl=G('crmStats');
@@ -3406,6 +3565,7 @@ function renderContacts(){
     html+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">';
     html+='<span style="background:rgba(0,0,0,.2);color:'+typeColor+';border:1px solid '+typeColor+'44;border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700">'+typeLabel+'</span>';
     if(c.status&&c.status!='Active')html+='<span class="b b-am" style="font-size:9px">'+esc(c.status)+'</span>';
+    (c.twwp_roles||[]).forEach(function(r){var rc=TWWP_ROLE_COLORS[r]||'var(--text2)';html+='<span style="background:rgba(0,0,0,.15);color:'+rc+';border:1px solid '+rc+'44;border-radius:4px;padding:2px 6px;font-size:9px;font-weight:700">'+esc(r)+'</span>';});
     html+='</div></div>';
     html+='<div style="display:flex;gap:4px">';
     html+='<button class="btn btn-g btn-xs" data-xid="'+esc(c.id)+'" onclick="editContact(this.dataset.xid)">Edit</button>';
@@ -3423,20 +3583,52 @@ function renderContacts(){
   });
   grid.innerHTML=html;
 }
+var TWWP_ROLE_COLORS={Guardian:'var(--cyan)',Host:'var(--green)',Facilitator:'#f59e0b',Technician:'var(--purple)',Quencher:'#06b6d4',Sponsor:'var(--amber)',Supplier:'var(--text2)',Trustee:'var(--red)',Member:'var(--green)'};
+function ctGetRoles(){return Array.from(document.querySelectorAll('.ct-role-cb:checked')).map(function(cb){return cb.value;});}
+function ctSetRoles(roles){document.querySelectorAll('.ct-role-cb').forEach(function(cb){cb.checked=(roles||[]).includes(cb.value);});ctToggleTrusteeFields();}
+function ctToggleTrusteeFields(){
+  var roles=ctGetRoles();
+  var show=roles.includes('Trustee');
+  if(G('ct-trustee-fields'))G('ct-trustee-fields').style.display=show?'':'none';
+  ctCalcTermExpiry();
+}
+function ctCalcTermExpiry(){
+  var appt=G('ct-appt-date')?.value;var len=parseInt(G('ct-term-length')?.value)||0;
+  if(!appt||!len){if(G('ct-term-expiry'))G('ct-term-expiry').value='';return;}
+  var d=new Date(appt);d.setFullYear(d.getFullYear()+len);
+  if(G('ct-term-expiry'))G('ct-term-expiry').value=d.toISOString().split('T')[0];
+}
+// Wire up change listeners on trustee fields
+document.addEventListener('DOMContentLoaded',function(){
+  document.querySelectorAll('.ct-role-cb').forEach(function(cb){cb.addEventListener('change',ctToggleTrusteeFields);});
+  var ad=G('ct-appt-date');if(ad)ad.addEventListener('input',ctCalcTermExpiry);
+  var tl=G('ct-term-length');if(tl)tl.addEventListener('input',ctCalcTermExpiry);
+});
 function openContactMo(type){
   editContactId=null;G('contactMoT').textContent='// ADD CONTACT';
   const whs=S.get('locations').filter(l=>l.type==='Waterhouse');
   G('ct-wh').innerHTML='<option value="">-- None --</option>'+whs.map(w=>'<option value="'+w.id+'">'+esc(w.name)+'</option>').join('');
-  ['ct-name','ct-email','ct-phone','ct-org','ct-addr','ct-tags','ct-notes','ct-memid'].forEach(id=>{const e=G(id);if(e)e.value='';});
-  G('ct-type').value=type||'guardian';G('ct-status').value='Active';OM('contactMo');
+  ['ct-name','ct-email','ct-phone','ct-org','ct-addr','ct-tags','ct-notes','ct-memid','ct-appt-date','ct-term-length','ct-term-expiry'].forEach(id=>{const e=G(id);if(e)e.value='';});
+  G('ct-type').value=type||'guardian';G('ct-status').value='Active';
+  ctSetRoles([]);OM('contactMo');
 }
 function editContact(id){
   const c=S.find('contacts',id);if(!c)return;editContactId=id;G('contactMoT').textContent='// EDIT CONTACT';
   const whs=S.get('locations').filter(l=>l.type==='Waterhouse');
   G('ct-wh').innerHTML='<option value="">-- None --</option>'+whs.map(w=>'<option value="'+w.id+'">'+esc(w.name)+'</option>').join('');
-  G('ct-name').value=c.name||'';G('ct-email').value=c.email||'';G('ct-phone').value=c.phone||'';G('ct-org').value=c.org||'';G('ct-addr').value=c.addr||'';G('ct-type').value=c.type||'guardian';G('ct-status').value=c.status||'Active';G('ct-tags').value=c.tags||'';G('ct-notes').value=c.notes||'';G('ct-memid').value=c.memid||'';G('ct-wh').value=c.wh_id||'';OM('contactMo');
+  G('ct-name').value=c.name||'';G('ct-email').value=c.email||'';G('ct-phone').value=c.phone||'';G('ct-org').value=c.org||'';G('ct-addr').value=c.addr||'';G('ct-type').value=c.type||'guardian';G('ct-status').value=c.status||'Active';G('ct-tags').value=c.tags||'';G('ct-notes').value=c.notes||'';G('ct-memid').value=c.memid||'';G('ct-wh').value=c.wh_id||'';
+  if(G('ct-appt-date'))G('ct-appt-date').value=c.appt_date||'';
+  if(G('ct-term-length'))G('ct-term-length').value=c.term_length||'';
+  if(G('ct-term-expiry'))G('ct-term-expiry').value=c.term_expiry||'';
+  ctSetRoles(c.twwp_roles||[]);OM('contactMo');
 }
-function saveContact(){const name=G('ct-name').value.trim();if(!name){alert('Name required.');return;}S.upsert('contacts',{id:editContactId||uid(),name,type:G('ct-type').value,email:G('ct-email').value.trim(),phone:G('ct-phone').value.trim(),org:G('ct-org').value.trim(),addr:G('ct-addr').value.trim(),wh_id:G('ct-wh').value,status:G('ct-status').value,tags:G('ct-tags').value.trim(),memid:G('ct-memid').value.trim(),notes:G('ct-notes').value.trim(),created:editContactId?(S.find('contacts',editContactId)?.created||new Date().toISOString()):new Date().toISOString()});CM('contactMo');renderContacts();updStats();}
+function saveContact(){
+  const name=G('ct-name').value.trim();if(!name){alert('Name required.');return;}
+  var roles=ctGetRoles();
+  var apptDate=G('ct-appt-date')?.value||'';var termLen=G('ct-term-length')?.value||'';var termExp=G('ct-term-expiry')?.value||'';
+  S.upsert('contacts',{id:editContactId||uid(),name,type:G('ct-type').value,twwp_roles:roles,email:G('ct-email').value.trim(),phone:G('ct-phone').value.trim(),org:G('ct-org').value.trim(),addr:G('ct-addr').value.trim(),wh_id:G('ct-wh').value,status:G('ct-status').value,tags:G('ct-tags').value.trim(),memid:G('ct-memid').value.trim(),notes:G('ct-notes').value.trim(),appt_date:apptDate,term_length:termLen,term_expiry:termExp,created:editContactId?(S.find('contacts',editContactId)?.created||new Date().toISOString()):new Date().toISOString()});
+  CM('contactMo');renderContacts();updStats();
+}
 function delContact(id){if(!confirm('Delete this contact?'))return;S.rm('contacts',id);renderContacts();updStats();}
 function impContactsCSV(){
   var inp=document.createElement('input');inp.type='file';inp.accept='.csv,text/csv';
@@ -3580,11 +3772,42 @@ function updateRDStatus(id){const item=S.find('captures',id);if(!item)return;con
 // TRUSTEES / LEGAL
 legalSF='';
 function renderTrusteeSummary(){
-  const trustees=S.get('contacts').filter(c=>c.type==='trustee');
-  const el=G('trusteeSummary');if(!el)return;
-  const legal=S.get('captures').filter(c=>c.type==='legal');
-  const open=legal.filter(l=>l.status==='open').length;
-  el.innerHTML='<div class="fin-summary-card"><div class="fin-amount" style="color:var(--purple)">'+trustees.length+'</div><div class="fin-label">Trustees</div></div><div class="fin-summary-card"><div class="fin-amount" style="color:var(--amber)">'+open+'</div><div class="fin-label">Open Legal Items</div></div><div class="fin-summary-card"><div class="fin-amount" style="color:var(--green)">'+(legal.filter(l=>l.status==='resolved').length)+'</div><div class="fin-label">Resolved Items</div></div>';}
+  var allContacts=S.get('contacts');
+  var trustees=allContacts.filter(function(c){return c.type==='trustee'||(c.twwp_roles||[]).includes('Trustee');});
+  var el=G('trusteeSummary');if(!el)return;
+  var legal=S.get('captures').filter(function(c){return c.type==='legal';});
+  var open=legal.filter(function(l){return l.status==='open';}).length;
+  var today=todayStr();
+  var expiredCount=trustees.filter(function(t){return t.term_expiry&&t.term_expiry<today;}).length;
+  var expiringSoon=trustees.filter(function(t){return t.term_expiry&&t.term_expiry>=today&&t.term_expiry<=addDays(today,90);}).length;
+  var summHtml='<div class="fin-summary-card"><div class="fin-amount" style="color:var(--purple)">'+trustees.length+'</div><div class="fin-label">Trustees</div></div>'+
+    '<div class="fin-summary-card"><div class="fin-amount" style="color:var(--amber)">'+open+'</div><div class="fin-label">Open Legal Items</div></div>'+
+    '<div class="fin-summary-card"><div class="fin-amount" style="color:var(--green)">'+(legal.filter(function(l){return l.status==='resolved';}).length)+'</div><div class="fin-label">Resolved Items</div></div>';
+  if(expiredCount)summHtml+='<div class="fin-summary-card"><div class="fin-amount" style="color:var(--red)">'+expiredCount+'</div><div class="fin-label">Expired Terms</div></div>';
+  if(expiringSoon)summHtml+='<div class="fin-summary-card"><div class="fin-amount" style="color:var(--amber)">'+expiringSoon+'</div><div class="fin-label">Terms Expiring Soon</div></div>';
+  el.innerHTML=summHtml;
+  // Render trustee term cards if container exists
+  var tc=G('trusteeTarmCards');
+  if(tc&&trustees.length){
+    var tcHtml='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-top:12px">';
+    trustees.forEach(function(t){
+      var expired=t.term_expiry&&t.term_expiry<today;
+      var soonExp=!expired&&t.term_expiry&&t.term_expiry<=addDays(today,90);
+      var borderCol=expired?'var(--red)':soonExp?'var(--amber)':'var(--purple)';
+      tcHtml+='<div style="background:var(--surface2);border-radius:10px;padding:12px;border-left:3px solid '+borderCol+'">';
+      tcHtml+='<div style="font-weight:700;font-size:13px;color:var(--text)">'+esc(t.name)+'</div>';
+      if(t.org)tcHtml+='<div style="font-size:11px;color:var(--text3)">'+esc(t.org)+'</div>';
+      if(t.appt_date)tcHtml+='<div style="font-size:11px;color:var(--text3);margin-top:4px">Appointed: '+fmtDate(t.appt_date)+(t.term_length?' ('+t.term_length+'yr term)':'')+'</div>';
+      if(t.term_expiry){
+        var expCol=expired?'var(--red)':soonExp?'var(--amber)':'var(--text3)';
+        tcHtml+='<div style="font-size:11px;font-weight:600;color:'+expCol+';margin-top:2px">'+(expired?'&#9888; EXPIRED: ':'Expires: ')+fmtDate(t.term_expiry)+'</div>';
+      }
+      tcHtml+='</div>';
+    });
+    tcHtml+='</div>';
+    tc.innerHTML=tcHtml;
+  }
+}
 function renderLegal(){
   var all=S.get('captures').filter(function(c){return c.type==='legal';});
   var items=legalSF?all.filter(function(c){return c.status===legalSF;}):all;
@@ -5710,6 +5933,68 @@ function renderDashboard(){
   html+='<div style="font-size:11px;color:var(--text3);text-align:center">Add Organisation</div>';
   html+='</div>';
   html+='</div></div>'; // end org grid + section
+
+  // ════════════════════════════════════════════════════════
+  // ROW 8 — Campaigns + Inventory (2 columns)
+  // ════════════════════════════════════════════════════════
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">';
+
+  // Campaign status panel
+  var camps=S.get('campaigns');
+  var campByStage={};
+  CAMP_STAGES.forEach(function(s){campByStage[s]=camps.filter(function(c){return c.status===s;}).length;});
+  var activeCamps=camps.filter(function(c){return c.status==='active'||c.status==='outreach';}).sort(function(a,b){return (b.updated||'').localeCompare(a.updated||'');});
+  html+='<div style="background:var(--surface2);border-radius:12px;padding:14px">';
+  html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
+  html+='<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em">Campaigns</div>';
+  html+='<span style="font-size:10px;color:var(--cyan);cursor:pointer" data-pg="campaigns" onclick="dashNavTo(this.dataset.pg)">View All &rarr;</span>';
+  html+='</div>';
+  if(!camps.length){
+    html+='<div style="font-size:11px;color:var(--text3)">No campaigns yet.</div>';
+  } else {
+    // Stage counts
+    html+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">';
+    CAMP_STAGES.forEach(function(s){
+      if(!campByStage[s])return;
+      var col=CAMP_STAGE_COLORS[s]||'var(--text2)';
+      html+='<span style="font-size:10px;background:rgba(255,255,255,.05);border-radius:4px;padding:2px 7px;color:'+col+'">'+s+' <strong>'+campByStage[s]+'</strong></span>';
+    });
+    html+='</div>';
+    // Most recent active campaign
+    if(activeCamps.length){
+      var ac=activeCamps[0];
+      html+='<div style="font-size:12px;font-weight:600;color:var(--green)">&#127942; '+esc(ac.name)+'</div>';
+      if(ac.goal)html+='<div style="font-size:11px;color:var(--text3);margin-top:3px">Goal: '+esc(ac.goal)+'</div>';
+    }
+  }
+  html+='</div>';
+
+  // Inventory summary panel
+  var invItems=S.get('items');
+  var kits=S.get('kits');
+  var allDeps=S.get('deps');
+  var activeDeps=allDeps.filter(function(d){return d.status==='active'||d.status==='deployed';});
+  var lowStock=invItems.filter(function(i){return (parseFloat(i.stock)||0)<=(parseFloat(i.reorder_qty)||1)&&(parseFloat(i.stock)||0)>0;});
+  var outOfStock=invItems.filter(function(i){return (parseFloat(i.stock)||0)===0;});
+  html+='<div style="background:var(--surface2);border-radius:12px;padding:14px">';
+  html+='<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">Inventory</div>';
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
+  [
+    {val:invItems.length,lbl:'Parts',col:'var(--cyan)',pg:'catalogue'},
+    {val:kits.length,lbl:'Kits',col:'var(--green)',pg:'kits'},
+    {val:activeDeps.length,lbl:'Active Deployments',col:'var(--amber)',pg:'deployments'},
+    {val:outOfStock.length,lbl:'Out of Stock',col:outOfStock.length?'var(--red)':'var(--text3)',pg:'catalogue'},
+  ].forEach(function(s){
+    html+='<div style="cursor:pointer;padding:8px;border-radius:8px;background:rgba(255,255,255,.03)" data-pg="'+s.pg+'" onclick="dashNavTo(this.dataset.pg)">';
+    html+='<div style="font-size:18px;font-weight:700;font-family:var(--mono);color:'+s.col+'">'+s.val+'</div>';
+    html+='<div style="font-size:10px;color:var(--text3)">'+s.lbl+'</div>';
+    html+='</div>';
+  });
+  html+='</div>';
+  if(lowStock.length){html+='<div style="font-size:10px;color:var(--amber);margin-top:8px">&#9888; '+lowStock.length+' item'+(lowStock.length!==1?'s':'')+' low on stock</div>';}
+  html+='</div>';
+
+  html+='</div>'; // end row 8
 
   el.innerHTML=html;
 }
@@ -9981,18 +10266,16 @@ async function uploadDocBuilderToDrive(btn){
     var apiUrl=getIntegration('rails-api').replace(/\/$/,'');
     var labels={'host-agreement':'host-agreement','reimbursement-receipt':'reimbursement-receipt','waterhouse-report':'waterhouse-report'};
     var fileName=(labels[dbTemplate]||dbTemplate)+'-'+new Date().toISOString().split('T')[0]+'.html';
-    var blob=new Blob([dbPreviewHTML],{type:'text/html'});
-    var fd=new FormData();fd.append('file',blob,fileName);fd.append('folder','TWWP Documents');
     var session=getRailsSession();
     var res=await fetch(apiUrl+'/api/drive/upload',{
       method:'POST',
-      headers:{'Authorization':'Bearer '+session.token},
-      body:fd
+      headers:{'Authorization':'Bearer '+session.token,'Content-Type':'application/json'},
+      body:JSON.stringify({filename:fileName,content:dbPreviewHTML,mime_type:'text/html'})
     });
     var data=await res.json();
     if(res.ok){
       if(btn){btn.textContent='✓ Uploaded';}
-      var link=data.url?(' <a href="'+data.url+'" target="_blank" style="color:var(--cyan)">Open in Drive</a>'):'';
+      var link=data.webViewLink?(' <a href="'+data.webViewLink+'" target="_blank" style="color:var(--cyan)">Open in Drive</a>'):'';
       showDbToast('Uploaded to Drive successfully.'+link);
     } else {
       throw new Error(data.error||'Upload failed (HTTP '+res.status+')');
@@ -10066,6 +10349,171 @@ function kbImportSelectedDocs(){
   CM('kbImportDocsMo');
   renderKB();
   alert(imported+' document'+(imported!==1?'s':'')+' imported to Knowledge Base.');
+}
+
+// ============================================================
+// EMAIL REGISTRY
+// ============================================================
+var emailEditId=null;
+var EMAIL_TEMPLATES={
+  'guardian-welcome':{
+    subject:'Welcome to the TWWP Guardian Network!',
+    body:'Kia ora {{name}},\n\nWelcome aboard! We\'re thrilled to have you as a Guardian for The Wholey Water Project.\n\nYour waterhouse is a vital part of our community water network. As a Guardian, you\'ll be hosting one of our reverse osmosis filtration units and helping ensure your neighbours have access to clean, affordable water.\n\nHere\'s what to expect:\n- Monthly maintenance visits (usually takes about an hour)\n- Reimbursement for water and power costs\n- Full support from the TWWP team\n\nPlease don\'t hesitate to reach out if you have any questions.\n\nNgā mihi,\nThe TWWP Team\nthewholeywaterproject@gmail.com\n02041333855'
+  },
+  'maintenance-reminder':{
+    subject:'Upcoming Waterhouse Maintenance Visit',
+    body:'Kia ora {{name}},\n\nThis is a friendly reminder that your scheduled waterhouse maintenance visit is coming up soon.\n\nPlease ensure the waterhouse area is accessible and that you\'ve noted any issues or unusual readings over the past month.\n\nIf the scheduled time doesn\'t work, please get in touch and we\'ll arrange an alternative.\n\nNgā mihi,\nThe TWWP Team'
+  },
+  'reimbursement-approved':{
+    subject:'Your TWWP Reimbursement Has Been Processed',
+    body:'Kia ora {{name}},\n\nGreat news — your reimbursement for this month\'s waterhouse maintenance has been approved and processed.\n\nPayment details:\n- Amount: {{amount}}\n- Method: {{method}}\n- Reference: {{ref}}\n\nThank you for your ongoing contribution to the network. Your dedication keeps clean water flowing for your community.\n\nNgā mihi,\nThe TWWP Team'
+  }
+};
+
+function renderEmailRegistry(){
+  var search=(G('email-search')?.value||'').toLowerCase();
+  var statusFil=G('email-status-filter')?.value||'';
+  var emails=S.get('emailRegistry').sort(function(a,b){return (b.created||'').localeCompare(a.created||'');});
+  if(search)emails=emails.filter(function(e){return (e.subject||'').toLowerCase().includes(search)||(e.contact_name||'').toLowerCase().includes(search)||(e.body||'').toLowerCase().includes(search);});
+  if(statusFil)emails=emails.filter(function(e){return e.status===statusFil;});
+  var statusColors={sent:'var(--green)',draft:'var(--text2)',failed:'var(--red)'};
+  if(!emails.length){G('emailList').innerHTML='<div style="color:var(--text3);padding:20px;text-align:center">No emails logged yet. Click "+ Compose Email" to get started.</div>';return;}
+  G('emailList').innerHTML=emails.map(function(e){
+    var sColor=statusColors[e.status]||'var(--text2)';
+    return '<div class="card" style="cursor:pointer;padding:14px 18px;margin-bottom:8px;border-left:3px solid '+sColor+'" onclick="editEmail(\''+esc(e.id)+'\')">'+
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'+
+      '<div><div style="font-weight:600;color:var(--text)">'+esc(e.subject||'(no subject)')+'</div>'+
+      '<div style="font-size:12px;color:var(--text3);margin-top:3px">'+esc(e.contact_name||'No contact')+(e.date?' · '+fmtDate(e.date):'')+'</div></div>'+
+      '<div style="font-size:11px;font-weight:700;color:'+sColor+';white-space:nowrap;text-transform:uppercase">'+esc(e.status||'draft')+'</div></div>'+
+      (e.notes?'<div style="font-size:11px;color:var(--text3);margin-top:6px;font-style:italic">'+esc(e.notes)+'</div>':'')+
+    '</div>';
+  }).join('');
+}
+
+function openEmailMo(id){
+  emailEditId=id||null;
+  G('emailMoTitle').textContent=id?'// EDIT EMAIL':'// COMPOSE EMAIL';
+  // Populate contact picker
+  var contacts=S.get('contacts');
+  G('em-contact').innerHTML='<option value="">— no contact —</option>'+contacts.map(function(c){return '<option value="'+esc(c.id)+'">'+esc(c.name+(c.email?' <'+c.email+'>':''))+'</option>';}).join('');
+  if(id){
+    var e=S.find('emailRegistry',id);
+    if(!e)return;
+    G('em-template').value='';
+    G('em-contact').value=e.contact_id||'';
+    G('em-subject').value=e.subject||'';
+    G('em-body').value=e.body||'';
+    G('em-status').value=e.status||'draft';
+    G('em-notes').value=e.notes||'';
+  } else {
+    G('em-template').value='';G('em-contact').value='';G('em-subject').value='';
+    G('em-body').value='';G('em-status').value='draft';G('em-notes').value='';
+  }
+  OM('emailMo');
+}
+function editEmail(id){openEmailMo(id);}
+
+function applyEmailTemplate(){
+  var tmpl=G('em-template').value;
+  if(!tmpl||!EMAIL_TEMPLATES[tmpl])return;
+  var t=EMAIL_TEMPLATES[tmpl];
+  // Fill contact name if selected
+  var cid=G('em-contact').value;
+  var contact=cid?S.find('contacts',cid):null;
+  var name=contact?contact.name:'[Name]';
+  G('em-subject').value=t.subject;
+  G('em-body').value=t.body.replace(/{{name}}/g,name).replace(/{{amount}}/g,'[Amount]').replace(/{{method}}/g,'[Method]').replace(/{{ref}}/g,'[Ref]');
+}
+
+function saveEmail(){
+  var subject=G('em-subject').value.trim();
+  if(!subject){alert('Subject required.');return;}
+  var cid=G('em-contact').value;
+  var contact=cid?S.find('contacts',cid):null;
+  var now=new Date().toISOString();
+  S.upsert('emailRegistry',{
+    id:emailEditId||uid(),
+    contact_id:cid||'',contact_name:contact?contact.name:'',contact_email:contact?contact.email:'',
+    subject:subject,body:G('em-body').value,
+    status:G('em-status').value||'draft',
+    date:now.split('T')[0],
+    notes:G('em-notes').value,
+    created:emailEditId?(S.find('emailRegistry',emailEditId)||{}).created||now:now,
+    updated:now
+  });
+  CM('emailMo');renderEmailRegistry();
+}
+
+// ============================================================
+// CAMPAIGNS
+// ============================================================
+var campEditId=null;
+var CAMP_STAGES=['planning','outreach','active','review','complete','archived'];
+var CAMP_STAGE_COLORS={planning:'var(--text2)',outreach:'var(--cyan)',active:'var(--green)',review:'#f59e0b',complete:'var(--text)',archived:'#555'};
+
+function seedCampaigns(){
+  if(S.get('campaigns').length)return;
+  var now=new Date().toISOString();
+  S.upsert('campaigns',{id:'camp_demo1',name:'Autumn 2026 Guardian Drive',type:'guardian-recruitment',status:'active',start:'2026-03-01',end:'2026-05-31',goal:'Recruit 4 new Guardian households in the eastern suburbs',owner:'Kenny',desc:'Targeted outreach to homeowners in target zones identified in the annual review.',notes:'Focus on Onehunga and Hillsborough first.',created:now,updated:now});
+  S.upsert('campaigns',{id:'camp_demo2',name:'Awareness — World Water Day 2026',type:'awareness',status:'complete',start:'2026-03-01',end:'2026-03-22',goal:'Post 5 social media updates, reach 500 impressions',owner:'Kenny',desc:'Annual World Water Day social media campaign to raise awareness of TWWP\'s mission.',notes:'Instagram, Facebook. Boosted 3 posts.',created:now,updated:now});
+}
+
+function renderCampaigns(){
+  var search=(G('camp-search')?.value||'').toLowerCase();
+  var stageFil=G('camp-status-filter')?.value||'';
+  var camps=S.get('campaigns').sort(function(a,b){return (b.updated||'').localeCompare(a.updated||'');});
+  if(search)camps=camps.filter(function(c){return (c.name||'').toLowerCase().includes(search)||(c.desc||'').toLowerCase().includes(search)||(c.goal||'').toLowerCase().includes(search);});
+  if(stageFil)camps=camps.filter(function(c){return c.status===stageFil;});
+  if(!camps.length){G('campaignList').innerHTML='<div style="color:var(--text3);padding:20px;text-align:center">No campaigns yet. Click "+ New Campaign" to get started.</div>';return;}
+  G('campaignList').innerHTML=camps.map(function(c){
+    var sColor=CAMP_STAGE_COLORS[c.status]||'var(--text2)';
+    var typeLabel=(c.type||'').replace(/-/g,' ').replace(/\b\w/g,function(l){return l.toUpperCase();});
+    return '<div class="card" style="cursor:pointer;padding:14px 18px;margin-bottom:8px;border-left:3px solid '+sColor+'" onclick="openCampaignMo(\''+esc(c.id)+'\')">'+
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'+
+      '<div style="flex:1"><div style="font-weight:700;color:var(--text);font-size:14px">'+esc(c.name)+'</div>'+
+      '<div style="font-size:12px;color:var(--text3);margin-top:3px">'+esc(typeLabel)+(c.owner?' · '+esc(c.owner):'')+(c.start?' · '+fmtDate(c.start)+' – '+(c.end?fmtDate(c.end):'…'):'')+'</div>'+
+      (c.goal?'<div style="font-size:12px;color:var(--text2);margin-top:6px">&#127919; '+esc(c.goal)+'</div>':'')+
+      '</div>'+
+      '<div style="font-size:11px;font-weight:700;color:'+sColor+';white-space:nowrap;text-transform:uppercase;background:rgba(255,255,255,.05);padding:2px 8px;border-radius:4px">'+esc(c.status||'planning')+'</div></div>'+
+    '</div>';
+  }).join('');
+}
+
+function openCampaignMo(id){
+  campEditId=id||null;
+  G('campaignMoTitle').textContent=id?'// EDIT CAMPAIGN':'// NEW CAMPAIGN';
+  G('campDeleteBtn').style.display=id?'':'none';
+  if(id){
+    var c=S.find('campaigns',id);if(!c)return;
+    G('camp-id').value=c.id;G('camp-name').value=c.name||'';G('camp-type').value=c.type||'other';
+    G('camp-status').value=c.status||'planning';G('camp-start').value=c.start||'';G('camp-end').value=c.end||'';
+    G('camp-goal').value=c.goal||'';G('camp-owner').value=c.owner||'';G('camp-desc').value=c.desc||'';G('camp-notes').value=c.notes||'';
+  } else {
+    G('camp-id').value='';G('camp-name').value='';G('camp-type').value='guardian-recruitment';
+    G('camp-status').value='planning';G('camp-start').value=todayStr();G('camp-end').value='';
+    G('camp-goal').value='';G('camp-owner').value='';G('camp-desc').value='';G('camp-notes').value='';
+  }
+  OM('campaignMo');
+}
+
+function saveCampaign(){
+  var name=G('camp-name').value.trim();if(!name){alert('Campaign name required.');return;}
+  var now=new Date().toISOString();
+  var existing=campEditId?S.find('campaigns',campEditId):null;
+  S.upsert('campaigns',{
+    id:campEditId||uid(),name:name,type:G('camp-type').value,status:G('camp-status').value,
+    start:G('camp-start').value,end:G('camp-end').value,goal:G('camp-goal').value,
+    owner:G('camp-owner').value,desc:G('camp-desc').value,notes:G('camp-notes').value,
+    created:existing?existing.created:now,updated:now
+  });
+  CM('campaignMo');renderCampaigns();
+}
+
+function deleteCampaign(){
+  if(!campEditId)return;
+  var c=S.find('campaigns',campEditId);if(!c)return;
+  if(!confirm('Delete campaign "'+c.name+'"? This cannot be undone.'))return;
+  S.rm('campaigns',campEditId);CM('campaignMo');renderCampaigns();
 }
 
 function enforceRoleUI(){

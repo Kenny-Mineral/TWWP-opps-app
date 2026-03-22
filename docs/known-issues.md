@@ -1,6 +1,6 @@
 # Known Issues, Bugs, and Stubs
 
-Last updated: 2026-03-23 (session 10)
+Last updated: 2026-03-23 (session 11)
 
 ---
 
@@ -58,19 +58,9 @@ Last updated: 2026-03-23 (session 10)
 
 ## Current bugs
 
-### A1 — CRITICAL: Google OAuth drive.file scope fails
-**Symptom:** "Something went wrong" at Google after account selection
-**What works:** email-only OAuth confirmed working
-**What fails:** drive.file scope causes Google error before token issuance
-**Zero traffic in Cloud Console metrics** — Google rejecting server-side
-**Theories (try in order):**
-1. Wait 30 min for consent screen propagation, retry in incognito
-2. Confirm Google Drive API v3 is enabled in Cloud Console
-3. Try drive.readonly scope to narrow down
-4. Enable People API
-5. Test with fresh Gmail account added as test user
-6. Check Workspace admin settings if thewholeywaterproject@gmail.com is Workspace
-
+### A1 — Google OAuth drive scope (scope changed, re-auth needed)
+**Update (session 11):** Scope changed from `drive.file` to full `drive`. This may resolve the Google rejection.
+**What to do:** Re-connect via "Connect via Rails API" in AI & Integrations. Users must re-authorise to get the new scope.
 **Note:** There are TWO OAuth Client IDs in Cloud Console.
 Active one: `...39mavd5fmtl0s688dcfa26gdq64sjvkd`
 Old broken one: `...nljl` — do not use.
@@ -90,8 +80,11 @@ Financial form now adapts on type change: contact label and placeholder update (
 ### ✅ A6 — Contacts CSV import — FIXED (session 9)
 `impContactsCSV()` now opens a file picker, parses CSV via `parseCsvText()`, auto-maps columns (name, email, phone, type, org, addr, tags, notes), deduplicates by email, and imports with a confirmation dialog.
 
-### A8 — Rails `/api/drive/upload` endpoint not yet built
-Doc Builder "Upload to Drive" button POSTs to `{railsApiUrl}/api/drive/upload` — frontend wired but Rails endpoint doesn't exist yet. Needs: accept multipart file, authenticate with Google Drive, upload HTML, return `{url: ...}`. Blocked by OAuth drive.file scope issue (A1).
+### ✅ A8 — Rails `/api/drive/upload` endpoint — FIXED (session 11)
+Endpoint existed but returned raw Drive response without `webViewLink`. Fixed: added `?fields=id,webViewLink,name`, defaulted mime_type to `text/html`, returns clean `{id, webViewLink, filename}`. Frontend updated to send JSON body instead of FormData.
+
+### A9 — Google OAuth scope re-authorisation required
+Changed from `drive.file` to full `drive` scope (session 11). Any users who previously connected via Google OAuth must **re-connect** — old tokens have insufficient scope. The re-auth flow will request the new scope.
 
 ### A7 — `dtk_I1` seeded twice
 Duplicate dev task ID.
@@ -113,7 +106,7 @@ Duplicate dev task ID.
 | Google Drive OAuth via Rails API | Deployed, drive.file scope failing |
 | Multi-device sync | Needs OAuth fix first |
 | Document Creation tab | Not built |
-| Email Registry tab | Not built |
+| ✅ Email Registry tab | Built (session 11) |
 | Drive backup on logout | Code written, needs OAuth |
 | Auto-save to Drive every 30 min | Timer set, needs OAuth |
 | `callModelForFeature()` | Built but not wired into autofill/import/classify |
