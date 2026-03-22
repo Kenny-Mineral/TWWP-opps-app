@@ -10,6 +10,9 @@ Last updated: 2026-03-22 (session 7 — Sprint 1)
 - ✅ Cloudflare Proxy URL had no Test button — added (AI & Integrations modal)
 - ✅ Rails API auto-save: logout (confirmed), report generation, 30-min timer — all wired
 - ✅ GitHub Actions auto-deploy — `.github/workflows/deploy.yml` created (need to flip Pages source to GitHub Actions in repo settings)
+- ✅ Hardcoded login replaced with Rails JWT auth — falls back to local if Rails unreachable
+- ✅ Users table + has_secure_password deployed to Fly.io
+- ✅ Admin user created on production: admin@thewholeywaterproject.com
 - ⚠️ `sendRptChatMsg()` and `updateFinForm()` — still stubs, `console.warn` added for visibility
 
 ---

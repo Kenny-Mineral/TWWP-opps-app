@@ -2362,9 +2362,48 @@ tbody tr:hover{background:var(--surface2);}
 const CK='twwp_creds_v1',SK='twwp_sess_v1';
 function getCreds(){try{return JSON.parse(localStorage.getItem(CK))||{u:'admin',p:'twwp2024'};}catch{return{u:'admin',p:'twwp2024'};}}
 function isLoggedIn(){try{return JSON.parse(sessionStorage.getItem(SK))?.ok===true;}catch{return false;}}
-function doLogin(){
+async function doLogin(){
   const u=G('lu').value.trim(),p=G('lp').value,c=getCreds();
   const devMode=c.u===''&&c.p==='';
+  const railsUrl=getIntegration('rails-api');
+
+  if(railsUrl){
+    G('le').textContent='Signing in...';
+    try{
+      const res=await fetch(railsUrl.replace(/\/$/,'')+'/auth/login',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({email:u,password:p})
+      });
+      const data=await res.json();
+      if(res.ok){
+        // Store JWT so railsAPIRequest can use it immediately
+        localStorage.setItem('twwp_rails_session',JSON.stringify({
+          token:data.token,
+          email:data.user.email,
+          role:data.user.role,
+          org_id:data.user.org_id,
+          connected_at:new Date().toISOString()
+        }));
+        const displayName=data.user.email.split('@')[0]||'Admin';
+        sessionStorage.setItem(SK,JSON.stringify({ok:true,user:displayName,role:data.user.role,org_id:data.user.org_id}));
+        G('loginScreen').style.display='none';G('appRoot').style.display='flex';
+        G('uNm').textContent=displayName;G('uAv').textContent=displayName[0].toUpperCase();
+        G('le').textContent='';initApp();go('dashboard',G('ni-dashboard'));
+        return;
+      } else {
+        // Rails returned an error (wrong credentials) — don't fall back to local
+        G('le').textContent=data.error||'Incorrect email or password.';G('lp').value='';
+        return;
+      }
+    }catch(e){
+      // Network error — Rails unreachable, fall through to local check
+      G('le').textContent='';
+      console.warn('Rails API unreachable, falling back to local login:',e.message);
+    }
+  }
+
+  // Local fallback (no Rails URL configured, or Rails unreachable)
   if(devMode||(u===c.u&&p===c.p)){
     const displayName=u||'Dev';
     sessionStorage.setItem(SK,JSON.stringify({ok:true,user:displayName}));

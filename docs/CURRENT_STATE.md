@@ -1,6 +1,6 @@
 # TWWP Ops App — Current State
 
-**Last updated:** 2026-03-22 (session 7 — Sprint 1)
+**Last updated:** 2026-03-22 (session 7 — Sprint 1–3)
 
 ---
 
@@ -41,6 +41,27 @@ Rails API at `https://twwp-ops-api.fly.dev`.
 | Home Assistant | ⚠️ Fields saved, no live test |
 | Multi-device sync | ⚠️ Code wired, unblocked by OAuth fix |
 | AI (Gemini/Anthropic/OpenAI/OpenRouter) | ✅ Working |
+
+---
+
+## Sprint 3 changes (2026-03-22)
+
+### Tasks 5-8 — Rails user auth + frontend login wired
+
+**Rails API (twwp-ops-api):**
+- `bcrypt` gem enabled in Gemfile
+- Migration `20260322000000_create_users` — `users` table with email (unique), password_digest, role (default staff), org_id, active (default true)
+- `User` model with `has_secure_password` and email uniqueness validation
+- `SessionsController#create` — POST `/auth/login`, returns JWT with user_id/email/role/org_id, 30-day expiry
+- `ApplicationController#authenticate_request!` updated to handle both `user_id` JWTs (new login) and `session_id` JWTs (existing Google OAuth) — backward compatible
+- Deployed to Fly.io, remote migration applied
+- Admin user created: `admin@thewholeywaterproject.com` / `twwp2024`, role=admin, org_id=twwp
+
+**Frontend (index.html):**
+- `doLogin()` is now `async`
+- If Rails API URL is configured: POSTs to `/auth/login`, stores JWT + role in `twwp_rails_session` and `SK` session, proceeds to app
+- Wrong credentials from Rails: shows error, does **not** fall back to local
+- Rails unreachable (network error): falls back silently to local admin/twwp2024 check
 
 ---
 

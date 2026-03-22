@@ -162,11 +162,14 @@
 
 ## GROUP T — Security & User Management
 
-- ⬜ Replace hardcoded admin/twwp2024 login with Rails-backed user auth
-- ⬜ `users` table in Rails API — email, bcrypt password, role, org_id, active
-- ⬜ Roles: admin, staff, read-only (per org)
-- ⬜ Login screen POSTs credentials to Rails → receives JWT → stored in localStorage
-- ⬜ JWT used for all subsequent API calls (already wired via Bearer token)
+- ✅ `users` table in Rails API — email, bcrypt password, role, org_id, active — DONE
+- ✅ `has_secure_password` on User model — DONE
+- ✅ POST `/auth/login` endpoint — returns JWT with user_id/email/role/org_id — DONE
+- ✅ Login screen POSTs to Rails → receives JWT → stored in localStorage — DONE
+- ✅ Falls back to local login if Rails unreachable — DONE
+- ✅ JWT used for all subsequent API calls (Bearer token) — already wired
+- ✅ First admin user created on Fly.io — DONE
+- ⬜ Roles: admin, staff, read-only (per org) — roles exist in DB, UI enforcement pending
 - ⬜ Role-based UI — read-only users cannot create/edit/delete records
 - ⬜ Admin-only pages: Developer, AI & Integrations, Trustees/Legal
 - ⬜ User management page (admin only) — invite, deactivate, change role
@@ -218,7 +221,7 @@ branding, users and config — without touching the code.
 3. ✅ Wire Rails API auto-save — logout, report generation, 30 min timer (GROUP R) — DONE
 4. Fix GROUP A bugs — CSV import, sendRptChatMsg, updateFinForm (duplicates already resolved)
 5. ✅ GitHub Actions auto-deploy (GROUP S) — DONE
-6. Security & User Management (GROUP T) — proper login, roles, user DB
+6. ✅ Security foundations (GROUP T) — users table, JWT login, admin user, frontend wired
 7. Multi-Organisation Architecture (GROUP U) — org_id everywhere, org switcher
 8. Email Registry + Document Creation tabs (GROUP Z)
 9. Campaigns page (GROUP H)
