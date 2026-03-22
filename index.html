@@ -2029,6 +2029,7 @@ tbody tr:hover{background:var(--surface2);}
       <div class="tb" data-t="captures" onclick="switchDevTab(this)">Captures</div>
       <div class="tb" data-t="backlog" onclick="switchDevTab(this)">Backlog</div>
       <div class="tb" data-t="spec" onclick="switchDevTab(this)">Platform Spec</div>
+      <div class="tb" data-t="kb" onclick="switchDevTab(this)">Knowledge Base</div>
     </div>
 
     <!-- DEV HISTORY tab -->
@@ -2091,6 +2092,33 @@ tbody tr:hover{background:var(--surface2);}
       </div>
     </div>
 
+    <!-- KNOWLEDGE BASE tab -->
+    <div id="dev-tab-kb" style="display:none">
+      <div class="helper-bubble" style="margin-bottom:16px"><div class="hb-icon">&#128218;</div><div><strong>Knowledge Base</strong> is a living staff handbook fed into every AI call. Write SOPs, FAQs, glossary entries, and procedures here. Toggle <strong>Always Inject</strong> to include an entry in every AI request automatically — the AI will read it before answering anything.</div></div>
+      <div style="margin-bottom:16px"><button class="btn btn-p btn-sm" onclick="openKBMo()">+ Add Entry</button></div>
+      <div id="kbList"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- KB ENTRY MODAL -->
+<div class="mo" id="kbMo">
+  <div class="md" style="max-width:640px">
+    <div class="md-h"><div class="md-t" id="kbMoT">// ADD KNOWLEDGE ENTRY</div><button class="md-x" onclick="CM('kbMo')">x</button></div>
+    <div class="md-b">
+      <div class="fg"><label>Title *</label><input type="text" id="kb-title" placeholder="e.g. Guardian Reimbursement SOP"></div>
+      <div class="fg"><label>Tags <span style="font-weight:400;color:var(--text3)">(comma-separated)</span></label><input type="text" id="kb-tags" placeholder="guardians, finance, maintenance"></div>
+      <div class="fg"><label>Body *</label><textarea id="kb-body" rows="10" placeholder="Write the article, SOP, FAQ, or glossary entry here..." style="font-family:var(--mono);font-size:12px;line-height:1.6"></textarea></div>
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 0">
+        <input type="checkbox" id="kb-inject" style="width:16px;height:16px;cursor:pointer">
+        <label for="kb-inject" style="font-size:13px;color:var(--text);cursor:pointer">Always inject into AI calls <span style="font-size:11px;color:var(--text3)">(AI reads this before every response)</span></label>
+      </div>
+    </div>
+    <div class="md-f">
+      <button class="btn btn-g btn-sm" onclick="CM('kbMo')">Cancel</button>
+      <button class="btn btn-p btn-sm" onclick="saveKBEntry()">Save Entry</button>
+    </div>
   </div>
 </div>
 
@@ -2473,7 +2501,8 @@ const KS={
   assets:'twwp_assets_v1',
   ppsr:'twwp_ppsr_v1',
   docs:'twwp_docs_v1',
-  workflow_flags:'twwp_wf_flags_v1'
+  workflow_flags:'twwp_wf_flags_v1',
+  knowledgeBase:'twwp_kb_v1'
 };
 const S={
   get:k=>{try{return JSON.parse(localStorage.getItem(KS[k])||'[]');}catch{return[];}},
@@ -3520,10 +3549,12 @@ async function sendAIHelperMsg(){
   const cfg=getAiCfg();const provider=cfg.provider||'gemini';const apiKey=(cfg.keys&&cfg.keys[provider])||'';
   if(!apiKey){addAIMsg('[!] No API key configured. Go to AI & Integrations settings to add one.','bot');return;}
   const activePage=document.querySelector('.page.on')?.id?.replace('page-','')||'unknown';
-  const prompt='You are the Ops App assistant. The user is on the '+activePage+' page. Answer helpfully and concisely. TWWP is The Wholey Water Project, a decentralised community RO water network in New Zealand. If the user says "save as feedback" or describes an app improvement, classify it into one of: bug, backlog, ui, workflow, integration, automation, other. User message: '+msg;
+  const kbCtx=getKBContext();
+  const baseSystem='You are the Ops App assistant for TWWP (The Wholey Water Project), a decentralised community RO water network in New Zealand. The user is on the '+activePage+' page. Answer helpfully and concisely. If the user says "save as feedback" or describes an app improvement, classify it into one of: bug, backlog, ui, workflow, integration, automation, other.'+(kbCtx?'\n\n'+kbCtx:'');
+  const prompt=baseSystem+'\n\nUser message: '+msg;
   try{
     let text='';
-    if(provider==='anthropic'){const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:500,system:'You are a helpful Ops App assistant. Be concise.',messages:[{role:'user',content:prompt}]})});const d=await res.json();text=d.content?.[0]?.text||'No response.';}
+    if(provider==='anthropic'){const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:500,system:baseSystem,messages:[{role:'user',content:msg}]})});const d=await res.json();text=d.content?.[0]?.text||'No response.';}
     else if(provider==='gemini'){const res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key='+apiKey,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})});const d=await res.json();if(d.error)throw new Error('Gemini error '+d.error.code+': '+d.error.message);text=d.candidates?.[0]?.content?.parts?.[0]?.text||'No response.';}
     else if(provider==='openai'){const res=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+apiKey},body:JSON.stringify({model:'gpt-4o-mini',max_tokens:500,messages:[{role:'user',content:prompt}]})});const d=await res.json();text=d.choices?.[0]?.message?.content||'No response.';}
     addAIMsg(text,'bot');
@@ -4143,12 +4174,13 @@ function renderDevPage(){
   renderCapTypeCards();
   renderDevBacklog();
   renderSpecPage();
+  renderKB();
 }
 
 function switchDevTab(el){
   document.querySelectorAll('#devPageTabs .tb').forEach(function(t){t.classList.remove('on');});
   el.classList.add('on');
-  ['history','tasks','captures','backlog','spec'].forEach(function(t){
+  ['history','tasks','captures','backlog','spec','kb'].forEach(function(t){
     var e=G('dev-tab-'+t);if(e)e.style.display=t===el.dataset.t?'block':'none';
   });
   if(el.dataset.t==='history')renderDevHistory();
@@ -4156,6 +4188,98 @@ function switchDevTab(el){
   if(el.dataset.t==='captures')renderCapTypeCards();
   if(el.dataset.t==='backlog')renderDevBacklog();
   if(el.dataset.t==='spec'){renderSpecPage();}
+  if(el.dataset.t==='kb')renderKB();
+}
+
+// ── Knowledge Base ─────────────────────────────────────────
+var editKBId=null;
+var KB_TAGS_COLORS=['var(--cyan)','var(--green)','var(--purple)','var(--amber)','var(--orange)','var(--text3)'];
+function kbTagColor(i){return KB_TAGS_COLORS[i%KB_TAGS_COLORS.length];}
+
+function renderKB(){
+  var el=G('kbList');if(!el)return;
+  var entries=S.get('knowledgeBase');
+  if(!entries.length){
+    el.innerHTML='<div class="cl cl-i"><span>i</span><div>No knowledge entries yet. Add SOPs, FAQs, glossary entries, or procedures. Toggle Always Inject to feed them into every AI call.</div></div>';
+    return;
+  }
+  var injectCount=entries.filter(function(e){return e.always_inject;}).length;
+  var html='<div style="font-size:11px;color:var(--text3);margin-bottom:14px">'+entries.length+' entries &bull; <span style="color:var(--cyan)">'+injectCount+' always-injected into AI</span></div>';
+  entries.forEach(function(e){
+    var tags=(e.tags||[]);
+    var preview=(e.body||'').slice(0,160).replace(/\n/g,' ')+(e.body&&e.body.length>160?'…':'');
+    html+='<div style="background:var(--surface2);border:1px solid var(--border);border-left:3px solid '+(e.always_inject?'var(--cyan)':'var(--border)')+';border-radius:8px;padding:14px 16px;margin-bottom:10px">';
+    html+='<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">';
+    html+='<div style="flex:1;min-width:0">';
+    html+='<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px">'+esc(e.title)+'</div>';
+    if(tags.length)html+='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">'+tags.map(function(t,i){return '<span style="background:rgba(0,0,0,.25);color:'+kbTagColor(i)+';border:1px solid '+kbTagColor(i)+'44;border-radius:4px;padding:1px 8px;font-size:10px;font-weight:700">'+esc(t.trim())+'</span>';}).join('')+'</div>';
+    html+='<div style="font-size:11px;color:var(--text3);line-height:1.5;font-family:var(--mono)">'+esc(preview)+'</div>';
+    html+='</div>';
+    html+='<div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;align-items:flex-end">';
+    html+='<div style="display:flex;gap:6px">';
+    html+='<button class="btn btn-g btn-xs" data-xid="'+esc(e.id)+'" onclick="openKBMo(this.dataset.xid)">Edit</button>';
+    html+='<button class="btn btn-d btn-xs" data-xid="'+esc(e.id)+'" onclick="deleteKBEntry(this.dataset.xid)">Del</button>';
+    html+='</div>';
+    html+='<button onclick="toggleKBInject(\''+esc(e.id)+'\')" style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:12px;border:1px solid '+(e.always_inject?'var(--cyan)':'var(--border)')+';background:'+(e.always_inject?'rgba(0,229,255,.12)':'transparent')+';color:'+(e.always_inject?'var(--cyan)':'var(--text3)')+';cursor:pointer;white-space:nowrap">'+(e.always_inject?'✓ Injecting':'⊘ Off')+'</button>';
+    html+='</div></div></div>';
+  });
+  el.innerHTML=html;
+}
+
+function openKBMo(id){
+  editKBId=id||null;
+  G('kbMoT').textContent=id?'// EDIT KNOWLEDGE ENTRY':'// ADD KNOWLEDGE ENTRY';
+  if(id){
+    var e=S.find('knowledgeBase',id);if(!e)return;
+    G('kb-title').value=e.title||'';
+    G('kb-tags').value=(e.tags||[]).join(', ');
+    G('kb-body').value=e.body||'';
+    G('kb-inject').checked=!!e.always_inject;
+  } else {
+    G('kb-title').value='';G('kb-tags').value='';G('kb-body').value='';G('kb-inject').checked=false;
+  }
+  OM('kbMo');
+}
+
+function saveKBEntry(){
+  var title=(G('kb-title')&&G('kb-title').value.trim())||'';
+  var body=(G('kb-body')&&G('kb-body').value.trim())||'';
+  if(!title){alert('Title is required.');return;}
+  if(!body){alert('Body is required.');return;}
+  var tags=(G('kb-tags')&&G('kb-tags').value||'').split(',').map(function(t){return t.trim();}).filter(Boolean);
+  var entry={
+    id:editKBId||uid(),
+    title:title,
+    body:body,
+    tags:tags,
+    always_inject:!!(G('kb-inject')&&G('kb-inject').checked),
+    created:editKBId?(S.find('knowledgeBase',editKBId)||{}).created||new Date().toISOString():new Date().toISOString(),
+    updated:new Date().toISOString()
+  };
+  S.upsert('knowledgeBase',entry);
+  CM('kbMo');
+  renderKB();
+}
+
+function deleteKBEntry(id){
+  if(!confirm('Delete this knowledge entry?'))return;
+  S.rm('knowledgeBase',id);
+  renderKB();
+}
+
+function toggleKBInject(id){
+  var e=S.find('knowledgeBase',id);if(!e)return;
+  e.always_inject=!e.always_inject;
+  S.upsert('knowledgeBase',e);
+  renderKB();
+}
+
+function getKBContext(){
+  var entries=S.get('knowledgeBase').filter(function(e){return e.always_inject;});
+  if(!entries.length)return '';
+  return '=== KNOWLEDGE BASE ===\n'+entries.map(function(e){
+    return '## '+e.title+(e.tags&&e.tags.length?' ['+e.tags.join(', ')+']':'')+'\n'+e.body;
+  }).join('\n\n')+'\n=== END KNOWLEDGE BASE ===';
 }
 
 // ── Dev History ────────────────────────────────────────────
@@ -8822,6 +8946,9 @@ function getModelForFeature(feature){
 async function callModelForFeature(feature, prompt, imageB64, mediaType){
   var spec=getModelForFeature(feature);
   if(!spec.key)throw new Error('No API key for '+spec.provider+'. Add one in AI & Integrations.');
+  // Prepend knowledge base context to every AI call
+  var kbCtx=getKBContext();
+  if(kbCtx)prompt=kbCtx+'\n\n'+prompt;
   var raw='';
   if(spec.provider==='gemini'){
     var parts=[{text:prompt}];

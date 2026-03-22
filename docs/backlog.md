@@ -1,6 +1,6 @@
 # TWWP Ops App — Build Backlog
 
-**Last updated:** 2026-03-22 (session 7)
+**Last updated:** 2026-03-23 (session 8)
 
 **Labels:** `[EXPLICIT]` `[IMPLIED]` `[FIX]` `[OPEN]` ✅ done
 

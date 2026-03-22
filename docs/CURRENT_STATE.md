@@ -1,6 +1,6 @@
 # TWWP Ops App — Current State
 
-**Last updated:** 2026-03-22 (session 7 — Sprint 1–3)
+**Last updated:** 2026-03-23 (session 8)
 
 ---
 
@@ -41,6 +41,21 @@ Rails API at `https://twwp-ops-api.fly.dev`.
 | Home Assistant | ⚠️ Fields saved, no live test |
 | Multi-device sync | ⚠️ Code wired, unblocked by OAuth fix |
 | AI (Gemini/Anthropic/OpenAI/OpenRouter) | ✅ Working |
+
+---
+
+## Session 8 changes (2026-03-23)
+
+### Knowledge Base — store, CRUD UI, AI injection
+
+- `knowledgeBase` store added to KS (`twwp_kb_v1`)
+- **Knowledge Base tab** added to Developer page (after Platform Spec)
+- Each entry: `id`, `title`, `body`, `tags[]`, `always_inject`, `created`, `updated`
+- Full CRUD: list with tag badges, body preview, add/edit modal, delete
+- **Always Inject toggle** per entry — cyan left-border when on, button toggles on/off
+- `getKBContext()` — collects all `always_inject:true` entries, formats as structured block
+- `sendAIHelperMsg()` — KB context prepended into system prompt; Anthropic gets it in the `system` field, others in the prompt string
+- `callModelForFeature()` — KB context prepended to prompt for all features (autofill, classify, etc.)
 
 ---
 
