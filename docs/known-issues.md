@@ -1,6 +1,6 @@
 # Known Issues, Bugs, and Stubs
 
-Last updated: 2026-03-22 (session 7 — Sprint 1)
+Last updated: 2026-03-23 (session 9)
 
 ---
 
@@ -81,14 +81,14 @@ Already gone in current file. Backlog item was based on stale line numbers.
 ### ✅ A3 — Duplicate `closeRptFormMo` — RESOLVED
 Same as A2.
 
-### A4 — `sendRptChatMsg()` stub
-Report AI chat does nothing. `console.warn` added — visible in DevTools. Full wiring pending.
+### ✅ A4 — `sendRptChatMsg()` — FIXED (session 9)
+Report AI chat now fully wired. Supports all four providers (Gemini, Anthropic, OpenAI, OpenRouter). Includes report context (title, type, waterhouse) and KB injection in system prompt. Maintains multi-turn `rptChatHistory`.
 
-### A5 — `updateFinForm()` stub
-Financial form doesn't adapt to type. `console.warn` added — visible in DevTools. Full wiring pending.
+### ✅ A5 — `updateFinForm()` — FIXED (session 9)
+Financial form now adapts on type change: contact label and placeholder update (Paid To / Donor Name / Reimburse To / Received From), waterhouse row hidden for donation and income types, category pre-selects a sensible default.
 
-### A6 — Contacts CSV import shows alert
-Not implemented.
+### ✅ A6 — Contacts CSV import — FIXED (session 9)
+`impContactsCSV()` now opens a file picker, parses CSV via `parseCsvText()`, auto-maps columns (name, email, phone, type, org, addr, tags, notes), deduplicates by email, and imports with a confirmation dialog.
 
 ### A7 — `dtk_I1` seeded twice
 Duplicate dev task ID.
@@ -102,7 +102,7 @@ Duplicate dev task ID.
 | Receipt Inbox AI Parse tab | Tab exists, no AI call |
 | Deployments → inventory auto-move | Checkbox not built |
 | Shop Destinations management UI | Store exists, no UI |
-| Report chat | Empty function |
+| ✅ Report chat | Wired (session 9) |
 | Tap-Map sync | JSON export works, Rails endpoint not built |
 | HA test connection | Fields saved, no test call |
 | Slack / Zapier webhooks | Fields saved, no event wiring |

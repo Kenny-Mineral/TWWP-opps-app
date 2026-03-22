@@ -1,6 +1,6 @@
 # TWWP Ops App — Current State
 
-**Last updated:** 2026-03-23 (session 8)
+**Last updated:** 2026-03-23 (session 9)
 
 ---
 
@@ -101,11 +101,48 @@ Rails API at `https://twwp-ops-api.fly.dev`.
 
 ---
 
+---
+
+## Session 9 changes (2026-03-23)
+
+### Task 4 — Remove debug console.logs from `doLogin()`
+- Removed three `console.log` statements from the Rails login path (email sent, URL, response body)
+- `console.warn` for Rails-unreachable fallback is kept (intentional)
+
+### Task 6 — Wire `updateFinForm()`
+- Now adapts the financial entry form on type change:
+  - **expense**: Contact label = "Paid To (optional)", waterhouse row shown
+  - **donation**: Contact label = "Donor Name", waterhouse row hidden, category pre-selects "Community Donation"
+  - **reimbursement**: Contact label = "Reimburse To", waterhouse shown, category pre-selects "Guardian Reimbursement"
+  - **income**: Contact label = "Received From", waterhouse hidden, category pre-selects "Event Income"
+
+### Task 7 — Wire `sendRptChatMsg()`
+- Report AI chat modal now fully functional
+- All four providers supported (Gemini, Anthropic, OpenAI, OpenRouter)
+- System prompt includes report context (title, type, waterhouse) + KB injection
+- Multi-turn: `rptChatHistory` maintained across messages
+
+### Task 8 — Fix Contacts CSV import
+- `impContactsCSV()` now opens a native file picker (no modal needed)
+- Parses via `parseCsvText()` — handles comma/tab/semicolon delimiters, quoted fields, BOM
+- Auto-maps columns: name, email, phone, type, org, addr, tags, notes
+- Deduplicates by email — updates existing rather than creating duplicates
+- Confirmation dialog shows first 3 names before import
+
+### Task 10 — Role-based UI enforcement
+- `getUserRole()` helper — reads role from session storage
+- `isAdmin()` helper — true for admin role or local (no-role) login
+- `enforceRoleUI()` called from `initApp()`:
+  - **staff/read-only**: Developer, AI & Integrations, Trustees/Legal nav items hidden
+  - **read-only**: amber bottom banner + `S.upsert` and `S.rm` blocked with alert
+- AI & Integrations sidebar item now has `id="ni-ai-integrations"` for targeting
+
+---
+
 ## Next up
 
-1. Remove debug `console.log` from `doLogin()` once login confirmed working
-2. Flip GitHub Pages source to GitHub Actions (one click in repo settings)
-3. Wire `updateFinForm()` — financial form field show/hide on type change
-4. Wire `sendRptChatMsg()` — report AI chat using `sendAIHelperMsg()` pattern
-5. Fix Contacts CSV import — shows alert, not implemented
-6. Resolve Google OAuth `drive.file` scope (unblocks Drive backup + multi-device full sync)
+1. Flip GitHub Pages source to GitHub Actions (manual step: repo Settings → Pages → Source → GitHub Actions)
+2. Resolve Google OAuth `drive.file` scope (external blocker — see known-issues A1)
+3. `dtk_I1` duplicate seed (minor)
+4. User management page (admin only) — invite, deactivate, change role
+5. `callModelForFeature()` — wire into autofill and import wizard

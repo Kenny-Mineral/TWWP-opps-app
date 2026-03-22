@@ -9,9 +9,9 @@
 ## GROUP A — Bug Fixes
 
 - ✅ `[FIX]` Remove duplicate `buildRptFormModal` + `closeRptFormMo` — already resolved in current file
-- `[FIX]` Wire `sendRptChatMsg()` — console.warn added, full wiring pending
-- `[FIX]` Wire `updateFinForm()` — console.warn added, full wiring pending
-- `[FIX]` Contacts CSV import — shows alert, not implemented
+- ✅ `[FIX]` Wire `sendRptChatMsg()` — DONE (session 9): all-provider AI chat with report context + KB injection
+- ✅ `[FIX]` Wire `updateFinForm()` — DONE (session 9): contact label/placeholder + category + waterhouse row adapt to type
+- ✅ `[FIX]` Contacts CSV import — DONE (session 9): file picker, parseCsvText, email dedup, confirm dialog
 - `[FIX]` Duplicate `dtk_I1` dev task seed
 - `[FIX]` Wire `callModelForFeature()` into autofill, AI helper, import wizard, classify
 - ✅ `[FIX]` CRITICAL — Rails API OAuth: oauth_states DB fix — DONE
@@ -169,9 +169,9 @@
 - ✅ Falls back to local login if Rails unreachable — DONE
 - ✅ JWT used for all subsequent API calls (Bearer token) — already wired
 - ✅ First admin user created on Fly.io — DONE
-- ⬜ Roles: admin, staff, read-only (per org) — roles exist in DB, UI enforcement pending
-- ⬜ Role-based UI — read-only users cannot create/edit/delete records
-- ⬜ Admin-only pages: Developer, AI & Integrations, Trustees/Legal
+- ✅ Roles: admin, staff, read-only (per org) — roles exist in DB, UI enforcement live
+- ✅ Role-based UI — read-only: all S.upsert/S.rm blocked + banner; staff/read-only: admin nav items hidden
+- ✅ Admin-only pages: Developer, AI & Integrations, Trustees/Legal — hidden for non-admin roles
 - ⬜ User management page (admin only) — invite, deactivate, change role
 - ⬜ API keys stored in Rails credentials server-side — not typed into browser
 - ⬜ Document uploads routed through Rails → Google Drive (never raw in browser)

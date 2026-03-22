@@ -1178,7 +1178,7 @@ tbody tr:hover{background:var(--surface2);}
     <div class="sb-sect">Dev</div>
     <div class="sb-item" id="ni-developer" onclick="go('developer',this)"><span class="sb-icon">&#128736;</span><span class="sb-lbl">Developer</span></div>
     <div class="sb-sect">Settings</div>
-    <div class="sb-item" onclick="openApiMo()"><span class="sb-icon">&#128273;</span><span class="sb-lbl">AI &amp; Integrations</span></div>
+    <div class="sb-item" id="ni-ai-integrations" onclick="openApiMo()"><span class="sb-icon">&#128273;</span><span class="sb-lbl">AI &amp; Integrations</span></div>
     <div class="sb-item" onclick="openCP()"><span class="sb-icon">&#128274;</span><span class="sb-lbl">Change Password</span></div>
     <div class="sb-sect">Export</div>
     <div class="sb-item" onclick="expAll()"><span class="sb-icon">&#128190;</span><span class="sb-lbl">Backup JSON</span></div>
@@ -2390,6 +2390,8 @@ tbody tr:hover{background:var(--surface2);}
 const CK='twwp_creds_v1',SK='twwp_sess_v1';
 function getCreds(){try{return JSON.parse(localStorage.getItem(CK))||{u:'admin',p:'twwp2024'};}catch{return{u:'admin',p:'twwp2024'};}}
 function isLoggedIn(){try{return JSON.parse(sessionStorage.getItem(SK))?.ok===true;}catch{return false;}}
+function getUserRole(){try{return JSON.parse(sessionStorage.getItem(SK))?.role||'';}catch{return '';}}
+function isAdmin(){var r=getUserRole();return r===''||r==='admin';} // empty = local login = full access
 async function doLogin(){
   let u=G('lu').value.trim(),p=G('lp').value,c=getCreds();
   // Convenience: typing "admin" maps to the full admin email
@@ -2399,8 +2401,6 @@ async function doLogin(){
 
   if(railsUrl){
     const loginUrl=railsUrl.replace(/\/$/,'')+'/auth/login';
-    console.log('[doLogin] email being sent:', u);
-    console.log('[doLogin] posting to:', loginUrl);
     G('le').textContent='Signing in...';
     try{
       const res=await fetch(loginUrl,{
@@ -2409,7 +2409,6 @@ async function doLogin(){
         body:JSON.stringify({email:u,password:p})
       });
       const data=await res.json();
-      console.log('[doLogin] response status:', res.status, '| body:', JSON.stringify(data));
       if(res.ok){
         // Store JWT so railsAPIRequest can use it immediately
         localStorage.setItem('twwp_rails_session',JSON.stringify({
@@ -3300,7 +3299,28 @@ function buildRptHTML(d){const ti=RPT_TYPES.find(t=>t.id===d.type)||{label:'Repo
   if(d.notes){body+='<h2>Notes</h2><p style="font-size:12px;white-space:pre-wrap">'+esc(d.notes)+'</p>';}
   body+='<div class="footer">Contact: Kendall or the TWWP Team<br>admin@thewholeywaterproject.com | 02041333855<br>The Wholey Water Project PMA -- Private Membership Association</div>';
   return '<!DOCTYPE html><html><head><meta charset="utf-8"><title>'+esc(d.title||'TWWP Report')+'</title><style>'+css+'</style></head><body>'+body+'</body></html>';}
-function sendRptChatMsg(){console.warn('sendRptChatMsg() is not yet wired — see backlog Group A');}
+async function sendRptChatMsg(){
+  var inp=G('rptChatInput');if(!inp||!inp.value.trim())return;
+  var msg=inp.value.trim();inp.value='';
+  var mc=G('rptChatMessages');
+  function addMsg(text,role){if(!mc)return;var div=document.createElement('div');div.className='ai-msg ai-msg-'+(role==='user'?'user':'bot');div.textContent=text;mc.appendChild(div);mc.scrollTop=mc.scrollHeight;}
+  addMsg(msg,'user');
+  var cfg=getAiCfg();var provider=cfg.provider||'gemini';var apiKey=(cfg.keys&&cfg.keys[provider])||'';
+  if(!apiKey){addMsg('[!] No API key configured. Go to AI & Integrations settings.','bot');return;}
+  var kbCtx=getKBContext();
+  var rptCtx=rptDraft&&rptDraft.id?'Current report: '+rptDraft.title+' (type: '+rptDraft.type+', waterhouse: '+(rptDraft.wh_id||'general')+')':'No report open.';
+  var system='You are the TWWP Report Assistant. Help the user draft, refine, or summarise operational reports for The Wholey Water Project — a community reverse osmosis water network in New Zealand. '+rptCtx+(kbCtx?'\n\n'+kbCtx:'');
+  rptChatHistory.push({role:'user',content:msg});
+  try{
+    var text='';
+    if(provider==='anthropic'){var res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:600,system:system,messages:rptChatHistory})});var d=await res.json();text=d.content?.[0]?.text||'No response.';}
+    else if(provider==='gemini'){var res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key='+apiKey,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:system+'\n\nUser: '+msg}]}]})});var d=await res.json();if(d.error)throw new Error('Gemini: '+d.error.message);text=d.candidates?.[0]?.content?.parts?.[0]?.text||'No response.';}
+    else if(provider==='openai'){var res=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+apiKey},body:JSON.stringify({model:'gpt-4o-mini',max_tokens:600,messages:[{role:'system',content:system}].concat(rptChatHistory)})});var d=await res.json();text=d.choices?.[0]?.message?.content||'No response.';}
+    else{var orMdl=cfg.openrouterModel||'openai/gpt-4o-mini';var res=await fetch('https://openrouter.ai/api/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+apiKey},body:JSON.stringify({model:orMdl,max_tokens:600,messages:[{role:'system',content:system}].concat(rptChatHistory)})});var d=await res.json();text=d.choices?.[0]?.message?.content||'No response.';}
+    rptChatHistory.push({role:'assistant',content:text});
+    addMsg(text,'bot');
+  }catch(e){addMsg('[!] Error: '+e.message,'bot');}
+}
 
 // ============================================================
 // CONTACTS / CRM
@@ -3365,7 +3385,60 @@ function editContact(id){
 }
 function saveContact(){const name=G('ct-name').value.trim();if(!name){alert('Name required.');return;}S.upsert('contacts',{id:editContactId||uid(),name,type:G('ct-type').value,email:G('ct-email').value.trim(),phone:G('ct-phone').value.trim(),org:G('ct-org').value.trim(),addr:G('ct-addr').value.trim(),wh_id:G('ct-wh').value,status:G('ct-status').value,tags:G('ct-tags').value.trim(),memid:G('ct-memid').value.trim(),notes:G('ct-notes').value.trim(),created:editContactId?(S.find('contacts',editContactId)?.created||new Date().toISOString()):new Date().toISOString()});CM('contactMo');renderContacts();updStats();}
 function delContact(id){if(!confirm('Delete this contact?'))return;S.rm('contacts',id);renderContacts();updStats();}
-function impContactsCSV(){alert('CSV import for contacts: prepare a file with columns: name, type, email, phone, org, addr, notes. Then import via Backup Restore or contact admin.');}
+function impContactsCSV(){
+  var inp=document.createElement('input');inp.type='file';inp.accept='.csv,text/csv';
+  inp.onchange=function(){
+    var file=this.files[0];if(!file)return;
+    var reader=new FileReader();
+    reader.onload=function(e){
+      try{
+        var parsed=parseCsvText(e.target.result);
+        var h=parsed.headers;
+        var find=function(){var cands=Array.from(arguments);return cands.find(function(c){return h.includes(c)})||h.find(function(hh){return cands.some(function(c){return hh.includes(c)})})||null;};
+        var m={
+          name:find('name','full name','contact name','fullname'),
+          email:find('email','email address','e-mail'),
+          phone:find('phone','mobile','cell','telephone','ph'),
+          type:find('type','contact type','category'),
+          org:find('org','organisation','organization','company','business'),
+          addr:find('addr','address','location'),
+          tags:find('tags','tag','labels'),
+          notes:find('notes','note','comments','comment')
+        };
+        var rows=parsed.rows;
+        if(!rows.length){alert('No data rows found.');return;}
+        if(!m.name){alert('Could not find a "name" column. Ensure your CSV has a column named "name".');return;}
+        var preview=rows.slice(0,3).map(function(r){return r[m.name];}).filter(Boolean).join(', ');
+        if(!confirm('Import '+rows.length+' contact'+(rows.length!==1?'s':'')+' from '+file.name+'?\nFirst entries: '+preview+'\n\nContacts with a matching email address will be updated, not duplicated.'))return;
+        var imported=0,updated=0,skipped=0;
+        rows.forEach(function(row){
+          var name=m.name?row[m.name].trim():'';if(!name){skipped++;return;}
+          var email=m.email?row[m.email].trim().toLowerCase():'';
+          var existing=email?S.get('contacts').find(function(c){return c.email&&c.email.toLowerCase()===email;}):null;
+          var contact={
+            id:existing?existing.id:uid(),
+            name:name,email:email,
+            phone:m.phone?row[m.phone]||'':'',
+            type:(m.type?row[m.type]||'other':'other').toLowerCase(),
+            org:m.org?row[m.org]||'':'',
+            addr:m.addr?row[m.addr]||'':'',
+            tags:m.tags?row[m.tags]||'':'',
+            notes:m.notes?row[m.notes]||'':'',
+            status:'Active',wh_id:'',memid:'',
+            created:existing?existing.created:new Date().toISOString(),
+            updated:new Date().toISOString()
+          };
+          S.upsert('contacts',contact);
+          if(existing)updated++;else imported++;
+        });
+        renderContacts();updStats();
+        alert('Done: '+imported+' added, '+updated+' updated'+(skipped?' ('+skipped+' skipped — no name)':'')+'.');
+      }catch(err){alert('CSV import error: '+err.message);}
+    };
+    reader.readAsText(file,'UTF-8');
+  };
+  inp.click();
+}
 
 // ============================================================
 // PROJECTS
@@ -3516,7 +3589,33 @@ function renderFinancials(){
   el.innerHTML=html;
 }
 function openFinMo(){G('finMoT').textContent='// LOG FINANCIAL ENTRY';const whs=S.get('locations').filter(l=>l.type==='Waterhouse');G('fi-wh').innerHTML='<option value="">-- General --</option>'+whs.map(w=>'<option value="'+w.id+'">'+esc(w.name)+'</option>').join('');['fi-amount','fi-desc','fi-ref','fi-contact','fi-notes'].forEach(id=>{const e=G(id);if(e)e.value='';});G('fi-type').value='expense';G('fi-date').value=todayStr();G('fi-method').value='Cash';OM('finMo');}
-function updateFinForm(){console.warn('updateFinForm() is not yet wired — see backlog Group A');}
+function updateFinForm(){
+  var type=G('fi-type').value;
+  var contactFg=G('fi-contact')&&G('fi-contact').closest('.fg');
+  var contactLabel=contactFg&&contactFg.querySelector('label');
+  var catSel=G('fi-cat');
+  var whRow=G('fi-wh')&&G('fi-wh').closest('.fr');
+  if(type==='expense'){
+    if(contactLabel)contactLabel.textContent='Paid To (optional)';
+    if(G('fi-contact'))G('fi-contact').placeholder='Vendor or payee name';
+    if(whRow)whRow.style.display='';
+  }else if(type==='donation'){
+    if(contactLabel)contactLabel.textContent='Donor Name';
+    if(G('fi-contact'))G('fi-contact').placeholder='Name of donor or organisation';
+    if(whRow)whRow.style.display='none';
+    if(catSel&&['Water Usage','Power','Maintenance','Parts / Hardware','Admin'].includes(catSel.value))catSel.value='Community Donation';
+  }else if(type==='reimbursement'){
+    if(contactLabel)contactLabel.textContent='Reimburse To';
+    if(G('fi-contact'))G('fi-contact').placeholder='Person to be reimbursed';
+    if(whRow)whRow.style.display='';
+    if(catSel)catSel.value='Guardian Reimbursement';
+  }else if(type==='income'){
+    if(contactLabel)contactLabel.textContent='Received From';
+    if(G('fi-contact'))G('fi-contact').placeholder='Source of income';
+    if(whRow)whRow.style.display='none';
+    if(catSel&&['Water Usage','Power','Maintenance','Parts / Hardware','Guardian Reimbursement'].includes(catSel.value))catSel.value='Event Income';
+  }
+}
 function saveFin(){const desc=G('fi-desc').value.trim();const amount=G('fi-amount').value;if(!desc){alert('Description required.');return;}if(!amount){alert('Amount required.');return;}S.upsert('financials',{id:uid(),type:G('fi-type').value,amount:parseFloat(amount)||0,desc,cat:G('fi-cat').value,date:G('fi-date').value||todayStr(),wh_id:G('fi-wh').value,method:G('fi-method').value,ref:G('fi-ref').value.trim(),contact:G('fi-contact').value.trim(),notes:G('fi-notes').value.trim(),created:new Date().toISOString()});CM('finMo');renderFinancials();}
 function delFin(id){if(!confirm('Delete this entry?'))return;S.rm('financials',id);renderFinancials();}
 function expFinCSV(){const entries=S.get('financials');const rows=[['Date','Type','Category','Description','Amount NZD','Waterhouse','Contact','Method','Ref','Notes']];entries.forEach(e=>{const wh=e.wh_id?S.find('locations',e.wh_id):null;rows.push([e.date||'',e.type||'',e.cat||'',e.desc||'',e.amount||0,wh?wh.name:'',e.contact||'',e.method||'',e.ref||'',e.notes||'']);});dlCSV(rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n'),'twwp-financials-'+todayStr()+'.csv');}
@@ -9636,6 +9735,26 @@ async function saveToRailsAPI(){
   }
 }
 
+function enforceRoleUI(){
+  var role=getUserRole();
+  if(!role)return; // local login = full access, no restrictions
+  if(role!=='admin'){
+    // Hide admin-only nav items for staff and read-only users
+    ['ni-developer','ni-ai-integrations','ni-trustees'].forEach(function(id){var el=G(id);if(el)el.style.display='none';});
+  }
+  if(role==='read-only'){
+    // Banner so it's clear why write actions are blocked
+    var banner=document.createElement('div');
+    banner.id='readOnlyBanner';
+    banner.style.cssText='position:fixed;bottom:0;left:0;right:0;background:var(--amber);color:#000;text-align:center;padding:6px 12px;font-size:12px;font-weight:700;z-index:9999;letter-spacing:.02em';
+    banner.textContent='Read-only mode — contact your administrator to add or edit records.';
+    document.body.appendChild(banner);
+    // Block all store writes at the S layer
+    S.upsert=function(){alert('Read-only access: contact your administrator to make changes.');};
+    S.rm=function(){alert('Read-only access: contact your administrator to make changes.');};
+  }
+}
+
 function initApp(){
   seedDemoData();
   seedDevTasks();
@@ -9653,6 +9772,7 @@ function initApp(){
   // Apply dev notes default ON
   const cfg=getAiCfg();
   if(cfg.devNotes===undefined){cfg.devNotes=true;saveAiCfgToStore(cfg);}
+  enforceRoleUI();
   // Add clear demo button to sidebar
   setTimeout(()=>{
     const exportSect=document.querySelector('.sb-nav');
