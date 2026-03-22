@@ -681,6 +681,7 @@ tbody tr:hover{background:var(--surface2);}
         <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:block">Cloudflare Proxy Worker</label>
         <div class="helper-bubble" style="margin-bottom:8px"><div class="hb-icon">&#9729;</div><div>Used by AI Fill to fetch real product pages before sending to AI. Without this, AI Fill can only guess from the URL text. Set up a Cloudflare Worker at <a href="https://workers.cloudflare.com" target="_blank" style="color:var(--cyan)">workers.cloudflare.com</a>.</div></div>
         <div class="fg" style="margin:0"><label>Worker URL</label><input type="url" id="int-proxy-url" placeholder="https://twwp-proxy.yourname.workers.dev" autocomplete="off"><div style="font-size:10px;color:var(--text3);margin-top:3px">Your Cloudflare Worker URL — no trailing slash</div></div>
+        <div style="margin-top:10px"><button class="btn btn-g btn-sm" id="testProxyBtn" onclick="testProxyUrl()">Test Proxy</button> <span id="testProxyResult" style="font-size:11px;color:var(--text3);margin-left:8px"></span></div>
       </div>
       <!-- Test AI Key -->
       <div>
@@ -3209,7 +3210,7 @@ function buildMonitorFields(){return '<div style="border-top:1px solid var(--bor
 function rptAutoFill(){const whId=G('rf-wh')?G('rf-wh').value:'';if(!whId)return;const wh=S.find('locations',whId);if(wh?.water_rate&&G('rf-rate'))G('rf-rate').value=wh.water_rate;const periods=S.get('monitorData').filter(p=>p.wh_id===whId);if(!periods.length)return;const p=periods.sort((a,b)=>b.end_date.localeCompare(a.end_date))[0];if(G('rf-quenched')&&p.quenched)G('rf-quenched').value=Math.round(parseFloat(p.quenched));if(G('rf-filtered')&&p.filtered)G('rf-filtered').value=Math.round(parseFloat(p.filtered));if(G('rf-vip')&&p.vips)G('rf-vip').value=p.vips;if(G('rf-members')&&p.total_members)G('rf-members').value=p.total_members;if(G('rf-m3')&&p.wm3)G('rf-m3').value=parseFloat(p.wm3).toFixed(2);if(G('rf-eff')&&p.efficiency)G('rf-eff').value=parseFloat(p.efficiency).toFixed(1);if(G('rf-power')&&p.power)G('rf-power').value=parseFloat(p.power).toFixed(2);}
 function collectRptFormData(){const whId=G('rf-wh')?G('rf-wh').value:'';const wh=whId?S.find('locations',whId):null;const start=G('rf-start')?G('rf-start').value:'';const end=G('rf-end')?G('rf-end').value:'';const m3=parseFloat(G('rf-m3')?G('rf-m3').value:0)||0;const rate=parseFloat(G('rf-rate')?G('rf-rate').value:3.54)||3.54;const power=parseFloat(G('rf-power')?G('rf-power').value:0)||0;const guardian=parseFloat(G('rf-guardian')?G('rf-guardian').value:15)||0;const goodwill=parseFloat(G('rf-goodwill')?G('rf-goodwill').value:20)||0;const wCost=m3*rate;const wReimb=wCost*1.15;const total=wReimb+power+guardian+goodwill;return Object.assign({},rptDraft,{title:G('rf-title')?G('rf-title').value:rptDraft.title,wh_id:whId,wh_name:wh?wh.name:'All',guardian_name:wh?wh.guardian_name||'Guardian':'Guardian',address:wh?wh.address||'':'',recipient:G('rf-recipient')?G('rf-recipient').value:'',recipient_email:G('rf-email')?G('rf-email').value:'',period_start:start,period_end:end,days:start&&end?Math.round((new Date(end)-new Date(start))/86400000):89,quenched:parseFloat(G('rf-quenched')?G('rf-quenched').value:0)||0,filtered:parseFloat(G('rf-filtered')?G('rf-filtered').value:0)||0,vip:parseInt(G('rf-vip')?G('rf-vip').value:0)||0,members:parseInt(G('rf-members')?G('rf-members').value:0)||0,efficiency:parseFloat(G('rf-eff')?G('rf-eff').value:0)||0,m3,rate,water_cost:wCost,water_reimb:wReimb,power,guardian,goodwill,total_reimb:total,work:G('rf-work')?G('rf-work').value:'',pending:G('rf-pending')?G('rf-pending').value:'',notes:G('rf-notes')?G('rf-notes').value:'',chat:rptChatHistory});}
 function saveRptDraft(){const d=collectRptFormData();d.status='draft';const rpts=S.get('reports');const idx=rpts.findIndex(r=>r.id===d.id);if(idx>-1)rpts[idx]=d;else rpts.push(d);S.set('reports',rpts);rptDraft=d;alert('Draft saved.');renderReportsList();}
-function previewRptFromForm(){const d=collectRptFormData();d.status='preview';if(isOAuthConnected())setTimeout(function(){driveAutoBackup();},2000);const rpts=S.get('reports');const idx=rpts.findIndex(r=>r.id===d.id);if(idx>-1)rpts[idx]=d;else rpts.push(d);S.set('reports',rpts);rptDraft=d;openRptPreview(d.id);CM('rptFormMo');renderReportsList();}
+function previewRptFromForm(){const d=collectRptFormData();d.status='preview';if(isOAuthConnected())setTimeout(function(){driveAutoBackup();},2000);if(isRailsConnected())saveToRailsAPI();const rpts=S.get('reports');const idx=rpts.findIndex(r=>r.id===d.id);if(idx>-1)rpts[idx]=d;else rpts.push(d);S.set('reports',rpts);rptDraft=d;openRptPreview(d.id);CM('rptFormMo');renderReportsList();}
 function openRptPreview(rptId){const rpt=rptId?S.find('reports',rptId):rptDraft;if(!rpt)return;const el=G('rptPreviewBody');if(!el)return;el.innerHTML=buildRptHTML(rpt);OM('rptPreviewMo');}
 function openRptSend(rptId){const rpt=rptId?S.find('reports',rptId):rptDraft;if(!rpt)return;rptDraft=rpt;if(G('rs-email'))G('rs-email').value=rpt.recipient_email||'';if(G('rs-name'))G('rs-name').value=rpt.recipient||'';if(G('rs-subject'))G('rs-subject').value=rpt.title||'TWWP Report';if(G('rs-body'))G('rs-body').value='Hi '+(rpt.recipient||'there')+',\n\nPlease find the latest TWWP report for '+(rpt.wh_name||'your Waterhouse')+'.'+'\n\nPeriod: '+(rpt.period_start||'')+' to '+(rpt.period_end||'')+'\nTotal Reimbursement: $'+(rpt.total_reimb||0).toFixed(2)+' NZD\n\nThank you for your contribution.\n\nKindly,\nKendall or the TWWP Team\nadmin@thewholeywaterproject.com | 02041333855';OM('rptSendMo');}
 function sendRptEmail(){const email=G('rs-email')?G('rs-email').value:'';const subject=G('rs-subject')?G('rs-subject').value:'';const body=G('rs-body')?G('rs-body').value:'';if(!email){alert('Enter a recipient email.');return;}window.open('mailto:'+encodeURIComponent(email)+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body),'_blank');const rpts=S.get('reports');const idx=rpts.findIndex(r=>r.id===rptDraft.id);if(idx>-1){rpts[idx].status='sent';rpts[idx].sent_at=new Date().toISOString();S.set('reports',rpts);}CM('rptSendMo');renderReportsList();}
@@ -3224,7 +3225,7 @@ function buildRptHTML(d){const ti=RPT_TYPES.find(t=>t.id===d.type)||{label:'Repo
   if(d.notes){body+='<h2>Notes</h2><p style="font-size:12px;white-space:pre-wrap">'+esc(d.notes)+'</p>';}
   body+='<div class="footer">Contact: Kendall or the TWWP Team<br>admin@thewholeywaterproject.com | 02041333855<br>The Wholey Water Project PMA -- Private Membership Association</div>';
   return '<!DOCTYPE html><html><head><meta charset="utf-8"><title>'+esc(d.title||'TWWP Report')+'</title><style>'+css+'</style></head><body>'+body+'</body></html>';}
-function sendRptChatMsg(){}
+function sendRptChatMsg(){console.warn('sendRptChatMsg() is not yet wired — see backlog Group A');}
 
 // ============================================================
 // CONTACTS / CRM
@@ -3440,7 +3441,7 @@ function renderFinancials(){
   el.innerHTML=html;
 }
 function openFinMo(){G('finMoT').textContent='// LOG FINANCIAL ENTRY';const whs=S.get('locations').filter(l=>l.type==='Waterhouse');G('fi-wh').innerHTML='<option value="">-- General --</option>'+whs.map(w=>'<option value="'+w.id+'">'+esc(w.name)+'</option>').join('');['fi-amount','fi-desc','fi-ref','fi-contact','fi-notes'].forEach(id=>{const e=G(id);if(e)e.value='';});G('fi-type').value='expense';G('fi-date').value=todayStr();G('fi-method').value='Cash';OM('finMo');}
-function updateFinForm(){}
+function updateFinForm(){console.warn('updateFinForm() is not yet wired — see backlog Group A');}
 function saveFin(){const desc=G('fi-desc').value.trim();const amount=G('fi-amount').value;if(!desc){alert('Description required.');return;}if(!amount){alert('Amount required.');return;}S.upsert('financials',{id:uid(),type:G('fi-type').value,amount:parseFloat(amount)||0,desc,cat:G('fi-cat').value,date:G('fi-date').value||todayStr(),wh_id:G('fi-wh').value,method:G('fi-method').value,ref:G('fi-ref').value.trim(),contact:G('fi-contact').value.trim(),notes:G('fi-notes').value.trim(),created:new Date().toISOString()});CM('finMo');renderFinancials();}
 function delFin(id){if(!confirm('Delete this entry?'))return;S.rm('financials',id);renderFinancials();}
 function expFinCSV(){const entries=S.get('financials');const rows=[['Date','Type','Category','Description','Amount NZD','Waterhouse','Contact','Method','Ref','Notes']];entries.forEach(e=>{const wh=e.wh_id?S.find('locations',e.wh_id):null;rows.push([e.date||'',e.type||'',e.cat||'',e.desc||'',e.amount||0,wh?wh.name:'',e.contact||'',e.method||'',e.ref||'',e.notes||'']);});dlCSV(rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n'),'twwp-financials-'+todayStr()+'.csv');}
@@ -8648,6 +8649,25 @@ async function testAiKey(){
   if(btn)btn.disabled=false;
 }
 
+async function testProxyUrl(){
+  var btn=G('testProxyBtn'),result=G('testProxyResult');
+  if(btn)btn.disabled=true;
+  if(result){result.style.color='var(--text3)';result.textContent='Testing...';}
+  var url=(G('int-proxy-url')&&G('int-proxy-url').value.trim())||getIntegration('proxy-url');
+  if(!url){
+    if(result){result.style.color='var(--amber)';result.textContent='No proxy URL entered. Paste your Worker URL and try again.';}
+    if(btn)btn.disabled=false;return;
+  }
+  try{
+    var res=await fetch(url.replace(/\/$/,'')+'/?url=https://example.com');
+    var d=await res.json();
+    if(result){result.style.color='var(--green)';result.textContent='\u2713 Worker responding'+(d.title?' — got: "'+String(d.title).slice(0,40)+'"':'');}
+  }catch(e){
+    if(result){result.style.color='var(--red)';result.textContent='\u2717 Failed: '+e.message;}
+  }
+  if(btn)btn.disabled=false;
+}
+
 
 // ============================================================
 // MODEL SELECTOR
@@ -9454,6 +9474,8 @@ function initApp(){
   calSyncAll();
   seedCatFilters();renderCat();
   updStats();updMaintBadge();
+  // Sync to Rails API every 30 minutes
+  setInterval(function(){if(isRailsConnected()){saveToRailsAPI();checkRailsAPISync();}},1800000);
   // Apply dev notes default ON
   const cfg=getAiCfg();
   if(cfg.devNotes===undefined){cfg.devNotes=true;saveAiCfgToStore(cfg);}
