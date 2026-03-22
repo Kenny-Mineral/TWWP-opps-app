@@ -93,9 +93,19 @@ Rails API at `https://twwp-ops-api.fly.dev`.
 
 ---
 
-## Next up (Sprint 1 remaining)
+## Health check fixes (2026-03-23) — all applied
 
-- Fix Contacts CSV import (shows alert — GROUP A)
-- Wire `sendRptChatMsg()` using `sendAIHelperMsg()` pattern
-- Wire `updateFinForm()` field show/hide
-- GitHub Actions auto-deploy (GROUP S)
+1. `doLogin()` — `checkRailsAPISync()` now called via `setTimeout(..., 1000)` after JWT login success
+2. `doLogout()` — made `async`, now `await saveToRailsAPI()` before page reload
+3. `aiCallJSON()` — KB injection added at top of function; fixes doc upload AI, Classify Folder AI, receipt AI
+
+---
+
+## Next up
+
+1. Remove debug `console.log` from `doLogin()` once login confirmed working
+2. Flip GitHub Pages source to GitHub Actions (one click in repo settings)
+3. Wire `updateFinForm()` — financial form field show/hide on type change
+4. Wire `sendRptChatMsg()` — report AI chat using `sendAIHelperMsg()` pattern
+5. Fix Contacts CSV import — shows alert, not implemented
+6. Resolve Google OAuth `drive.file` scope (unblocks Drive backup + multi-device full sync)

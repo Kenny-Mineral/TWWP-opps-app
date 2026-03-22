@@ -48,6 +48,14 @@ Last updated: 2026-03-22 (session 7 — Sprint 1)
 
 ---
 
+## Fixed 2026-03-23 (health check bugs)
+
+- ✅ `doLogin()` — `checkRailsAPISync()` now called 1 s after JWT login success
+- ✅ `doLogout()` — `saveToRailsAPI()` now awaited before `location.reload()`
+- ✅ `aiCallJSON()` — KB injection added; doc upload, Classify Folder, and receipt AI now read the knowledge base
+
+---
+
 ## Current bugs
 
 ### A1 — CRITICAL: Google OAuth drive.file scope fails

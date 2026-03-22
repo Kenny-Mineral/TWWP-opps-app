@@ -2424,6 +2424,7 @@ async function doLogin(){
         G('loginScreen').style.display='none';G('appRoot').style.display='flex';
         G('uNm').textContent=displayName;G('uAv').textContent=displayName[0].toUpperCase();
         G('le').textContent='';initApp();go('dashboard',G('ni-dashboard'));
+        setTimeout(function(){checkRailsAPISync();},1000);
         return;
       } else {
         // Rails returned an error (wrong credentials) — don't fall back to local
@@ -2449,11 +2450,11 @@ async function doLogin(){
 const AI_CFG_KEY='twwp_ai_cfg_v1';
 function getAiCfg(){try{return JSON.parse(localStorage.getItem(AI_CFG_KEY)||'{}');}catch{return{};}}
 function saveAiCfgToStore(cfg){localStorage.setItem(AI_CFG_KEY,JSON.stringify(cfg));}
-function doLogout(){
+async function doLogout(){
   if(!confirm('Log out?'))return;
   // Auto-save backup to Drive if connected
-  // Save to Rails API if connected
-  if(isRailsConnected()){saveToRailsAPI();}
+  // Save to Rails API if connected (await so the fetch completes before reload)
+  if(isRailsConnected()){await saveToRailsAPI();}
   var token=getOAuthToken();
   if(token&&token.access_token){
     var msg=document.createElement('div');
@@ -6857,6 +6858,7 @@ async function importWizStep1Receipt(){
 async function aiCallJSON(prompt,imageB64,mediaType){
   var cfg=getAiCfg();var provider=cfg.provider||'gemini';var key=(cfg.keys&&cfg.keys[provider])||'';
   if(!key)throw new Error('No API key configured. Set one in AI & Integrations.');
+  var kbCtx=getKBContext();if(kbCtx)prompt=kbCtx+'\n\n'+prompt;
   var raw='';
   if(provider==='anthropic'){
     var msgs=[{role:'user',content:imageB64?[{type:'image',source:{type:'base64',media_type:mediaType,data:imageB64}},{type:'text',text:prompt}]:[{type:'text',text:prompt}]}];
