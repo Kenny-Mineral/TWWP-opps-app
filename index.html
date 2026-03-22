@@ -310,8 +310,16 @@ tbody tr:hover{background:var(--surface2);}
 .helper-bubble strong{color:var(--cyan);}
 /* ===== PAGE BLURB ===== */
 .pg-blurb{font-size:10px;color:var(--text3);padding:4px 28px 6px;border-bottom:1px solid var(--border);background:rgba(0,0,0,.2);font-family:var(--mono);letter-spacing:.02em;}
+/* ===== RESOURCE BAR ===== */
+#resourceBar{position:fixed;bottom:0;left:0;right:0;z-index:990;background:rgba(16,16,24,0.92);border-top:1px solid var(--border);backdrop-filter:blur(8px);font-size:11px;color:var(--text3);padding:0 14px;display:flex;align-items:center;gap:14px;height:28px;transition:height .2s,opacity .2s;}
+#resourceBar.collapsed{height:4px;opacity:0.4;overflow:hidden;}
+#resourceBar.collapsed:hover{height:28px;opacity:1;}
+.rb-item{display:flex;align-items:center;gap:4px;white-space:nowrap;}
+.rb-dot{width:7px;height:7px;border-radius:50%;display:inline-block;}
+.rb-bar-wrap{width:60px;height:5px;background:var(--surface2);border-radius:3px;overflow:hidden;}
+.rb-bar-fill{height:100%;border-radius:3px;}
 /* ===== CAPTURE WIDGET ===== */
-.capture-fab{position:fixed;bottom:24px;right:24px;z-index:1000;display:flex;flex-direction:column;align-items:flex-end;gap:8px;}
+.capture-fab{position:fixed;bottom:32px;right:24px;z-index:1000;display:flex;flex-direction:column;align-items:flex-end;gap:8px;}
 .capture-fab-btn{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--green));border:none;color:#000;font-size:24px;font-weight:700;cursor:pointer;box-shadow:0 6px 24px var(--accent-glow);transition:all .2s;display:flex;align-items:center;justify-content:center;}
 .capture-fab-btn:hover{transform:scale(1.08);box-shadow:0 8px 32px var(--accent-glow);}
 .capture-menu{display:none;flex-direction:column;gap:6px;background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:10px;box-shadow:0 20px 60px rgba(0,0,0,.6);min-width:180px;}
@@ -775,6 +783,15 @@ tbody tr:hover{background:var(--surface2);}
     </div>
     <div class="md-f"><button class="btn btn-g" onclick="CM('calEventMo')">Cancel</button><button class="btn btn-r" id="ce-del-btn" onclick="deleteCalEvent(calEditId)" style="display:none">Delete</button><button class="btn btn-p" onclick="saveCalEvent()">Save Event</button></div>
   </div>
+</div>
+
+<!-- LEDGER ACTIVITY POPOVER -->
+<div id="ledgerPopover" style="display:none;position:fixed;z-index:2000;background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:12px;min-width:220px;max-width:300px;box-shadow:0 12px 40px rgba(0,0,0,.6)">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+    <div id="ledPopTitle" style="font-size:11px;font-weight:700;color:var(--cyan);text-transform:uppercase;letter-spacing:.06em"></div>
+    <button onclick="G('ledgerPopover').style.display='none'" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:0">×</button>
+  </div>
+  <div id="ledPopContent" style="font-size:11px;color:var(--text2);max-height:200px;overflow-y:auto"></div>
 </div>
 
 <!-- CALENDAR PROVIDER MODAL -->
@@ -1573,6 +1590,7 @@ tbody tr:hover{background:var(--surface2);}
     <div class="ph-right">
       <select id="calWhFilter" onchange="renderCalendar();renderCalLedger()" style="min-width:150px"><option value="">All Waterhouses</option></select>
       <button class="btn btn-g btn-sm" onclick="calSyncAll()">&#8635; Sync</button>
+      <button class="btn btn-g btn-sm" id="calActivityBtn" onclick="toggleCalActivityLog()">&#128221; Activity</button>
       <button class="btn btn-p btn-sm" onclick="openCalEventMo()">+ Event</button>
       <button class="btn btn-g btn-sm" onclick="openCalProviderPanel()">&#128279; Connect</button>
     </div>
@@ -2302,8 +2320,14 @@ tbody tr:hover{background:var(--surface2);}
       <button class="btn btn-g btn-sm" onclick="clearLedgerFilters()">Clear</button>
     </div>
 
-    <!-- Storage indicator -->
-    <div id="ledger-storage-bar" style="margin-bottom:14px"></div>
+    <!-- Storage indicator + purge settings -->
+    <div id="ledger-storage-bar" style="margin-bottom:8px"></div>
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
+      <label style="font-size:11px;color:var(--text3)">Max age: <input type="number" id="ledger-max-days" value="90" min="7" max="365" style="width:60px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:3px 6px;font-size:11px" onchange="saveLedgerSettings()"> days</label>
+      <label style="font-size:11px;color:var(--text3)">Max entries: <input type="number" id="ledger-max-entries" value="5000" min="100" max="20000" step="500" style="width:70px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:3px 6px;font-size:11px" onchange="saveLedgerSettings()"> entries</label>
+      <button class="btn btn-g btn-sm" onclick="purgeLedger()">Purge Now</button>
+      <button class="btn btn-g btn-sm" id="ledger-sync-btn" onclick="syncLedgerToRails()">&#8635; Sync to Rails</button>
+    </div>
 
     <!-- Table -->
     <div id="ledger-table-wrap" style="overflow-x:auto"></div>
@@ -2670,6 +2694,18 @@ tbody tr:hover{background:var(--surface2);}
 </div><!-- /app -->
 
 <!-- CAPTURE FAB -->
+<!-- RESOURCE BAR -->
+<div id="resourceBar" title="Click to collapse/expand">
+  <span style="font-size:9px;color:var(--text3);cursor:pointer;user-select:none" onclick="toggleResourceBar()">▼</span>
+  <div class="rb-item" id="rb-storage" title="localStorage usage"></div>
+  <div class="rb-item" id="rb-sync" title="Last Rails sync"></div>
+  <div class="rb-item" id="rb-ai" title="AI calls this session"></div>
+  <div class="rb-item" id="rb-ledger" title="Ledger events today"></div>
+  <div class="rb-item" id="rb-drive" title="Google Drive status"></div>
+  <div style="flex:1"></div>
+  <span style="font-size:9px;color:var(--text3);cursor:pointer" onclick="toggleResourceBar()">TWWP Ops</span>
+</div>
+
 <div class="capture-fab" id="captureFab">
   <div class="capture-menu" id="captureMenu">
     <div class="capture-menu-item" onclick="openCaptureMo('note')"><span class="ci-icon">&#128221;</span> Note / Idea</div>
@@ -2983,7 +3019,7 @@ function go(page,el){
   if(page==='inventory'){renderInventory();}
   if(page==='purchases'){renderPOs();}
   if(page==='aihelper')renderAIFeedback();
-  if(page==='eventledger')renderEventLedgerPage();
+  if(page==='eventledger'){renderEventLedgerPage();loadLedgerSettings();}
   logEvent('nav','navigate','Navigated to '+page, {page:page});
   onPageChange(page);
 }
@@ -3006,6 +3042,7 @@ function updStats(){
   const pb=G('projBadge');if(pb){pb.textContent=activeProj;pb.classList.toggle('hid',activeProj===0);}
   updMaintBadge();
   updAQBadge();
+  updateResourceBar();
 }
 
 // ============================================================
@@ -5442,18 +5479,57 @@ function getUnifiedCalItems(filterDate){
   var wf = calState.whFilter;
   var items = [];
 
-  // Calendar events
+  // Calendar events (including recurring expansion)
+  var calViewStart, calViewEnd;
+  if(calState.view==='month'){
+    calViewStart = new Date(calState.year, calState.month, 1);
+    calViewEnd = new Date(calState.year, calState.month+1, 0);
+  } else if(calState.view==='week'){
+    var ref=new Date(calState.weekDate+'T00:00:00'),dow=ref.getDay();
+    var mon=new Date(ref);mon.setDate(mon.getDate()+(dow===0?-6:1-dow));
+    calViewStart=mon;
+    calViewEnd=new Date(mon);calViewEnd.setDate(calViewEnd.getDate()+6);
+  } else {
+    calViewStart=new Date(calState.dayDate+'T00:00:00');
+    calViewEnd=calViewStart;
+  }
+
   if(sf==='all'||sf==='events'||sf==='maintenance'){
     var evts = S.get('calEvents');
     if(wf) evts = evts.filter(function(e){return e.wh_id===wf||!e.wh_id;});
     if(sf==='maintenance') evts = evts.filter(function(e){return e.type==='Maintenance Visit';});
     evts.forEach(function(e){
       if(!e.date) return;
-      items.push({
-        id: e.id, date: e.date.slice(0,10), title: e.title||'Event',
-        type: e.type||'Custom', source: 'event', color: (CAL_TYPES[e.type]||CAL_TYPES.Custom).color,
-        raw: e
-      });
+      var col = (CAL_TYPES[e.type]||CAL_TYPES.Custom).color;
+      var recur = e.recurrence||'';
+      if(!recur){
+        items.push({
+          id: e.id, date: e.date.slice(0,10), title: e.title||'Event',
+          type: e.type||'Custom', source: 'event', color: col, raw: e, recurring: false
+        });
+      } else {
+        // Expand recurring events within view range
+        var baseDate = new Date(e.date+'T00:00:00');
+        var cur = new Date(baseDate);
+        var limit = 0;
+        while(cur <= calViewEnd && limit < 400){
+          limit++;
+          if(cur >= calViewStart){
+            var ds = cur.toISOString().slice(0,10);
+            items.push({
+              id: e.id+'_'+ds, date: ds, title: e.title||'Event',
+              type: e.type||'Custom', source: 'event', color: col,
+              raw: e, recurring: true, baseId: e.id
+            });
+          }
+          if(recur==='daily') cur.setDate(cur.getDate()+1);
+          else if(recur==='weekly') cur.setDate(cur.getDate()+7);
+          else if(recur==='monthly') cur.setMonth(cur.getMonth()+1);
+          else if(recur==='yearly') cur.setFullYear(cur.getFullYear()+1);
+          else break;
+          if(cur < baseDate) break; // guard overflow
+        }
+      }
     });
   }
 
@@ -5742,6 +5818,48 @@ function deleteCalEvent(id){
   showDbToast('Event deleted');
 }
 
+// ── Calendar / Ledger integration ────────────────────────────────────────
+function toggleCalActivityLog(){
+  var cur = localStorage.getItem('twwp_cal_activity_log')==='1';
+  localStorage.setItem('twwp_cal_activity_log', cur?'0':'1');
+  var btn = G('calActivityBtn');
+  if(btn){btn.classList.toggle('on',!cur); btn.textContent = (!cur?'● ':'') + '📓 Activity';}
+  renderCalendar();
+}
+
+function showLedgerPopover(el, dateStr){
+  var popover = G('ledgerPopover'); if(!popover) return;
+  var entries = S.get('eventLedger').filter(function(e){
+    return e.date===dateStr && e.category!=='nav';
+  }).slice(0,20);
+  G('ledPopTitle').textContent = dateStr;
+  if(!entries.length){
+    G('ledPopContent').innerHTML = '<div style="color:var(--text3)">No activity recorded.</div>';
+  } else {
+    G('ledPopContent').innerHTML = entries.map(function(e){
+      var col = CAT_COLORS[e.category]||'#b2bec3';
+      var ts = e.ts ? new Date(e.ts).toLocaleTimeString('en-NZ',{hour:'2-digit',minute:'2-digit'}) : '';
+      return '<div style="padding:4px 0;border-bottom:1px solid var(--border)">'+
+        '<span style="font-size:9px;padding:1px 6px;border-radius:8px;background:'+col+'22;color:'+col+';font-weight:700;margin-right:4px">'+esc(e.category)+'</span>'+
+        '<span style="color:var(--text)">'+esc(e.detail||e.action||'')+'</span>'+
+        (ts?'<span style="color:var(--text3);float:right;font-size:10px">'+ts+'</span>':'')+'</div>';
+    }).join('');
+  }
+  // Position near the dot
+  var rect = el.getBoundingClientRect();
+  popover.style.display = '';
+  popover.style.top = Math.min(rect.bottom+6, window.innerHeight-220)+'px';
+  popover.style.left = Math.max(8, Math.min(rect.left-100, window.innerWidth-310))+'px';
+}
+
+// Close popover on outside click
+document.addEventListener('click', function(e){
+  var pop = G('ledgerPopover');
+  if(pop && pop.style.display!=='none' && !pop.contains(e.target) && !e.target.dataset.leddate){
+    pop.style.display='none';
+  }
+});
+
 // ── Calendar provider connection ─────────────────────────────────────────
 function openCalProviderPanel(){
   updateCalProviderUI();
@@ -5884,6 +6002,18 @@ function renderCalMonth(){
     byDate[d].push(item);
   });
 
+  // Build ledger-by-date for activity dots (filter out nav events)
+  var ledByDate={};
+  var showActivityLog = localStorage.getItem('twwp_cal_activity_log')==='1';
+  if(showActivityLog){
+    S.get('eventLedger').forEach(function(e){
+      if(e.category==='nav')return; // skip nav noise
+      if(!e.date)return;
+      if(!ledByDate[e.date])ledByDate[e.date]=0;
+      ledByDate[e.date]++;
+    });
+  }
+
   var cells='';
   for(var i=0;i<firstDay;i++){
     var dd=daysInPrev-firstDay+1+i;
@@ -5897,10 +6027,16 @@ function renderCalMonth(){
     var chips='';
     dayItems.slice(0,3).forEach(function(item){
       var icon=item.source==='task'?'&#9989; ':item.source==='devtask'?'&#128736; ':'';
-      chips+='<div class="cal-chip" style="background:'+item.color+'22;color:'+item.color+';border:1px solid '+item.color+'44" data-id="'+esc(item.id)+'" data-src="'+item.source+'" onclick="calChipClick(this);event.stopPropagation()" title="'+esc(item.title)+'">'+icon+esc(item.title.slice(0,16))+'</div>';
+      var recurIcon = item.recurring?'<span style="font-size:8px;opacity:.7">↻</span>':'';
+      var chipId = item.recurring ? (item.baseId||item.id) : item.id;
+      chips+='<div class="cal-chip" style="background:'+item.color+'22;color:'+item.color+';border:1px solid '+item.color+'44" data-id="'+esc(chipId)+'" data-src="'+item.source+'" onclick="calChipClick(this);event.stopPropagation()" title="'+esc(item.title)+(item.recurring?' (recurring)':'')+'">'+icon+recurIcon+esc(item.title.slice(0,14))+'</div>';
     });
     var more=dayItems.length>3?'<div style="font-size:9px;color:var(--text3)">+'+(dayItems.length-3)+' more</div>':'';
-    cells+='<div class="cal-cell'+(isToday?' today':'')+'" data-date="'+dateStr+'" onclick="calCellClick(this)"><div class="cal-day-num">'+d+'</div>'+chips+more+'</div>';
+    var ledDot='';
+    if(showActivityLog && ledByDate[dateStr]){
+      ledDot='<div style="position:absolute;bottom:3px;left:50%;transform:translateX(-50%);display:flex;gap:2px"><span style="width:5px;height:5px;border-radius:50%;background:var(--cyan);opacity:.7;cursor:pointer" data-leddate="'+dateStr+'" onclick="showLedgerPopover(this,\''+dateStr+'\');event.stopPropagation()" title="'+ledByDate[dateStr]+' activity events"></span></div>';
+    }
+    cells+='<div class="cal-cell'+(isToday?' today':'')+'" data-date="'+dateStr+'" onclick="calCellClick(this)" style="position:relative"><div class="cal-day-num">'+d+'</div>'+chips+more+ledDot+'</div>';
   }
   var totalCells=firstDay+daysInMonth;
   var rem=(7-totalCells%7)%7;
@@ -5941,7 +6077,9 @@ function renderCalWeek(){
     html += '<div style="border:1px solid var(--border);border-radius:6px;padding:6px;min-height:120px;background:'+(isToday?'var(--surface2)':'var(--surface)')+';">';
     html += '<div style="font-size:11px;font-weight:700;color:'+(isToday?'var(--cyan)':'var(--text2)')+';margin-bottom:6px">'+days[i]+' '+d.getDate()+'</div>';
     items.forEach(function(item){
-      html += '<div class="cal-chip" style="background:'+item.color+'22;color:'+item.color+';border:1px solid '+item.color+'44;margin-bottom:2px" data-id="'+esc(item.id)+'" data-src="'+item.source+'" onclick="calChipClick(this)" title="'+esc(item.title)+'">'+esc(item.title.slice(0,18))+'</div>';
+      var rIcon = item.recurring?'<span style="font-size:8px;opacity:.7">↻</span>':'';
+      var chipId = item.recurring?(item.baseId||item.id):item.id;
+      html += '<div class="cal-chip" style="background:'+item.color+'22;color:'+item.color+';border:1px solid '+item.color+'44;margin-bottom:2px" data-id="'+esc(chipId)+'" data-src="'+item.source+'" onclick="calChipClick(this)" title="'+esc(item.title)+'">'+rIcon+esc(item.title.slice(0,18))+'</div>';
     });
     if(!items.length) html += '<div style="font-size:10px;color:var(--text3)">—</div>';
     html += '</div>';
@@ -6052,6 +6190,71 @@ function renderEventLedgerPage(){
     (filtered.length>500?'<div style="font-size:11px;color:var(--text3);padding:8px 0">Showing 500 of '+filtered.length+' entries — use filters to narrow.</div>':'');
 }
 
+function saveLedgerSettings(){
+  var days = parseInt((G('ledger-max-days')||{}).value||'90');
+  var entries = parseInt((G('ledger-max-entries')||{}).value||'5000');
+  localStorage.setItem('twwp_ledger_max_days', days);
+  localStorage.setItem('twwp_ledger_max_entries', entries);
+  showDbToast('Ledger settings saved');
+}
+
+function loadLedgerSettings(){
+  var days = localStorage.getItem('twwp_ledger_max_days')||'90';
+  var entries = localStorage.getItem('twwp_ledger_max_entries')||'5000';
+  var d = G('ledger-max-days'); if(d) d.value = days;
+  var e = G('ledger-max-entries'); if(e) e.value = entries;
+}
+
+function purgeLedger(){
+  var maxDays = parseInt(localStorage.getItem('twwp_ledger_max_days')||'90');
+  var maxEntries = parseInt(localStorage.getItem('twwp_ledger_max_entries')||'5000');
+  var cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - maxDays);
+  var cutoffStr = cutoff.toISOString().slice(0,10);
+  var entries = S.get('eventLedger');
+  var before = entries.length;
+  entries = entries.filter(function(e){ return (e.date||'') >= cutoffStr; });
+  if(entries.length > maxEntries) entries = entries.slice(0, maxEntries);
+  S.set('eventLedger', entries);
+  var removed = before - entries.length;
+  showDbToast('Purged '+removed+' entries ('+(entries.length)+' remain)');
+  renderEventLedgerPage();
+}
+
+function autoPurgeLedger(){
+  var maxDays = parseInt(localStorage.getItem('twwp_ledger_max_days')||'90');
+  var maxEntries = parseInt(localStorage.getItem('twwp_ledger_max_entries')||'5000');
+  var cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - maxDays);
+  var cutoffStr = cutoff.toISOString().slice(0,10);
+  var entries = S.get('eventLedger');
+  entries = entries.filter(function(e){ return (e.date||'') >= cutoffStr; });
+  if(entries.length > maxEntries) entries = entries.slice(0, maxEntries);
+  S.set('eventLedger', entries);
+}
+
+function syncLedgerToRails(){
+  var btn = G('ledger-sync-btn');
+  if(!isRailsConnected()){showDbToast('Rails API not connected',true);return;}
+  var railsUrl = getRailsApiUrl();
+  var jwt = getRailsJWT();
+  if(!railsUrl||!jwt){showDbToast('Rails URL or JWT missing',true);return;}
+  if(btn) btn.textContent='Syncing...';
+  var entries = S.get('eventLedger');
+  fetch(railsUrl+'/api/ledger/sync',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+jwt},
+    body:JSON.stringify({entries: entries.slice(0,1000)})
+  }).then(function(r){return r.json();}).then(function(d){
+    if(btn) btn.textContent='✓ Synced';
+    showDbToast('Ledger synced to Rails ('+entries.length+' entries)');
+    setTimeout(function(){if(btn)btn.textContent='↻ Sync to Rails';},3000);
+  }).catch(function(e){
+    if(btn) btn.textContent='↻ Sync to Rails';
+    showDbToast('Ledger sync failed: '+e.message, true);
+  });
+}
+
 function toggleLedger(){
   ledgerEnabled = !ledgerEnabled;
   var btn = G('ledger-pause-btn');
@@ -6089,6 +6292,73 @@ function exportLedger(){
   a.download = 'twwp-event-ledger-'+todayStr()+'.csv';
   a.click();
   showDbToast('Ledger exported');
+}
+
+// ── Resource bar ─────────────────────────────────────────────────────────
+var rbCollapsed = localStorage.getItem('twwp_rb_collapsed')==='1';
+
+function updateResourceBar(){
+  var bar = G('resourceBar'); if(!bar) return;
+  if(rbCollapsed){bar.classList.add('collapsed');}else{bar.classList.remove('collapsed');}
+
+  // localStorage usage
+  var used = 0;
+  try{
+    var total = 5 * 1024 * 1024; // ~5MB typical
+    Object.keys(localStorage).forEach(function(k){used += (localStorage.getItem(k)||'').length * 2;});
+    var pct = Math.min(100, Math.round(used / total * 100));
+    var col = pct>80?'var(--red)':pct>60?'var(--amber)':'var(--green)';
+    var el = G('rb-storage');
+    if(el) el.innerHTML = '&#128190; <div class="rb-bar-wrap"><div class="rb-bar-fill" style="width:'+pct+'%;background:'+col+'"></div></div> <span style="color:'+col+'">'+pct+'%</span>';
+  }catch(e){}
+
+  // Last sync
+  var syncEl = G('rb-sync');
+  if(syncEl){
+    var lastSync = localStorage.getItem('twwp_last_sync_ts');
+    var syncTxt = '—';
+    if(lastSync){
+      var diff = Math.round((Date.now()-new Date(lastSync).getTime())/60000);
+      syncTxt = diff<2?'just now':diff<60?diff+'m ago':Math.round(diff/60)+'h ago';
+    }
+    syncEl.innerHTML = '&#8635; '+syncTxt;
+  }
+
+  // AI calls this session
+  var aiEl = G('rb-ai');
+  if(aiEl){
+    var today = todayStr();
+    var aiCount = S.get('eventLedger').filter(function(e){return e.category==='ai'&&e.date===today;}).length;
+    aiEl.innerHTML = '&#129302; '+aiCount+' AI';
+  }
+
+  // Ledger events today
+  var ledEl = G('rb-ledger');
+  if(ledEl){
+    var today2 = todayStr();
+    var cnt = S.get('eventLedger').filter(function(e){return e.date===today2;}).length;
+    var ledCol = ledgerEnabled ? 'var(--green)' : 'var(--text3)';
+    ledEl.innerHTML = '<span class="rb-dot" style="background:'+ledCol+'"></span> '+cnt+' events';
+  }
+
+  // Drive status
+  var driveEl = G('rb-drive');
+  if(driveEl){
+    var token = localStorage.getItem('twwp_google_access_token');
+    var driveCol = token ? 'var(--green)' : 'var(--text3)';
+    driveEl.innerHTML = '<span class="rb-dot" style="background:'+driveCol+'"></span> Drive';
+  }
+}
+
+function toggleResourceBar(){
+  rbCollapsed = !rbCollapsed;
+  localStorage.setItem('twwp_rb_collapsed', rbCollapsed?'1':'0');
+  var bar = G('resourceBar');
+  if(bar){
+    if(rbCollapsed) bar.classList.add('collapsed'); else bar.classList.remove('collapsed');
+    var arrow = bar.querySelector('span');
+    if(arrow) arrow.textContent = rbCollapsed ? '▲' : '▼';
+  }
 }
 
 // ── Tasks page — view + group toggles ────────────────────────────────────
@@ -11304,6 +11574,10 @@ function initApp(){
   const cfg=getAiCfg();
   if(cfg.devNotes===undefined){cfg.devNotes=true;saveAiCfgToStore(cfg);}
   enforceRoleUI();
+  autoPurgeLedger();
+  updateResourceBar();
+  // Update resource bar every 60s
+  setInterval(updateResourceBar, 60000);
   // Add clear demo button to sidebar
   setTimeout(()=>{
     const exportSect=document.querySelector('.sb-nav');

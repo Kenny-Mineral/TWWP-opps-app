@@ -348,16 +348,47 @@ Rails API at `https://twwp-ops-api.fly.dev`.
 - Table shows up to 500 rows; pagination note when truncated
 - `CAT_COLORS` colour map for category badges
 
+### Task 6 — Resource usage bar
+- Fixed bar above capture FAB (capture FAB moved from bottom:24px to bottom:32px)
+- Shows: localStorage % with colour-coded mini-bar (green/amber/red), last Rails sync age, AI calls today, ledger events today with recording indicator dot, Google Drive connection dot
+- Collapses to 4px strip on click; hover re-expands; collapsed state persisted in localStorage
+- `updateResourceBar()` called from `updStats()` and every 60s via `setInterval`
+- `toggleResourceBar()` toggles collapsed state
+
+### Task 7 — Calendar + Ledger integration (activity dots)
+- `toggleCalActivityLog()` — Activity toggle button in calendar header; persists in `twwp_cal_activity_log`
+- `renderCalMonth()` now reads ledger and builds `ledByDate` map (nav events excluded)
+- Cyan dot appears on calendar dates that have ledger entries when Activity mode is on
+- Clicking dot opens `ledgerPopover` — floating popover showing up to 20 entries for that date with category badge + time + detail
+- `showLedgerPopover(el, dateStr)` — positions popover near the clicked dot, prevents outside click propagation
+
+### Task 8 — Ledger auto-purge + storage management + Rails sync
+- `saveLedgerSettings()` / `loadLedgerSettings()` — max days (default 90) and max entries (default 5000) persisted in localStorage
+- `purgeLedger()` — manual purge: removes entries older than max days and trims to max entries
+- `autoPurgeLedger()` — runs silently on `initApp()` startup
+- Settings UI in Events Ledger page: two inputs + Purge Now button
+- `syncLedgerToRails()` — POSTs up to 1000 entries to `POST /api/ledger/sync`
+- Rails API: `POST /api/ledger/sync → Api::LedgerController#sync` (placeholder, logs count)
+- Route added to `config/routes.rb`
+
+### Task 9 — Recurring calendar events
+- `getUnifiedCalItems()` now expands recurring events within the calendar view range
+- Supported frequencies: daily, weekly, monthly, yearly
+- Each expansion gets a unique composite ID (`baseId_date`); chip clicks resolve to the base event for editing
+- ↻ indicator on chips for recurring instances
+- Expansion is view-range-bounded (month/week/day) with a 400-iteration safety cap
+- `calState` already had the view/weekDate/dayDate fields needed for range calculation
+
 ---
 
 ## Next up
 
-1. Resource usage bar (Tasks 6–10 from session 13)
-2. Calendar + Ledger integration (activity dots on calendar dates)
-3. Ledger auto-purge + Rails sync endpoint
-4. Recurring calendar events
-5. **Re-authorise Google OAuth** — scope changed from `drive.file` → `drive`
-6. **Deploy Rails email endpoint** — `fly deploy` in ~/twwp-ops-api
-7. **Flip GitHub Pages source to GitHub Actions** (manual: repo Settings → Pages → Source → GitHub Actions)
+1. **Re-authorise Google OAuth** — scope changed from `drive.file` → `drive`
+2. **Deploy Rails email + ledger endpoints** — `fly deploy` in ~/twwp-ops-api
+3. **Flip GitHub Pages source to GitHub Actions** (manual: repo Settings → Pages → Source → GitHub Actions)
+4. **User management page** (admin only) — invite, deactivate, change role
+5. **Wire `callModelForFeature()`** — into autofill and import wizard
+6. **Wire Receipt Inbox AI Parse tab**
+7. **Ledger Rails endpoint persistence** — add `ledger_entries` table to Rails (currently placeholder)
 
-See `docs/handoff/session-handoff-march23e.md` for prior sprint summary. Session 13 handoff at `session-handoff-march23f.md` when complete.
+See `docs/handoff/session-handoff-march23f.md` for session 13 full summary.

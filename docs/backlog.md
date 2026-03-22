@@ -231,10 +231,12 @@ branding, users and config — without touching the code.
 - ✅ Multi-provider calendar panel (Google Calendar live, iCloud/Proton/Outlook coming soon) — DONE (session 13)
 - ✅ `eventLedger` store + `logEvent()` global function — DONE (session 13)
 - ✅ Events Ledger page (admin-only) — DONE (session 13)
-- ⬜ Resource usage bar (fixed above capture FAB)
-- ⬜ Calendar activity dots from ledger entries
-- ⬜ Ledger auto-purge (90 days / 5000 entries)
-- ⬜ Rails `POST /api/ledger/sync` endpoint
+- ✅ Resource usage bar (fixed above capture FAB) — DONE (session 13)
+- ✅ Calendar activity dots from ledger entries — DONE (session 13)
+- ✅ Ledger auto-purge (90 days / 5000 entries) — DONE (session 13)
+- ✅ Rails `POST /api/ledger/sync` endpoint — DONE (session 13, placeholder)
+- ✅ Recurring calendar events (daily/weekly/monthly/yearly expand on render) — DONE (session 13)
+- ⬜ Ledger Rails persistence (add `ledger_entries` table — currently logs only)
 
 ---
 
