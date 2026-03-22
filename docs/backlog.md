@@ -1,6 +1,6 @@
 # TWWP Ops App — Build Backlog
 
-**Last updated:** 2026-03-21 (end of session 6)
+**Last updated:** 2026-03-22 (session 7)
 
 **Labels:** `[EXPLICIT]` `[IMPLIED]` `[FIX]` `[OPEN]` ✅ done
 
@@ -14,7 +14,7 @@
 - `[FIX]` Contacts CSV import — shows alert, not implemented
 - `[FIX]` Duplicate `dtk_I1` dev task seed
 - `[FIX]` Wire `callModelForFeature()` into autofill, AI helper, import wizard, classify
-- `[FIX]` CRITICAL — Rails API OAuth: apply oauth_states DB fix (see session-handoff-march21.md)
+- ✅ `[FIX]` CRITICAL — Rails API OAuth: oauth_states DB fix — DONE
 - `[FIX]` Add Test button for Cloudflare Proxy URL field in AI & Integrations
 
 ---
@@ -106,11 +106,11 @@
 - ✅ Classify Folder button (AI reads filenames, proposes structure)
 - ✅ Cloudflare Worker with /token and /refresh endpoints
 - ✅ Rails API deployed at https://twwp-ops-api.fly.dev
-- ⬜ CRITICAL: Apply oauth_states fix to Rails API (see session-handoff-march21.md)
-- ⬜ After OAuth fix: test full Connect → Drive write flow
-- ⬜ Auto-save backup JSON to Drive on logout (code written, needs OAuth)
-- ⬜ Silent sync from server on login (code written, needs OAuth)
-- ⬜ Auto-save every 30 minutes (timer set, needs OAuth)
+- ✅ oauth_states fix applied — PKCE stored in DB not session
+- ✅ Rails API OAuth confirmed working end to end (Mar 22 2026)
+- ⬜ Auto-save backup JSON to Drive on logout (code written, now unblocked)
+- ⬜ Silent sync from server on login (code written, now unblocked)
+- ⬜ Auto-save every 30 minutes (timer set, now unblocked)
 - ⬜ Upload documents directly to Drive from Document Library
 
 ---
@@ -145,11 +145,11 @@
 
 ## GROUP R — Multi-Device Sync
 
-- ⬜ Depends on GROUP N OAuth fix
-- ⬜ Silent sync on login if server data is newer
-- ⬜ Save to Rails API on logout
+- ✅ OAuth unblocked (Mar 22 2026)
+- ⬜ Activate silent sync on login if server data is newer
+- ⬜ Activate save to Rails API on logout
 - ⬜ Save to Rails API when report/receipt generated
-- ⬜ Save to Rails API every 30 minutes
+- ⬜ Auto-save to Rails API every 30 minutes
 
 ---
 
@@ -157,6 +157,48 @@
 
 - ⬜ GitHub Actions auto-deploy workflow (discussed, not implemented)
   Would auto-deploy on every commit — removes manual upload step
+
+---
+
+## GROUP T — Security & User Management
+
+- ⬜ Replace hardcoded admin/twwp2024 login with Rails-backed user auth
+- ⬜ `users` table in Rails API — email, bcrypt password, role, org_id, active
+- ⬜ Roles: admin, staff, read-only (per org)
+- ⬜ Login screen POSTs credentials to Rails → receives JWT → stored in localStorage
+- ⬜ JWT used for all subsequent API calls (already wired via Bearer token)
+- ⬜ Role-based UI — read-only users cannot create/edit/delete records
+- ⬜ Admin-only pages: Developer, AI & Integrations, Trustees/Legal
+- ⬜ User management page (admin only) — invite, deactivate, change role
+- ⬜ API keys stored in Rails credentials server-side — not typed into browser
+- ⬜ Document uploads routed through Rails → Google Drive (never raw in browser)
+- ⬜ Session expiry + auto-logout after inactivity
+- ⬜ Audit log — who changed what and when (store in Rails, surface in Developer page)
+
+---
+
+## GROUP U — Multi-Organisation Architecture
+
+**North star:** TWWP is org #1 and the reference implementation. Every feature
+must be designed so a second organisation can plug in with their own data,
+branding, users and config — without touching the code.
+
+- ⬜ `organisations` table in Rails — name, slug, logo_url, brand_colour, plan, active
+- ⬜ `org_id` on all Rails tables: users, ops_sessions, ops_syncs
+- ⬜ `org_id` on all localStorage stores: contacts, locations, financials, tasks,
+  projects, inventory, deployments, kits, maintenance, calEvents, monitorData,
+  services, assets, documents, campaigns
+- ⬜ Org context set at login — JWT includes org_id
+- ⬜ Org switcher in app header (for users who belong to multiple orgs)
+- ⬜ Per-org branding — logo, app name, brand colour loaded from org config
+- ⬜ Per-org feature flags — enable/disable modules per org
+- ⬜ Per-org integration config — each org has own API keys, Drive folder, HA URL
+- ⬜ Org admin role — can manage users and config for their org only
+- ⬜ Super-admin role — can see and manage all orgs
+- ⬜ White-label export — package a configured instance for a new org
+- ⬜ Onboarding wizard for new orgs — name, logo, first admin user, modules
+- ⬜ Tap-Map sync scoped per org (future)
+- ⬜ Billing/plan awareness (future — Stripe integration scoped per org)
 
 ---
 
@@ -171,13 +213,15 @@
 
 ## Recommended build sequence
 
-1. Apply Rails API oauth_states fix (GROUP N) — unblocks everything
-2. Test full OAuth flow end to end
-3. Wire Drive auto-save (logout, report generation, 30 min timer)
-4. Fix GROUP A bugs (code quality / UX polish)
-5. Build Email Registry + Document Creation tabs (GROUP Z)
-6. ESP32 firmware when hardware arrives (GROUP O)
-7. Campaigns page (GROUP H)
-8. Waterhouse digital twin (GROUP F)
-9. Tap-Map sync (GROUP P)
-
+1. ✅ Rails API OAuth (GROUP N) — DONE
+2. ✅ Rails API connection + multi-device sync unblocked — DONE
+3. Wire Drive auto-save — logout, report generation, 30 min timer (GROUP N, R)
+4. Fix GROUP A bugs — duplicate functions, empty wired functions
+5. GitHub Actions auto-deploy (GROUP S) — quick win, saves manual uploads
+6. Security & User Management (GROUP T) — proper login, roles, user DB
+7. Multi-Organisation Architecture (GROUP U) — org_id everywhere, org switcher
+8. Email Registry + Document Creation tabs (GROUP Z)
+9. Campaigns page (GROUP H)
+10. Waterhouse digital twin (GROUP F)
+11. ESP32 firmware + sensor integration (GROUP O)
+12. Tap-Map sync (GROUP P)
