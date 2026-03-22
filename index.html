@@ -1168,6 +1168,7 @@ tbody tr:hover{background:var(--surface2);}
   <nav class="sb-nav">
     <div class="sb-item" id="ni-dashboard" onclick="go('dashboard',this)"><span class="sb-icon">&#127968;</span><span class="sb-lbl">Dashboard</span></div>
     <div class="sb-sect">Operations</div>
+    <div class="sb-item" id="ni-approvalqueue" onclick="go('approvalqueue',this)"><span class="sb-icon">&#9989;</span><span class="sb-lbl">Approval Queue</span><span class="sb-badge hid" id="aqBadge">0</span></div>
     <div class="sb-item" id="ni-maintenance" onclick="go('maintenance',this)"><span class="sb-icon">&#128295;</span><span class="sb-lbl">Maintenance</span><span class="sb-badge hid" id="mBadge">0</span></div>
     <div class="sb-item" id="ni-calendar" onclick="go('calendar',this)"><span class="sb-icon">&#128197;</span><span class="sb-lbl">Calendar</span></div>
     <div class="sb-item" id="ni-monitor" onclick="go('monitor',this)"><span class="sb-icon">&#128202;</span><span class="sb-lbl">WH Monitor</span></div>
@@ -2184,6 +2185,18 @@ tbody tr:hover{background:var(--surface2);}
   </div>
 </div>
 
+<!-- ====== APPROVAL QUEUE PAGE ====== -->
+<div class="page" id="page-approvalqueue">
+  <div class="ph">
+    <div><div class="ph-ey">Operations</div><div class="ph-title">Approval Queue</div></div>
+    <div class="ph-right"><button class="btn btn-g btn-sm" onclick="renderApprovalQueue()">&#8635; Refresh</button></div>
+  </div>
+  <div class="pb">
+    <div class="helper-bubble"><div class="hb-icon">&#9989;</div><div><strong>Approval Queue</strong> aggregates items needing a decision from across the app: unreviewed captures, financial entries without approval, maintenance jobs awaiting sign-off, and pending reimbursements. Approve, reject, or view each item directly here.</div></div>
+    <div id="approvalQueueList"></div>
+  </div>
+</div>
+
 <!-- ====== DEVELOPER PAGE ====== -->
 <div class="page" id="page-developer">
   <div class="ph">
@@ -2808,6 +2821,7 @@ function go(page,el){
   if(page==='locations')renderLocs();
   if(page==='accounts')renderAccts();
   if(page==='inbox'){seedInboxSelects();renderInbox();}
+  if(page==='approvalqueue')renderApprovalQueue();
   if(page==='maintenance')renderMaintPage();
   if(page==='calendar'){populateCalWhFilter();renderCalendar();renderCalLedger();}
   if(page==='reports')renderReportsPage();
@@ -2849,6 +2863,7 @@ function updStats(){
   const b=G('iBadge');if(b){b.textContent=pend;b.classList.toggle('hid',pend===0);}
   const pb=G('projBadge');if(pb){pb.textContent=activeProj;pb.classList.toggle('hid',activeProj===0);}
   updMaintBadge();
+  updAQBadge();
 }
 
 // ============================================================
@@ -3216,7 +3231,12 @@ const SCHED_TASKS=[{id:'prefilter',label:'Pre-Filters Replacement',cat:'filtrati
 let schedEditState={};
 function renderSchedule(){const whFil=G('schedWhFil')?.value||'';const whs=S.get('locations').filter(l=>l.type==='Waterhouse');const sfEl=G('schedWhFil');if(sfEl){sfEl.innerHTML='<option value="">All Waterhouses</option>'+whs.map(w=>'<option value="'+w.id+'">'+w.name+'</option>').join('');}if(sfEl&&whFil)sfEl.value=whFil;const activeWhs=whFil?whs.filter(w=>w.id===whFil):whs;const schedData=JSON.parse(localStorage.getItem('twwp_sched_v1')||'{}');const jobs=S.get('maintJobs');const tod=new Date(todayStr());let rows=[];let overdueCount=0,dueSoonCount=0;activeWhs.forEach(wh=>{SCHED_TASKS.forEach(task=>{const key=wh.id+'.'+task.id;let lastDone=schedData[key]||null;const catJobs=jobs.filter(j=>j.wh_id===wh.id&&j.cats.includes(task.cat)).sort((a,b)=>b.date.localeCompare(a.date));if(catJobs.length&&(!lastDone||catJobs[0].date>lastDone))lastDone=catJobs[0].date;let nextDue=null,daysUntil=null,status='No Data';if(lastDone){const nd=new Date(lastDone);nd.setDate(nd.getDate()+task.intervalDays);nextDue=nd.toISOString().slice(0,10);daysUntil=Math.round((nd-tod)/(1000*60*60*24));if(daysUntil<0){status='Overdue';overdueCount++;}else if(daysUntil<=21){status='Due Soon';dueSoonCount++;}else status='On Track';}rows.push({wh,task,lastDone,nextDue,daysUntil,status,key});});});const alertEl=G('schedAlerts');if(alertEl){let alerts='';if(overdueCount)alerts+='<div class="cl cl-e" style="margin-bottom:8px"><span>!</span><div><strong>'+overdueCount+' task'+(overdueCount!==1?'s':'')+' overdue.</strong> Schedule maintenance ASAP.</div></div>';if(dueSoonCount)alerts+='<div class="cl cl-w"><span>!</span><div><strong>'+dueSoonCount+' task'+(dueSoonCount!==1?'s':'')+' due within 21 days.</strong></div></div>';alertEl.innerHTML=alerts;}const statusColor={'Overdue':'var(--red)','Due Soon':'var(--amber)','On Track':'var(--green)','No Data':'var(--text3)'};const el=G('schedTable');if(!el)return;if(!rows.length){el.innerHTML='<div class="cl cl-i"><span>i</span><div>No Waterhouses found.</div></div>';return;}el.innerHTML='<div class="tw"><table><thead><tr><th>Task</th><th>Waterhouse</th><th>Last Done</th><th>Next Due</th><th>Status</th><th>Days Until</th><th>Actions</th></tr></thead><tbody>'+rows.map(row=>'<tr style="'+(row.status==='Overdue'?'background:rgba(255,50,50,.04)':row.status==='Due Soon'?'background:rgba(255,165,0,.04)':'')+'"><td style="font-size:12px">'+row.task.label+'</td><td style="font-size:11px;color:var(--text3)">'+row.wh.name+'</td><td style="font-size:11px;font-family:monospace">'+(row.lastDone?fmtDate(row.lastDone):'--')+'</td><td style="font-size:11px;font-family:monospace">'+(row.nextDue?fmtDate(row.nextDue):'--')+'</td><td><span style="font-size:11px;font-weight:700;color:'+statusColor[row.status]+'">'+row.status+'</span></td><td style="font-family:monospace;font-size:12px;text-align:right">'+(row.daysUntil!==null?(row.daysUntil>=0?'+'+row.daysUntil:row.daysUntil):'--')+'</td><td style="display:flex;gap:4px;flex-wrap:wrap"><button class="btn btn-g btn-xs" onclick="openSchedDate(\''+row.key+'\',\''+row.task.label+'\',\''+row.wh.name+'\')">Set Date</button><button class="btn btn-p btn-xs" onclick="schedCalEvent(\''+row.wh.id+'\',\''+row.task.label+'\',\''+( row.nextDue||'')+'\')">Cal</button></td></tr>').join('')+'</tbody></table></div>';}
 function openSchedDate(key,taskLabel,whName){schedEditState={key};const el=G('schedDateLabel');if(el)el.textContent=taskLabel+' -- '+whName;const existing=JSON.parse(localStorage.getItem('twwp_sched_v1')||'{}')[key]||'';if(G('sd-date'))G('sd-date').value=existing;OM('schedDateMo');}
-function saveSchedDate(){const d=G('sd-date')?.value;if(!d||!schedEditState.key)return;const data=JSON.parse(localStorage.getItem('twwp_sched_v1')||'{}');data[schedEditState.key]=d;localStorage.setItem('twwp_sched_v1',JSON.stringify(data));CM('schedDateMo');renderSchedule();}
+function saveSchedDate(){const d=G('sd-date')?.value;if(!d||!schedEditState.key)return;const data=JSON.parse(localStorage.getItem('twwp_sched_v1')||'{}');data[schedEditState.key]=d;localStorage.setItem('twwp_sched_v1',JSON.stringify(data));CM('schedDateMo');renderSchedule();
+  // Auto-create calendar event for the scheduled maintenance
+  var key=schedEditState.key;var parts=key.split('_');var whId=parts[0]||'';var wh=S.find('locations',whId);var taskLabel=G('schedDateLabel')?.textContent||'Scheduled Maintenance';
+  S.upsert('calEvents',{id:uid(),title:taskLabel,type:'Maintenance Visit',wh_id:whId,date:d,time:'',assigned_to:'',notes:'Auto-scheduled from maintenance schedule.',remind:true,created:new Date().toISOString()});
+  showDbToast('\u2713 Calendar event added for '+fmtDate(d));
+}
 function schedCalEvent(whId,taskLabel,date){const wh=S.find('locations',whId);openCalEventMo(date,'Maintenance Visit',whId,taskLabel+(wh?' -- '+wh.name:''));}
 let mwPoItems=[];
 function addMwPo(){const id='po_'+Date.now();mwPoItems.push({id,item:'',qty:1,priority:'Normal',notes:''});renderMwPoList();}
@@ -3755,8 +3775,11 @@ function renderRD(){
     html+='<div class="card" style="padding:14px;display:flex;flex-direction:column;gap:8px">';
     html+='<div style="display:flex;justify-content:space-between;align-items:flex-start">';
     html+='<div style="font-size:13px;font-weight:700;color:var(--text);flex:1">'+esc(item.title)+'</div>';
-    html+='<div style="display:flex;gap:4px">';
+    html+='<div style="display:flex;gap:4px;flex-wrap:wrap">';
     html+='<button class="btn btn-g btn-xs" data-xid="'+esc(item.id)+'" onclick="updateRDStatus(this.dataset.xid)">Status</button>';
+    if(item.status==='validated'&&item.status!=='promoted'){
+      html+='<button class="btn btn-p btn-xs" data-xid="'+esc(item.id)+'" onclick="promoteRDToProject(this.dataset.xid)" title="Create a project from this idea">&#128640; Promote to Project</button>';
+    }
     html+='<button class="btn btn-d btn-xs" data-xid="'+esc(item.id)+'" onclick="delCapture(this.dataset.xid)">Del</button>';
     html+='</div></div>';
     if(item.body)html+='<div style="font-size:11px;color:var(--text2);line-height:1.5">'+esc(item.body.slice(0,200))+'</div>';
@@ -3768,6 +3791,18 @@ function renderRD(){
   grid.innerHTML=html;
 }
 function updateRDStatus(id){const item=S.find('captures',id);if(!item)return;const statuses=['idea','testing','validated','promoted'];const cur=statuses.indexOf(item.status||'idea');item.status=statuses[(cur+1)%statuses.length];S.upsert('captures',item);renderRD();}
+
+function promoteRDToProject(id){
+  var item=S.find('captures',id);if(!item)return;
+  if(item.status==='promoted'&&!confirm('This idea is already promoted. Create another project from it?'))return;
+  var now=new Date().toISOString();
+  var tags=(item.ai_tags||[]).join(', ');
+  S.upsert('projects',{id:uid(),name:item.title,type:'research',status:'planning',priority:'normal',wh_id:'',start:now.split('T')[0],due:'',owner:'',budget:'',desc:item.body||'',milestones:'',notes:'Promoted from R&D idea.'+(tags?'\nTags: '+tags:''),created:now});
+  item.status='promoted';item.promoted_to_project=true;
+  S.upsert('captures',item);
+  renderRD();
+  showDbToast('\u2713 Project created from R&D idea');
+}
 
 // TRUSTEES / LEGAL
 legalSF='';
@@ -3907,11 +3942,28 @@ function updateCaptureForm(){const type=G('cap-type').value;const extra=G('cap-e
 function saveCapture(){
   const title=G('cap-title').value.trim();if(!title){alert('Title required.');return;}
   const type=G('cap-type').value;
-  const item={id:uid(),type,title,body:G('cap-body').value.trim(),bucket:type==='feedback'?G('cap-bucket')?.value:'',status:type==='rd'?'idea':type==='legal'?'open':'',created:new Date().toISOString()};
+  const body=G('cap-body').value.trim();
+  const item={id:uid(),type,title,body,bucket:type==='feedback'?G('cap-bucket')?.value:'',status:type==='rd'?'idea':type==='legal'?'open':'',created:new Date().toISOString()};
   S.upsert('captures',item);CM('captureMo');
+  var now=new Date().toISOString();
+  if(type==='task'){
+    S.upsert('tasks',{id:uid(),title:title,desc:body,status:'open',priority:'normal',due:'',owner:'',module_link:'',wh_id:'',subtasks:[],notes:'',created:now});
+    showDbToast('Task created \u2014 view in Tasks');
+  }else if(type==='lead'){
+    S.upsert('contacts',{id:uid(),name:title,type:'lead',twwp_roles:[],email:'',phone:'',org:'',addr:'',wh_id:'',status:'active',tags:'',memid:'',notes:body,created:now});
+    showDbToast('Contact added \u2014 view in Contacts');
+  }else if(type==='campaign'){
+    S.upsert('campaigns',{id:uid(),name:title,type:'community',status:'idea',start:'',end:'',goal:'',owner:'',desc:body,notes:'',created:now,updated:now});
+    showDbToast('Campaign idea added \u2014 view in Campaigns');
+  }else if(type==='project'){
+    S.upsert('projects',{id:uid(),name:title,type:'admin',status:'idea',priority:'normal',wh_id:'',start:'',due:'',owner:'',budget:'',desc:body,milestones:'',notes:'',created:now});
+    showDbToast('Project idea added \u2014 view in Projects');
+  }
   if(type==='feedback')renderAIFeedback();
   else if(type==='rd')renderRD();
   else if(type==='legal'){renderLegal();renderTrusteeSummary();}
+  // Background AI classify
+  setTimeout(function(){classifyCapture(item.id);},500);
 }
 function delCapture(id){if(!confirm('Delete this item?'))return;S.rm('captures',id);renderRD();renderLegal();renderTrusteeSummary();renderAIFeedback();}
 
@@ -4840,22 +4892,33 @@ function renderCapDetail(type){
   var items=S.get('captures').filter(function(c){return c.type===type;});
   items.sort(function(a,b){return (b.created||'').localeCompare(a.created||'');});
   if(!items.length){el.innerHTML='<div class="cl cl-i"><span>i</span><div>No '+type+' captures yet. Use the + button to add one.</div></div>';return;}
-  var TRIAGE_OPTS=['undecided','backlog','discarded'];
+  var triageColor={undecided:'var(--text3)',accepted:'var(--green)',backlog:'var(--cyan)',discarded:'#555'};
   var html='<div class="tw"><table style="width:100%"><thead><tr>'+
-    '<th>Title</th><th>Notes</th><th>Date</th><th>Triage</th><th>Actions</th>'+
+    '<th>Title</th><th>AI / Notes</th><th>Date</th><th>Status</th><th>Actions</th>'+
     '</tr></thead><tbody>';
   items.forEach(function(item){
     var triage=item.triage||'undecided';
-    var triOpts=TRIAGE_OPTS.map(function(o){
-      return '<option value="'+o+'"'+(triage===o?' selected':'')+'>'+o.charAt(0).toUpperCase()+o.slice(1)+'</option>';
-    }).join('');
+    var triCol=triageColor[triage]||'var(--text3)';
+    // Title cell + AI badge
+    var titleCell='<td style="font-weight:600;font-size:12px;max-width:180px">'+esc(item.title);
+    if(item.ai_suggested_type){
+      titleCell+=' <span style="font-size:9px;padding:1px 5px;border-radius:3px;background:rgba(0,229,255,.12);color:var(--cyan);font-weight:700" title="'+(item.ai_suggested_action?esc(item.ai_suggested_action):'')+'">AI: '+esc(item.ai_suggested_type)+'</span>';
+    }
+    titleCell+='</td>';
+    // Notes cell: AI summary if present, else body snippet
+    var notes=item.ai_summary?item.ai_summary:(item.body||item.bucket||'').slice(0,60);
     html+='<tr>';
-    html+='<td style="font-weight:600;font-size:12px;max-width:180px">'+esc(item.title)+'</td>';
-    html+='<td style="font-size:11px;color:var(--text2);max-width:200px">'+esc((item.body||item.bucket||'').slice(0,60))+'</td>';
+    html+=titleCell;
+    html+='<td style="font-size:11px;color:var(--text2);max-width:200px">'+esc(notes)+(item.ai_priority&&item.ai_priority!=='normal'?' <span style="color:var(--amber);font-size:9px">['+esc(item.ai_priority)+']</span>':'')+'</td>';
     html+='<td style="font-family:monospace;font-size:10px;color:var(--text3)">'+fmtDate(item.created)+'</td>';
-    html+='<td><select class="triage-badge '+triage+'" data-xid="'+esc(item.id)+'" onchange="setCaptureTriage(this.dataset.xid,this.value,this)">'+triOpts+'</select></td>';
+    html+='<td><span style="font-size:10px;font-weight:700;color:'+triCol+'">'+triage.toUpperCase()+'</span>'+(item.routed_to?'<div style="font-size:9px;color:var(--text3)">→ '+esc(item.routed_to)+'</div>':'')+'</td>';
     html+='<td style="white-space:nowrap">';
-    html+='<button class="btn btn-p btn-xs" data-xid="'+esc(item.id)+'" onclick="sendCaptureToBacklog(this.dataset.xid)" title="Add as Dev Task">&#10133; Backlog</button> ';
+    if(triage!=='accepted'&&triage!=='discarded'){
+      html+='<button class="btn btn-p btn-xs" data-xid="'+esc(item.id)+'" onclick="acceptCapture(this.dataset.xid)" title="Route to natural home">&#10003; Accept</button> ';
+      html+='<button class="btn btn-s btn-xs" data-xid="'+esc(item.id)+'" onclick="promoteCapToKB(this.dataset.xid)" title="Save to Knowledge Base">&#8594; KB</button> ';
+      html+='<button class="btn btn-g btn-xs" data-xid="'+esc(item.id)+'" onclick="sendCaptureToBacklog(this.dataset.xid)" title="Add as Dev Task">Backlog</button> ';
+      html+='<button class="btn btn-d btn-xs" data-xid="'+esc(item.id)+'" onclick="discardCapture(this.dataset.xid)">Discard</button> ';
+    }
     html+='<button class="btn btn-d btn-xs" data-xid="'+esc(item.id)+'" onclick="delCapture(this.dataset.xid);renderCapDetail(\''+type+'\')">Del</button>';
     html+='</td>';
     html+='</tr>';
@@ -4903,6 +4966,72 @@ function setCaptureTriage(id,value,el){
   S.upsert('captures',item);
   el.className='triage-badge '+value;
   renderCapTypeCards();
+}
+
+// ── AI classify capture ───────────────────────────────────
+async function classifyCapture(id){
+  var item=S.find('captures',id);if(!item)return;
+  var cfg=getAiCfg();var provider=cfg.provider||'gemini';var key=(cfg.keys&&cfg.keys[provider])||'';
+  if(!key)return; // silent — no key configured
+  var prompt='Classify this capture item for a community water project ops app.\nTitle: '+item.title+'\nBody: '+(item.body||'')+'\n\nReturn ONLY valid JSON with these fields:\n{"suggested_type":"task|note|feedback|rd|legal|campaign|lead","priority":"urgent|high|normal|low","tags":["tag1","tag2"],"summary":"one sentence","suggested_action":"short next step"}';
+  try{
+    var result=await aiCallJSON(prompt);
+    if(result&&result.suggested_type){
+      var updated=S.find('captures',id);if(!updated)return;
+      updated.ai_suggested_type=result.suggested_type;
+      updated.ai_priority=result.priority||'normal';
+      updated.ai_tags=result.tags||[];
+      updated.ai_summary=result.summary||'';
+      updated.ai_suggested_action=result.suggested_action||'';
+      S.upsert('captures',updated);
+      if(devCurrentCapType)renderCapDetail(devCurrentCapType);
+    }
+  }catch(e){/* silent fail */}
+}
+
+// ── Capture triage actions ────────────────────────────────
+function acceptCapture(id){
+  var item=S.find('captures',id);if(!item)return;
+  var type=item.type;var dest='';var now=new Date().toISOString();
+  if(type==='task'){
+    S.upsert('tasks',{id:uid(),title:item.title,desc:item.body||'',status:'open',priority:'normal',due:'',owner:'',module_link:'',wh_id:'',subtasks:[],notes:'',created:now});
+    dest='Tasks';
+  }else if(type==='note'){
+    S.upsert('knowledgeBase',{id:uid(),title:item.title,body:item.body||'',tags:[],always_inject:false,created:now,updated:now});
+    dest='Knowledge Base';
+  }else if(type==='feedback'){
+    S.upsert('devtasks',{id:uid(),title:item.title,group:'From Captures',priority:'normal',status:'open',desc:item.body||'',created:now});
+    dest='Dev Tasks';
+  }else if(type==='rd'){
+    dest='R&D';
+  }else if(type==='legal'){
+    dest='Trustees / Legal';
+  }else if(type==='campaign'){
+    S.upsert('campaigns',{id:uid(),name:item.title,type:'community',status:'idea',start:'',end:'',goal:'',owner:'',desc:item.body||'',notes:'',created:now,updated:now});
+    dest='Campaigns';
+  }else if(type==='lead'){
+    S.upsert('contacts',{id:uid(),name:item.title,type:'lead',twwp_roles:[],email:'',phone:'',org:'',addr:'',wh_id:'',status:'active',tags:'',memid:'',notes:item.body||'',created:now});
+    dest='Contacts';
+  }else{dest=type;}
+  item.triage='accepted';item.routed_to=dest;S.upsert('captures',item);
+  if(devCurrentCapType){renderCapDetail(devCurrentCapType);renderCapTypeCards();}
+  showDbToast('\u2713 Accepted \u2014 sent to '+dest);
+}
+
+function promoteCapToKB(id){
+  var item=S.find('captures',id);if(!item)return;
+  var now=new Date().toISOString();
+  S.upsert('knowledgeBase',{id:uid(),title:item.title,body:item.body||'',tags:item.ai_tags||[],always_inject:false,created:now,updated:now});
+  item.triage='accepted';item.routed_to='Knowledge Base';S.upsert('captures',item);
+  if(devCurrentCapType){renderCapDetail(devCurrentCapType);renderCapTypeCards();}
+  showDbToast('\u2713 Added to Knowledge Base');
+}
+
+function discardCapture(id){
+  var item=S.find('captures',id);if(!item)return;
+  item.triage='discarded';S.upsert('captures',item);
+  if(devCurrentCapType){renderCapDetail(devCurrentCapType);renderCapTypeCards();}
+  showDbToast('Discarded');
 }
 
 // ── Backlog viewer ─────────────────────────────────────────
@@ -5204,6 +5333,7 @@ var CAL_TYPES = {
   'Fundraising':          {color:'#55efc4'},
   'Task Due':             {color:'#ff9f43'},
   'Dev Task Due':         {color:'#a29bfe'},
+  'Financial':            {color:'#55efc4'},
   'Custom':               {color:'#b2bec3'}
 };
 
@@ -5996,6 +6126,37 @@ function renderDashboard(){
 
   html+='</div>'; // end row 8
 
+  // ════════════════════════════════════════════════════════
+  // ROW 9 — Capture Inbox
+  // ════════════════════════════════════════════════════════
+  var allCaps=S.get('captures');
+  var unreviewed=allCaps.filter(function(c){return !c.triage||c.triage==='undecided';});
+  unreviewed.sort(function(a,b){return (b.created||'').localeCompare(a.created||'');});
+  var capTypeIcon={note:'&#128221;',task:'&#9989;',feedback:'&#128172;',rd:'&#128300;',legal:'&#9878;&#65039;',campaign:'&#128227;',lead:'&#128100;'};
+  html+='<div style="background:var(--surface2);border-radius:12px;padding:16px;margin-bottom:20px">';
+  html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">';
+  html+='<div style="display:flex;align-items:center;gap:10px">';
+  html+='<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em">Capture Inbox</div>';
+  if(unreviewed.length){html+='<span style="background:var(--amber);color:#000;font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px">'+unreviewed.length+' unreviewed</span>';}
+  html+='</div>';
+  html+='<button class="btn btn-p btn-sm" onclick="dashNavTo(\'developer\')">Review All</button>';
+  html+='</div>';
+  if(!unreviewed.length){
+    html+='<div style="font-size:11px;color:var(--text3)">All clear &#10003; No unreviewed items.</div>';
+  }else{
+    unreviewed.slice(0,5).forEach(function(c){
+      var icon=capTypeIcon[c.type]||'&#128172;';
+      html+='<div style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px solid var(--border)">';
+      html+='<span style="font-size:13px;flex-shrink:0">'+icon+'</span>';
+      html+='<div style="flex:1;min-width:0">';
+      html+='<div style="font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(c.title)+'</div>';
+      html+='<div style="font-size:10px;color:var(--text3)"><span style="font-family:monospace;background:rgba(255,255,255,.06);padding:1px 4px;border-radius:3px">'+esc(c.type)+'</span> &bull; '+fmtDate(c.created)+'</div>';
+      html+='</div></div>';
+    });
+    if(unreviewed.length>5)html+='<div style="font-size:10px;color:var(--text3);margin-top:6px">+'+(unreviewed.length-5)+' more &mdash; <span style="color:var(--cyan);cursor:pointer" onclick="dashNavTo(\'developer\')">Review All &rarr;</span></div>';
+  }
+  html+='</div>';
+
   el.innerHTML=html;
 }
 
@@ -6004,6 +6165,98 @@ function deleteOrg(id){
   orgs=orgs.filter(function(o){return o.id!==id;});
   localStorage.setItem('twwp_orgs_v1',JSON.stringify(orgs));
   renderDashboard();
+}
+
+// ============================================================
+// APPROVAL QUEUE
+// ============================================================
+function updAQBadge(){
+  var b=G('aqBadge');if(!b)return;
+  var count=getAQItems().length;
+  b.textContent=count;b.classList.toggle('hid',count===0);
+}
+
+function getAQItems(){
+  var items=[];
+  // Unreviewed captures
+  S.get('captures').filter(function(c){return !c.triage||c.triage==='undecided';}).forEach(function(c){
+    items.push({id:c.id,aqType:'capture',aqLabel:'Capture',title:c.title,subtitle:(c.type||'note').toUpperCase()+' — '+fmtDate(c.created),source:'Developer → Captures',raw:c});
+  });
+  // Financial entries with no approval_status
+  S.get('financials').filter(function(e){return !e.approval_status||e.approval_status==='pending';}).forEach(function(e){
+    items.push({id:e.id,aqType:'financial',aqLabel:e.type==='reimbursement'?'Reimbursement':'Financial',title:(e.desc||e.description||'Financial entry'),subtitle:(e.type||'').toUpperCase()+' — $'+(parseFloat(e.amount)||0).toFixed(2)+' — '+fmtDate(e.date||e.created),source:'Financials',raw:e});
+  });
+  // Maintenance jobs without sign-off
+  S.get('maintJobs').filter(function(j){return !j.sign_off_date;}).forEach(function(j){
+    items.push({id:j.id,aqType:'maintjob',aqLabel:'Maintenance',title:'Maintenance — '+(j.wh_name||'Unknown WH'),subtitle:'Performed by: '+(j.performed_by||'Unknown')+' — '+fmtDate(j.date),source:'Maintenance',raw:j});
+  });
+  return items;
+}
+
+function renderApprovalQueue(){
+  var el=G('approvalQueueList');if(!el)return;
+  var items=getAQItems();
+  updAQBadge();
+  if(!items.length){
+    el.innerHTML='<div class="cl cl-i"><span>i</span><div>Approval queue is empty. All items have been reviewed.</div></div>';return;
+  }
+  var typeColor={capture:'var(--cyan)',financial:'var(--amber)',maintjob:'var(--purple)',Reimbursement:'var(--cyan)'};
+  var html='<div style="display:flex;flex-direction:column;gap:10px">';
+  items.forEach(function(item){
+    var col=typeColor[item.aqType]||'var(--text2)';
+    html+='<div style="background:var(--surface2);border-radius:10px;padding:14px 16px;border-left:3px solid '+col+'">';
+    html+='<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">';
+    html+='<div>';
+    html+='<span style="font-size:9px;font-weight:700;color:'+col+';text-transform:uppercase;letter-spacing:.06em">'+esc(item.aqLabel)+'</span>';
+    html+='<div style="font-size:13px;font-weight:700;color:var(--text);margin-top:2px">'+esc(item.title)+'</div>';
+    html+='<div style="font-size:11px;color:var(--text3);margin-top:2px">'+esc(item.subtitle)+'</div>';
+    html+='<div style="font-size:10px;color:var(--text3);margin-top:2px">Source: '+esc(item.source)+'</div>';
+    html+='</div>';
+    html+='<div style="display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap">';
+    if(item.aqType==='capture'){
+      html+='<button class="btn btn-p btn-sm" data-xid="'+esc(item.id)+'" onclick="acceptCapture(this.dataset.xid);renderApprovalQueue()">Accept</button>';
+      html+='<button class="btn btn-s btn-sm" data-xid="'+esc(item.id)+'" onclick="promoteCapToKB(this.dataset.xid);renderApprovalQueue()">&#8594; KB</button>';
+      html+='<button class="btn btn-g btn-sm" data-xid="'+esc(item.id)+'" onclick="discardCapture(this.dataset.xid);renderApprovalQueue()">Discard</button>';
+    }else if(item.aqType==='financial'||item.aqType==='Reimbursement'){
+      html+='<button class="btn btn-p btn-sm" data-xid="'+esc(item.id)+'" onclick="approveFinancialEntry(this.dataset.xid)">Approve</button>';
+      html+='<button class="btn btn-d btn-sm" data-xid="'+esc(item.id)+'" onclick="rejectFinancialEntry(this.dataset.xid)">Reject</button>';
+    }else if(item.aqType==='maintjob'){
+      html+='<button class="btn btn-p btn-sm" data-xid="'+esc(item.id)+'" onclick="signOffMaintJob(this.dataset.xid)">Sign Off</button>';
+    }
+    html+='</div></div></div>';
+  });
+  html+='</div>';
+  el.innerHTML=html;
+}
+
+function approveFinancialEntry(id){
+  var entry=S.find('financials',id);if(!entry)return;
+  entry.approval_status='approved';entry.approved_date=todayStr();
+  S.upsert('financials',entry);
+  // Calendar event for Task 7
+  if(entry.type==='reimbursement'&&entry.amount>0){
+    S.upsert('calEvents',{id:uid(),title:'Reimbursement approved \u2014 '+(entry.contact_name||entry.contact||'Guardian'),type:'Financial',wh_id:entry.wh_id||'',date:todayStr(),time:'',assigned_to:'',notes:'$'+(parseFloat(entry.amount)||0).toFixed(2)+' — '+(entry.desc||entry.description||''),remind:false,created:new Date().toISOString()});
+    showDbToast('\u2713 Approved — calendar event added');
+  }else{
+    showDbToast('\u2713 Approved');
+  }
+  renderApprovalQueue();
+}
+
+function rejectFinancialEntry(id){
+  var entry=S.find('financials',id);if(!entry)return;
+  entry.approval_status='rejected';entry.approved_date=todayStr();
+  S.upsert('financials',entry);
+  showDbToast('Rejected');
+  renderApprovalQueue();
+}
+
+function signOffMaintJob(id){
+  var job=S.find('maintJobs',id);if(!job)return;
+  job.sign_off_date=todayStr();
+  S.upsert('maintJobs',job);
+  showDbToast('\u2713 Maintenance job signed off');
+  renderApprovalQueue();
 }
 
 // ── Org Wizard ────────────────────────────────────────────
@@ -10380,12 +10633,16 @@ function renderEmailRegistry(){
   if(!emails.length){G('emailList').innerHTML='<div style="color:var(--text3);padding:20px;text-align:center">No emails logged yet. Click "+ Compose Email" to get started.</div>';return;}
   G('emailList').innerHTML=emails.map(function(e){
     var sColor=statusColors[e.status]||'var(--text2)';
-    return '<div class="card" style="cursor:pointer;padding:14px 18px;margin-bottom:8px;border-left:3px solid '+sColor+'" onclick="editEmail(\''+esc(e.id)+'\')">'+
+    return '<div class="card" style="padding:14px 18px;margin-bottom:8px;border-left:3px solid '+sColor+'">'+
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'+
-      '<div><div style="font-weight:600;color:var(--text)">'+esc(e.subject||'(no subject)')+'</div>'+
+      '<div style="flex:1;min-width:0;cursor:pointer" onclick="editEmail(\''+esc(e.id)+'\')"><div style="font-weight:600;color:var(--text)">'+esc(e.subject||'(no subject)')+'</div>'+
       '<div style="font-size:12px;color:var(--text3);margin-top:3px">'+esc(e.contact_name||'No contact')+(e.date?' · '+fmtDate(e.date):'')+'</div></div>'+
-      '<div style="font-size:11px;font-weight:700;color:'+sColor+';white-space:nowrap;text-transform:uppercase">'+esc(e.status||'draft')+'</div></div>'+
+      '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0">'+
+      '<span style="font-size:11px;font-weight:700;color:'+sColor+';text-transform:uppercase">'+esc(e.status||'draft')+'</span>'+
+      (e.status!=='sent'?'<button class="btn btn-p btn-sm" data-xid="'+esc(e.id)+'" onclick="sendEmail(this.dataset.xid)">&#9993; Send</button>':'')+
+      '</div></div>'+
       (e.notes?'<div style="font-size:11px;color:var(--text3);margin-top:6px;font-style:italic">'+esc(e.notes)+'</div>':'')+
+      (e.sent_at?'<div style="font-size:10px;color:var(--green);margin-top:4px">Sent '+fmtDate(e.sent_at)+'</div>':'')+
     '</div>';
   }).join('');
 }
@@ -10444,6 +10701,36 @@ function saveEmail(){
   CM('emailMo');renderEmailRegistry();
 }
 
+async function sendEmail(id){
+  var email=S.find('emailRegistry',id);if(!email)return;
+  var railsUrl=getIntegration('rails-api-url')||localStorage.getItem('twwp_rails_api_url')||'';
+  if(!railsUrl){showDbToast('Rails API not configured. Set URL in AI & Integrations.',true);return;}
+  var jwt=JSON.parse(sessionStorage.getItem('twwp_rails_session')||'{}').token||'';
+  showDbToast('Sending\u2026');
+  try{
+    var resp=await fetch(railsUrl.replace(/\/$/,'')+'/api/email/send',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':jwt?'Bearer '+jwt:''},
+      body:JSON.stringify({to:email.contact_email||'',subject:email.subject||'',body:email.body||'',contact_name:email.contact_name||''})
+    });
+    var data=await resp.json();
+    if(resp.ok||data.status==='ok'){
+      email.status='sent';email.sent_at=new Date().toISOString().split('T')[0];
+      S.upsert('emailRegistry',email);
+      renderEmailRegistry();
+      showDbToast('\u2713 Email sent');
+    }else{
+      email.status='failed';S.upsert('emailRegistry',email);
+      renderEmailRegistry();
+      showDbToast('Send failed: '+(data.error||resp.status),true);
+    }
+  }catch(err){
+    email.status='failed';S.upsert('emailRegistry',email);
+    renderEmailRegistry();
+    showDbToast('Send failed: '+err.message,true);
+  }
+}
+
 // ============================================================
 // CAMPAIGNS
 // ============================================================
@@ -10500,12 +10787,20 @@ function saveCampaign(){
   var name=G('camp-name').value.trim();if(!name){alert('Campaign name required.');return;}
   var now=new Date().toISOString();
   var existing=campEditId?S.find('campaigns',campEditId):null;
+  var newStatus=G('camp-status').value;
+  var wasActive=existing&&existing.status==='active';
   S.upsert('campaigns',{
-    id:campEditId||uid(),name:name,type:G('camp-type').value,status:G('camp-status').value,
+    id:campEditId||uid(),name:name,type:G('camp-type').value,status:newStatus,
     start:G('camp-start').value,end:G('camp-end').value,goal:G('camp-goal').value,
     owner:G('camp-owner').value,desc:G('camp-desc').value,notes:G('camp-notes').value,
     created:existing?existing.created:now,updated:now
   });
+  // Auto-create calendar event when campaign moves to active
+  if(newStatus==='active'&&!wasActive){
+    var startDate=G('camp-start').value||todayStr();
+    S.upsert('calEvents',{id:uid(),title:'Campaign launched: '+name,type:'Marketing / Campaign',wh_id:'',date:startDate,time:'',assigned_to:G('camp-owner').value||'',notes:'Campaign moved to active status.',remind:false,created:now});
+    showDbToast('\u2713 Campaign active \u2014 calendar event added');
+  }
   CM('campaignMo');renderCampaigns();
 }
 

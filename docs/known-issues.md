@@ -1,6 +1,6 @@
 # Known Issues, Bugs, and Stubs
 
-Last updated: 2026-03-23 (session 11)
+Last updated: 2026-03-23 (session 12)
 
 ---
 
@@ -106,7 +106,7 @@ Duplicate dev task ID.
 | Google Drive OAuth via Rails API | Deployed, drive.file scope failing |
 | Multi-device sync | Needs OAuth fix first |
 | Document Creation tab | Not built |
-| ✅ Email Registry tab | Built (session 11) |
+| ✅ Email Registry tab | Built (session 11); Send button added (session 12) |
 | Drive backup on logout | Code written, needs OAuth |
 | Auto-save to Drive every 30 min | Timer set, needs OAuth |
 | `callModelForFeature()` | Built but not wired into autofill/import/classify |

@@ -1,6 +1,6 @@
 # TWWP Ops App — Build Backlog
 
-**Last updated:** 2026-03-23 (session 11)
+**Last updated:** 2026-03-23 (session 12)
 
 **Labels:** `[EXPLICIT]` `[IMPLIED]` `[FIX]` `[OPEN]` ✅ done
 
@@ -29,17 +29,20 @@
 
 ## GROUP C — Task System ✅ DONE
 
-- ⬜ Capture widget Task → creates real task record (currently saves a capture)
+- ✅ Capture widget Task → creates real task record — DONE (session 12)
+- ✅ Capture widget Lead → creates real contact record — DONE (session 12)
+- ✅ Capture widget Campaign → creates campaigns draft — DONE (session 12)
+- ✅ Capture widget Project → creates projects idea — DONE (session 12)
 - ⬜ Subtask support — `parent_task` field
 
 ---
 
 ## GROUP D — Import / Approval Workflow
 
-- ⬜ `approval_status` on financial entries
-- ⬜ Global Approval Queue page
+- ✅ `approval_status` on financial entries — DONE (session 12): Approve/Reject buttons in Approval Queue set approval_status field
+- ✅ Global Approval Queue page — DONE (session 12): aggregates captures, financials, maintenance jobs
 - ⬜ Wire Receipt Inbox AI Parse tab
-- ⬜ Approval items → Calendar events
+- ✅ Approval items → Calendar events — DONE (session 12): reimbursement approval creates calendar event
 
 ---
 

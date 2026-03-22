@@ -233,15 +233,81 @@ Rails API at `https://twwp-ops-api.fly.dev`.
 
 ---
 
+---
+
+## Session 12 changes (2026-03-23)
+
+### Task 1 & 2 — Capture routing to real stores
+- `saveCapture()` now creates real records when type matches:
+  - **task** → `tasks` store (status: open, priority: normal) + toast "Task created — view in Tasks"
+  - **lead** → `contacts` store (type: lead) + toast "Contact added — view in Contacts"
+  - **campaign** → `campaigns` store (status: idea) + toast "Campaign idea added — view in Campaigns"
+  - **project** → `projects` store (status: idea) + toast "Project idea added — view in Projects"
+- Captures also saved for history regardless of type
+
+### Task 3 — AI auto-classify on capture
+- `classifyCapture(id)` runs in background (500ms delay) after every saveCapture()
+- Calls `aiCallJSON()` with title + body, returns `{suggested_type, priority, tags, summary, suggested_action}`
+- Results stored on capture record as `ai_suggested_type`, `ai_priority`, `ai_tags`, `ai_summary`, `ai_suggested_action`
+- Developer → Captures table shows AI badge (cyan pill) next to title and AI priority warning if high/urgent
+
+### Task 4 — Capture triage workflow
+- `renderCapDetail()` redesigned: replaced triage dropdown with action buttons
+- **Accept** → routes to natural home (task→Tasks, note→KB, feedback→Dev Tasks, rd→R&D, legal→Legal, campaign→Campaigns, lead→Contacts) — creates real records
+- **→ KB** → promotes capture to Knowledge Base entry
+- **Backlog** → existing Dev Tasks flow (unchanged)
+- **Discard** → marks triage='discarded'
+- Each action shows toast confirming destination
+- Status column shows triage state + routed_to destination
+
+### Task 5 — Capture Inbox card on Dashboard
+- Row 9 added to Dashboard: amber badge with unreviewed count
+- Lists 5 most recent unreviewed captures with type badge + date
+- "Review All" button navigates to Developer → Captures
+- Shows "All clear" when inbox is empty
+
+### Task 6 — Global Approval Queue page
+- "Approval Queue" sidebar item added at top of Operations section with badge counter
+- `page-approvalqueue` with `renderApprovalQueue()`
+- Aggregates: unreviewed captures, financial entries with no approval_status, maintenance jobs without sign_off_date
+- Actions: Accept/KB/Discard (captures), Approve/Reject (financials), Sign Off (maintenance)
+- `approveFinancialEntry()` sets `approval_status: 'approved'` + auto-creates calendar event for reimbursements
+- `rejectFinancialEntry()` sets `approval_status: 'rejected'`
+- `signOffMaintJob()` sets `sign_off_date`
+- `updAQBadge()` called from `updStats()` — badge count updates automatically
+- 'Financial' type added to CAL_TYPES
+
+### Task 7 — Calendar auto-events from workflows
+- `saveSchedDate()` auto-creates a calendar event when a maintenance schedule date is saved
+- `approveFinancialEntry()` creates a calendar event when a reimbursement is approved
+- `saveCampaign()` creates a calendar event when campaign status moves to 'active'
+
+### Task 8 — Email Registry: Send via Rails
+- Send button added to each non-sent email card in Email Registry list
+- `sendEmail(id)` POSTs to `{railsApiUrl}/api/email/send` with JWT auth
+- Shows sent status + sent_at date on card after success; marks 'failed' on error
+- Rails API: new route `POST /api/email/send` → `Api::EmailController#send_email`
+- Controller logs email details and returns `{status:'ok'}` (placeholder — real SMTP later)
+
+### Task 9 — R&D: Promote validated idea to Project
+- R&D cards now show "Promote to Project" button when status is 'validated'
+- `promoteRDToProject(id)` creates a project record (type: research, status: planning) pre-filled with R&D title/body
+- Marks R&D item as 'promoted' with `promoted_to_project: true`
+- Toast: "Project created from R&D idea"
+
+---
+
 ## Next up
 
 1. **Re-authorise Google OAuth** — scope changed from `drive.file` → `drive`; re-connect in AI & Integrations → Connect via Rails API
 2. **Test Drive upload end-to-end** — Doc Builder → Preview → Upload to Drive
 3. **Activate Drive auto-backup + silent sync** — code written, unblocked by scope fix
 4. **Flip GitHub Pages source to GitHub Actions** (manual: repo Settings → Pages → Source → GitHub Actions)
-5. **User management page** (admin only) — invite, deactivate, change role
-6. **Wire `callModelForFeature()`** — into autofill and import wizard
-7. **Wire Receipt Inbox AI Parse tab**
-8. **`dtk_I1` duplicate seed** (minor)
+5. **Deploy Rails email endpoint** — `fly deploy` in ~/twwp-ops-api; then configure real SMTP
+6. **User management page** (admin only) — invite, deactivate, change role
+7. **Wire `callModelForFeature()`** — into autofill and import wizard
+8. **Wire Receipt Inbox AI Parse tab**
+9. **`dtk_I1` duplicate seed** (minor)
+10. **`openCalEventMo` / `saveCalEvent` / `editCalEvent`** — referenced everywhere but never defined; implement these
 
-See `docs/handoff/session-handoff-march23d.md` for full sprint summary and next-task breakdown.
+See `docs/handoff/session-handoff-march23e.md` for full sprint summary and next-task breakdown.
