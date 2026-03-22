@@ -62,6 +62,8 @@ Rails API at `https://twwp-ops-api.fly.dev`.
 - If Rails API URL is configured: POSTs to `/auth/login`, stores JWT + role in `twwp_rails_session` and `SK` session, proceeds to app
 - Wrong credentials from Rails: shows error, does **not** fall back to local
 - Rails unreachable (network error): falls back silently to local admin/twwp2024 check
+- Login field label changed from **Username** to **Email**; placeholder shows `admin@thewholeywaterproject.com`
+- Typing `admin` in the email field auto-expands to `admin@thewholeywaterproject.com`
 
 ---
 

@@ -501,7 +501,7 @@ tbody tr:hover{background:var(--surface2);}
         <div class="login-brand">TWWP</div>
         <div class="login-tagline">Operations v4.2</div>
       </div>
-      <div class="lf"><label>Username</label><input type="text" id="lu" placeholder="admin" autocomplete="username"></div>
+      <div class="lf"><label>Email</label><input type="text" id="lu" placeholder="admin@thewholeywaterproject.com" autocomplete="email"></div>
       <div class="lf"><label>Password</label><input type="password" id="lp" placeholder="..." autocomplete="current-password"></div>
       <button class="login-btn" onclick="doLogin()">Sign In -></button>
       <div class="login-err" id="le"></div>
@@ -2363,7 +2363,9 @@ const CK='twwp_creds_v1',SK='twwp_sess_v1';
 function getCreds(){try{return JSON.parse(localStorage.getItem(CK))||{u:'admin',p:'twwp2024'};}catch{return{u:'admin',p:'twwp2024'};}}
 function isLoggedIn(){try{return JSON.parse(sessionStorage.getItem(SK))?.ok===true;}catch{return false;}}
 async function doLogin(){
-  const u=G('lu').value.trim(),p=G('lp').value,c=getCreds();
+  let u=G('lu').value.trim(),p=G('lp').value,c=getCreds();
+  // Convenience: typing "admin" maps to the full admin email
+  if(u==='admin')u='admin@thewholeywaterproject.com';
   const devMode=c.u===''&&c.p==='';
   const railsUrl=getIntegration('rails-api');
 
