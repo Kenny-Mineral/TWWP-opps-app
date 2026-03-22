@@ -297,17 +297,67 @@ Rails API at `https://twwp-ops-api.fly.dev`.
 
 ---
 
+## Session 13 changes (2026-03-23) — Tasks 1–5 of 10
+
+### Task 1 — Fix calendar CRUD (live bug resolved)
+- Defined `openCalEventMo(date, type, whId, title)` — opens modal for new event
+- Defined `editCalEvent(id)` — opens modal pre-filled for editing
+- Defined `saveCalEvent()` — upserts into calEvents store, re-renders calendar
+- Defined `deleteCalEvent(id)` — confirm + remove from store
+- Added `calEditId` state variable
+- Added `populateCeWh()` — populates waterhouse dropdown in modal
+- Modal updated: recurrence select (None/Daily/Weekly/Monthly/Yearly), Delete button (hidden on create)
+- Event type dropdown updated: added Financial, Meeting, Reminder, Reimbursement, Personal
+- Removed two duplicate `renderCalendar()` definitions (was 3, now 1)
+
+### Task 2 — Calendar week/day views + categories
+- `calState` extended with `view`, `weekDate`, `dayDate` fields
+- `renderCalendar()` is now a dispatcher → `renderCalMonth()`, `renderCalWeek()`, `renderCalDay()`
+- View switcher pills (Month / Week / Day) added above source filter
+- **Today** button added to month nav bar
+- `setCalView()` and `calNavToday()` functions added
+- `calNav()` updated to navigate correctly per view (month: +/-1 month, week: +/-7 days, day: +/-1 day)
+- Week view: 7-column grid, today highlighted in cyan, event chips per column
+- Day view: event list with type + time, Edit button for manual events
+- Week/day container (`calWeekDayView`) shows/hides based on view
+- New `CAL_TYPES` entries: Reimbursement (amber), Meeting (blue), Reminder (cyan), Personal (grey)
+
+### Task 3 — Calendar multi-provider connection panel
+- **Connect button** added to calendar page header → opens `calProviderMo`
+- Modal shows 4 providers: Google Calendar (actionable), iCloud / Proton / Outlook (Coming soon)
+- `connectGoogleCal()` — checks for existing OAuth token, marks provider as connected, triggers sync
+- `syncGoogleCal()` — fetches events from Google Calendar API (primary calendar, 90-day window), deduplicates by `gcal_id`, imports as calEvents
+- `disconnectCalProvider(name)` — removes provider from `twwp_cal_providers` localStorage
+- `updateCalProviderUI()` — updates connected/disconnected state in modal
+- Provider state stored in `localStorage.twwp_cal_providers`
+
+### Task 4 — Events Ledger store + global logEvent()
+- `eventLedger: 'twwp_ledger_v1'` added to KS store map
+- `ledgerEnabled` flag (default true) — can be paused
+- `logEvent(category, action, detail, meta)` — writes entries to eventLedger store; never throws; caps at 5000 entries in-memory
+- Wired into: `saveTask` / `deleteTask`, `saveContact` / `delContact`, `saveCalEvent`, `doLogin`, `doLogout`, `aiCallJSON`, `go()` (light nav logging)
+
+### Task 5 — Events Ledger page
+- `page-eventledger` HTML page added (admin-only, under Dev section)
+- Sidebar item: Events Ledger (🗒 icon, `ni-eventledger`, hidden from non-admin)
+- `renderEventLedgerPage()` — filterable table (category, text search, date), stats bar (total/today/AI calls/top cat/size), storage % bar
+- `toggleLedger()` — Pause/Resume recording with visual badge update
+- `clearLedger()` — confirm + clear all entries
+- `exportLedger()` — CSV download
+- `clearLedgerFilters()` — resets all filters
+- Table shows up to 500 rows; pagination note when truncated
+- `CAT_COLORS` colour map for category badges
+
+---
+
 ## Next up
 
-1. **Re-authorise Google OAuth** — scope changed from `drive.file` → `drive`; re-connect in AI & Integrations → Connect via Rails API
-2. **Test Drive upload end-to-end** — Doc Builder → Preview → Upload to Drive
-3. **Activate Drive auto-backup + silent sync** — code written, unblocked by scope fix
-4. **Flip GitHub Pages source to GitHub Actions** (manual: repo Settings → Pages → Source → GitHub Actions)
-5. **Deploy Rails email endpoint** — `fly deploy` in ~/twwp-ops-api; then configure real SMTP
-6. **User management page** (admin only) — invite, deactivate, change role
-7. **Wire `callModelForFeature()`** — into autofill and import wizard
-8. **Wire Receipt Inbox AI Parse tab**
-9. **`dtk_I1` duplicate seed** (minor)
-10. **`openCalEventMo` / `saveCalEvent` / `editCalEvent`** — referenced everywhere but never defined; implement these
+1. Resource usage bar (Tasks 6–10 from session 13)
+2. Calendar + Ledger integration (activity dots on calendar dates)
+3. Ledger auto-purge + Rails sync endpoint
+4. Recurring calendar events
+5. **Re-authorise Google OAuth** — scope changed from `drive.file` → `drive`
+6. **Deploy Rails email endpoint** — `fly deploy` in ~/twwp-ops-api
+7. **Flip GitHub Pages source to GitHub Actions** (manual: repo Settings → Pages → Source → GitHub Actions)
 
-See `docs/handoff/session-handoff-march23e.md` for full sprint summary and next-task breakdown.
+See `docs/handoff/session-handoff-march23e.md` for prior sprint summary. Session 13 handoff at `session-handoff-march23f.md` when complete.

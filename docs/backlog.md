@@ -222,6 +222,22 @@ branding, users and config — without touching the code.
 
 ---
 
+## GROUP V — Calendar & Events Ledger
+
+- ✅ Fix calendar CRUD (`openCalEventMo`, `editCalEvent`, `saveCalEvent`, `deleteCalEvent`) — DONE (session 13)
+- ✅ Calendar recurrence field in modal — DONE (session 13)
+- ✅ Calendar week/day views + Today button + view switcher — DONE (session 13)
+- ✅ New CAL_TYPES: Meeting, Reminder, Reimbursement, Personal — DONE (session 13)
+- ✅ Multi-provider calendar panel (Google Calendar live, iCloud/Proton/Outlook coming soon) — DONE (session 13)
+- ✅ `eventLedger` store + `logEvent()` global function — DONE (session 13)
+- ✅ Events Ledger page (admin-only) — DONE (session 13)
+- ⬜ Resource usage bar (fixed above capture FAB)
+- ⬜ Calendar activity dots from ledger entries
+- ⬜ Ledger auto-purge (90 days / 5000 entries)
+- ⬜ Rails `POST /api/ledger/sync` endpoint
+
+---
+
 ## Recommended build sequence
 
 1. ✅ Rails API OAuth (GROUP N) — DONE

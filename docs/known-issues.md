@@ -1,6 +1,6 @@
 # Known Issues, Bugs, and Stubs
 
-Last updated: 2026-03-23 (session 12)
+Last updated: 2026-03-23 (session 13 — tasks 1–5)
 
 ---
 
@@ -88,6 +88,9 @@ Changed from `drive.file` to full `drive` scope (session 11). Any users who prev
 
 ### A7 — `dtk_I1` seeded twice
 Duplicate dev task ID.
+
+### ✅ NEW — Calendar CRUD undefined — FIXED (session 13)
+`openCalEventMo`, `editCalEvent`, `saveCalEvent`, `deleteCalEvent` were referenced in the UI but never defined. Now fully implemented with recurrence field, delete button, waterhouse dropdown population, and store upsert/remove.
 
 ---
 

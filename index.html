@@ -758,7 +758,7 @@ tbody tr:hover{background:var(--surface2);}
     <div class="md-b">
       <div class="fg"><label>Title *</label><input type="text" id="ce-title" placeholder="e.g. WH1 Filter Change"></div>
       <div class="fr">
-        <div class="fg"><label>Event Type</label><select id="ce-type"><option>Maintenance Visit</option><option>Water Quality Test</option><option>Contractor Visit</option><option>Report Due</option><option>Member Event</option><option>Marketing / Campaign</option><option>Project Management</option><option>Trustee / Legal</option><option>Fundraising</option><option>Custom</option></select></div>
+        <div class="fg"><label>Event Type</label><select id="ce-type"><option>Maintenance Visit</option><option>Water Quality Test</option><option>Contractor Visit</option><option>Report Due</option><option>Member Event</option><option>Marketing / Campaign</option><option>Project Management</option><option>Trustee / Legal</option><option>Fundraising</option><option>Financial</option><option>Meeting</option><option>Reminder</option><option>Reimbursement</option><option>Personal</option><option>Custom</option></select></div>
         <div class="fg"><label>Waterhouse</label><select id="ce-wh"><option value="">-- None --</option></select></div>
       </div>
       <div class="fr">
@@ -770,9 +770,62 @@ tbody tr:hover{background:var(--surface2);}
         <div class="fg"><label>Assigned Email</label><input type="email" id="ce-email" placeholder="email@example.com"></div>
       </div>
       <div class="fg"><label>Notes</label><textarea id="ce-notes" rows="2"></textarea></div>
+      <div class="fg"><label>Recurrence</label><select id="ce-recur"><option value="">None</option><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option><option value="yearly">Yearly</option></select></div>
       <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);cursor:pointer;padding:6px 0"><input type="checkbox" id="ce-remind" style="accent-color:var(--cyan)">Send reminder 48hrs before (requires backend)</label>
     </div>
-    <div class="md-f"><button class="btn btn-g" onclick="CM('calEventMo')">Cancel</button><button class="btn btn-p" onclick="saveCalEvent()">Save Event</button></div>
+    <div class="md-f"><button class="btn btn-g" onclick="CM('calEventMo')">Cancel</button><button class="btn btn-r" id="ce-del-btn" onclick="deleteCalEvent(calEditId)" style="display:none">Delete</button><button class="btn btn-p" onclick="saveCalEvent()">Save Event</button></div>
+  </div>
+</div>
+
+<!-- CALENDAR PROVIDER MODAL -->
+<div class="mo" id="calProviderMo">
+  <div class="md" style="max-width:520px">
+    <div class="md-h"><div class="md-t">// CONNECT CALENDAR</div><button class="md-x" onclick="CM('calProviderMo')">X</button></div>
+    <div class="md-b">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:16px">Connect external calendars to show their events alongside TWWP events. Events are read-only from external sources.</div>
+
+      <!-- Google Calendar -->
+      <div style="border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <div style="font-weight:700;font-size:13px;color:var(--text)">Google Calendar</div>
+          <div id="gcal-status" style="font-size:10px;padding:2px 8px;border-radius:10px;background:var(--surface2);color:var(--text3)">Not connected</div>
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:8px">Fetches events from your primary Google Calendar via existing OAuth credentials.</div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-p btn-sm" onclick="connectGoogleCal()">Connect via Google OAuth</button>
+          <button class="btn btn-g btn-sm" id="gcal-sync-btn" style="display:none" onclick="syncGoogleCal()">&#8635; Sync Now</button>
+          <button class="btn btn-d btn-sm" id="gcal-disconnect-btn" style="display:none" onclick="disconnectCalProvider('google')">Disconnect</button>
+        </div>
+      </div>
+
+      <!-- iCloud -->
+      <div style="border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <div style="font-weight:700;font-size:13px;color:var(--text)">iCloud Calendar</div>
+          <div style="font-size:10px;padding:2px 8px;border-radius:10px;background:var(--surface2);color:var(--amber)">Coming soon</div>
+        </div>
+        <div style="font-size:11px;color:var(--text3)">CalDAV URL support — requires iCloud App-Specific Password. Planned for a future session.</div>
+      </div>
+
+      <!-- Proton -->
+      <div style="border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <div style="font-weight:700;font-size:13px;color:var(--text)">Proton Calendar</div>
+          <div style="font-size:10px;padding:2px 8px;border-radius:10px;background:var(--surface2);color:var(--amber)">Coming soon</div>
+        </div>
+        <div style="font-size:11px;color:var(--text3)">CalDAV sync via Proton Bridge local server. Planned for a future session.</div>
+      </div>
+
+      <!-- Outlook -->
+      <div style="border:1px solid var(--border);border-radius:8px;padding:12px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <div style="font-weight:700;font-size:13px;color:var(--text)">Outlook / Microsoft 365</div>
+          <div style="font-size:10px;padding:2px 8px;border-radius:10px;background:var(--surface2);color:var(--amber)">Coming soon</div>
+        </div>
+        <div style="font-size:11px;color:var(--text3)">Microsoft Graph API with delegated calendar.read permissions. Planned for a future session.</div>
+      </div>
+    </div>
+    <div class="md-f"><button class="btn btn-g" onclick="CM('calProviderMo')">Close</button></div>
   </div>
 </div>
 
@@ -1202,6 +1255,7 @@ tbody tr:hover{background:var(--surface2);}
     <div class="sb-item" id="ni-aihelper" onclick="go('aihelper',this)"><span class="sb-icon">&#129302;</span><span class="sb-lbl">AI Helper / Notes</span></div>
     <div class="sb-sect">Dev</div>
     <div class="sb-item" id="ni-developer" onclick="go('developer',this)"><span class="sb-icon">&#128736;</span><span class="sb-lbl">Developer</span></div>
+    <div class="sb-item" id="ni-eventledger" onclick="go('eventledger',this)" data-admin-only><span class="sb-icon">&#128221;</span><span class="sb-lbl">Events Ledger</span></div>
     <div class="sb-sect">Settings</div>
     <div class="sb-item" id="ni-ai-integrations" onclick="openApiMo()"><span class="sb-icon">&#128273;</span><span class="sb-lbl">AI &amp; Integrations</span></div>
     <div class="sb-item" onclick="openCP()"><span class="sb-icon">&#128274;</span><span class="sb-lbl">Change Password</span></div>
@@ -1520,26 +1574,40 @@ tbody tr:hover{background:var(--surface2);}
       <select id="calWhFilter" onchange="renderCalendar();renderCalLedger()" style="min-width:150px"><option value="">All Waterhouses</option></select>
       <button class="btn btn-g btn-sm" onclick="calSyncAll()">&#8635; Sync</button>
       <button class="btn btn-p btn-sm" onclick="openCalEventMo()">+ Event</button>
+      <button class="btn btn-g btn-sm" onclick="openCalProviderPanel()">&#128279; Connect</button>
     </div>
   </div>
   <div class="pb">
 
-    <!-- Source filter pills -->
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;align-items:center">
-      <span style="font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.06em">Show:</span>
-      <div class="pill on" data-s="all" onclick="setCalSourceFilter(this)">All</div>
-      <div class="pill" data-s="events" onclick="setCalSourceFilter(this)">Events</div>
-      <div class="pill" data-s="tasks" onclick="setCalSourceFilter(this)">Tasks</div>
-      <div class="pill" data-s="devtasks" onclick="setCalSourceFilter(this)">Dev Tasks</div>
-      <div class="pill" data-s="maintenance" onclick="setCalSourceFilter(this)">Maintenance</div>
+    <!-- View switcher + source filter row -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center;justify-content:space-between">
+      <div style="display:flex;gap:4px">
+        <div class="pill on" data-cv="month" onclick="setCalView(this)">Month</div>
+        <div class="pill" data-cv="week" onclick="setCalView(this)">Week</div>
+        <div class="pill" data-cv="day" onclick="setCalView(this)">Day</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+        <span style="font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.06em">Show:</span>
+        <div class="pill on" data-s="all" onclick="setCalSourceFilter(this)">All</div>
+        <div class="pill" data-s="events" onclick="setCalSourceFilter(this)">Events</div>
+        <div class="pill" data-s="tasks" onclick="setCalSourceFilter(this)">Tasks</div>
+        <div class="pill" data-s="devtasks" onclick="setCalSourceFilter(this)">Dev Tasks</div>
+        <div class="pill" data-s="maintenance" onclick="setCalSourceFilter(this)">Maintenance</div>
+      </div>
     </div>
 
     <!-- Month nav + grid + sidebar -->
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
       <button class="btn btn-g btn-sm" onclick="calNav(-1)" style="min-width:36px">&#8592;</button>
       <span id="calMonthLabel" style="font-weight:700;font-size:16px;color:var(--text);flex:1;text-align:center"></span>
+      <button class="btn btn-g btn-sm" onclick="calNavToday()" style="font-size:11px;padding:4px 10px">Today</button>
       <button class="btn btn-g btn-sm" onclick="calNav(1)" style="min-width:36px">&#8594;</button>
     </div>
+    <!-- Week / Day view container -->
+    <div id="calWeekDayView" style="display:none;margin-bottom:16px">
+      <div id="calWeekDayGrid"></div>
+    </div>
+
     <div style="display:grid;grid-template-columns:1fr 260px;gap:16px" id="calMonthView">
       <div>
         <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px" id="calDayHeaders"></div>
@@ -2198,6 +2266,50 @@ tbody tr:hover{background:var(--surface2);}
 </div>
 
 <!-- ====== DEVELOPER PAGE ====== -->
+<!-- ====== EVENT LEDGER PAGE ====== -->
+<div class="page" id="page-eventledger">
+  <div class="ph">
+    <div><div class="ph-ey">Dev</div><div class="ph-title">Events Ledger</div></div>
+    <div class="ph-right">
+      <span id="ledger-status-badge" style="font-size:11px;padding:3px 10px;border-radius:10px;background:rgba(46,204,113,0.15);color:var(--green);font-weight:700">● Recording</span>
+      <button class="btn btn-g btn-sm" id="ledger-pause-btn" onclick="toggleLedger()">Pause</button>
+      <button class="btn btn-g btn-sm" onclick="exportLedger()">Export CSV</button>
+      <button class="btn btn-r btn-sm" onclick="clearLedger()">Clear All</button>
+    </div>
+  </div>
+  <div class="pb">
+    <!-- Stats bar -->
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px" id="ledger-stats"></div>
+
+    <!-- Filters -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center">
+      <select id="ledger-filter-cat" onchange="renderEventLedgerPage()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:5px 10px;font-size:12px">
+        <option value="">All categories</option>
+        <option value="task">task</option>
+        <option value="contact">contact</option>
+        <option value="financial">financial</option>
+        <option value="maintenance">maintenance</option>
+        <option value="capture">capture</option>
+        <option value="calendar">calendar</option>
+        <option value="ai">ai</option>
+        <option value="nav">nav</option>
+        <option value="auth">auth</option>
+        <option value="report">report</option>
+        <option value="app">app</option>
+      </select>
+      <input type="text" id="ledger-filter-search" placeholder="Search detail..." oninput="renderEventLedgerPage()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:5px 10px;font-size:12px;width:220px">
+      <input type="date" id="ledger-filter-date" onchange="renderEventLedgerPage()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:5px 10px;font-size:12px">
+      <button class="btn btn-g btn-sm" onclick="clearLedgerFilters()">Clear</button>
+    </div>
+
+    <!-- Storage indicator -->
+    <div id="ledger-storage-bar" style="margin-bottom:14px"></div>
+
+    <!-- Table -->
+    <div id="ledger-table-wrap" style="overflow-x:auto"></div>
+  </div>
+</div>
+
 <div class="page" id="page-developer">
   <div class="ph">
     <div>
@@ -2663,6 +2775,7 @@ async function doLogin(){
     G('loginScreen').style.display='none';G('appRoot').style.display='flex';
     G('uNm').textContent=displayName;G('uAv').textContent=displayName[0].toUpperCase();
     G('le').textContent='';initApp();go('dashboard',G('ni-dashboard'));
+    logEvent('auth','login','Local login: '+displayName);
   } else {G('le').textContent='Incorrect username or password.';G('lp').value='';}
 }
 const AI_CFG_KEY='twwp_ai_cfg_v1';
@@ -2670,6 +2783,7 @@ function getAiCfg(){try{return JSON.parse(localStorage.getItem(AI_CFG_KEY)||'{}'
 function saveAiCfgToStore(cfg){localStorage.setItem(AI_CFG_KEY,JSON.stringify(cfg));}
 async function doLogout(){
   if(!confirm('Log out?'))return;
+  logEvent('auth','logout','User logged out');
   // Auto-save backup to Drive if connected
   // Save to Rails API if connected (await so the fetch completes before reload)
   if(isRailsConnected()){await saveToRailsAPI();}
@@ -2723,7 +2837,8 @@ const KS={
   workflow_flags:'twwp_wf_flags_v1',
   knowledgeBase:'twwp_kb_v1',
   emailRegistry:'twwp_email_v1',
-  campaigns:'twwp_campaigns_v1'
+  campaigns:'twwp_campaigns_v1',
+  eventLedger:'twwp_ledger_v1'
 };
 const S={
   get:k=>{try{return JSON.parse(localStorage.getItem(KS[k])||'[]');}catch{return[];}},
@@ -2732,6 +2847,31 @@ const S={
   upsert(k,r){const a=S.get(k),i=a.findIndex(x=>x.id===r.id);if(i>-1)a[i]=r;else a.unshift(r);S.set(k,a);},
   rm:(k,id)=>S.set(k,S.get(k).filter(r=>r.id!==id))
 };
+
+// ============================================================
+// EVENTS LEDGER
+// ============================================================
+var ledgerEnabled = true;
+
+function logEvent(category, action, detail, meta){
+  if(!ledgerEnabled) return;
+  try{
+    var entry = {
+      id: uid(),
+      ts: new Date().toISOString(),
+      date: new Date().toISOString().slice(0,10),
+      category: category||'app',   // task, contact, financial, maintenance, capture, ai, nav, auth, report
+      action: action||'',          // create, update, delete, login, logout, ai_call, etc.
+      detail: detail||'',          // human-readable description
+      meta: meta||null             // optional {id, store, page, model, tokens}
+    };
+    var entries = S.get('eventLedger');
+    entries.unshift(entry);
+    // Cap in-memory write to avoid thrashing (auto-purge runs on load)
+    if(entries.length > 5000) entries = entries.slice(0, 5000);
+    S.set('eventLedger', entries);
+  }catch(e){ /* never throw from logEvent */ }
+}
 
 // ============================================================
 // CONSTANTS
@@ -2843,6 +2983,8 @@ function go(page,el){
   if(page==='inventory'){renderInventory();}
   if(page==='purchases'){renderPOs();}
   if(page==='aihelper')renderAIFeedback();
+  if(page==='eventledger')renderEventLedgerPage();
+  logEvent('nav','navigate','Navigated to '+page, {page:page});
   onPageChange(page);
 }
 
@@ -3258,110 +3400,32 @@ function renderMwPoList(){
   });
   el.innerHTML=html;
 }
-function calNav(dir){calState.month+=dir;if(calState.month>11){calState.month=0;calState.year++;}else if(calState.month<0){calState.month=11;calState.year--;}renderCalendar();}
-function calCellClick(el){openCalEventMo(el.dataset.date||'');}
-function renderCalendar(){
-  var yr=calState.year,mo=calState.month;
-  var label=G('calMonthLabel');
-  if(label)label.textContent=new Date(yr,mo,1).toLocaleDateString('en-NZ',{month:'long',year:'numeric'});
-  var hdrs=G('calDayHeaders');
-  if(hdrs)hdrs.innerHTML=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(function(d){return '<div style="text-align:center;font-size:10px;color:var(--text3);padding:4px;font-weight:700">'+d+'</div>';}).join('');
-  var grid=G('calGrid');if(!grid)return;
-  var firstDay=new Date(yr,mo,1).getDay();
-  var daysInMonth=new Date(yr,mo+1,0).getDate();
-  var daysInPrev=new Date(yr,mo,0).getDate();
-  var tod=todayStr();
-  var events=S.get('calEvents').filter(function(e){return !calState.whFilter||e.wh_id===calState.whFilter;});
-  var byDate={};
-  events.forEach(function(e){var d=e.date?e.date.slice(0,10):null;if(!d)return;if(!byDate[d])byDate[d]=[];byDate[d].push(e);});
-  var cells='';
-  for(var i=0;i<firstDay;i++){var dd=daysInPrev-firstDay+1+i;cells+='<div class="cal-cell other-month"><div class="cal-day-num">'+dd+'</div></div>';}
-  for(var d=1;d<=daysInMonth;d++){
-    var mm=String(mo+1).padStart(2,'0');var dd2=String(d).padStart(2,'0');
-    var dateStr=yr+'-'+mm+'-'+dd2;
-    var dayEvts=byDate[dateStr]||[];
-    var isToday=dateStr===tod;
-    var chips='';
-    dayEvts.slice(0,3).forEach(function(e){
-      var col=(CAL_TYPES[e.type]||CAL_TYPES.Custom).color;
-      chips+='<div class="cal-chip" style="background:'+col+'22;color:'+col+';border:1px solid '+col+'44" data-id="'+esc(e.id)+'" onclick="editCalEvent(this.dataset.id);event.stopPropagation()" title="'+esc(e.title)+'">'+esc(e.title.slice(0,18))+'</div>';
-    });
-    var more=dayEvts.length>3?'<div style="font-size:9px;color:var(--text3)">+'+(dayEvts.length-3)+' more</div>':'';
-    cells+='<div class="cal-cell'+(isToday?' today':'')+'" data-date="'+dateStr+'" onclick="calCellClick(this)"><div class="cal-day-num">'+d+'</div>'+chips+more+'</div>';
+function calNav(dir){
+  if(calState.view==='month'){
+    calState.month+=dir;
+    if(calState.month>11){calState.month=0;calState.year++;}
+    else if(calState.month<0){calState.month=11;calState.year--;}
+  } else if(calState.view==='week'){
+    var d=new Date(calState.weekDate+'T00:00:00');
+    d.setDate(d.getDate()+(dir*7));
+    calState.weekDate=d.toISOString().slice(0,10);
+  } else if(calState.view==='day'){
+    var d=new Date(calState.dayDate+'T00:00:00');
+    d.setDate(d.getDate()+dir);
+    calState.dayDate=d.toISOString().slice(0,10);
   }
-  var totalCells=firstDay+daysInMonth;var rem=(7-totalCells%7)%7;
-  for(var i=1;i<=rem;i++)cells+='<div class="cal-cell other-month"><div class="cal-day-num">'+i+'</div></div>';
-  grid.innerHTML=cells;
-  renderCalUpcoming();renderCalLegend();
+  renderCalendar();
 }
-function renderCalUpcoming(){
-  var el=G('calUpcoming');if(!el)return;
-  var tod=new Date(todayStr());var limit=new Date(tod);limit.setDate(limit.getDate()+30);
-  var events=S.get('calEvents').filter(function(e){var d=new Date(e.date);return d>=tod&&d<=limit;}).sort(function(a,b){return a.date.localeCompare(b.date);});
-  if(!events.length){el.innerHTML='<div style="font-size:11px;color:var(--text3)">No events in next 30 days.</div>';return;}
-  var html='';
-  events.slice(0,10).forEach(function(e){
-    var col=(CAL_TYPES[e.type]||CAL_TYPES.Custom).color;
-    var wh=e.wh_id?S.find('locations',e.wh_id):null;
-    html+='<div class="cal-upcoming-item" style="border-left-color:'+col+'">';
-    html+='<div style="font-size:12px;font-weight:700;color:var(--text)">'+esc(e.title)+'</div>';
-    html+='<div style="font-size:10px;color:var(--text3);margin-top:2px">'+fmtDate(e.date)+(e.time?' - '+e.time:'')+(wh?' - '+esc(wh.name):'')+'</div>';
-    if(e.assigned_to)html+='<div style="font-size:10px;color:var(--text3)">'+esc(e.assigned_to)+'</div>';
-    html+='<div style="display:flex;gap:4px;margin-top:4px">';
-    html+='<button class="btn btn-g btn-xs" data-id="'+esc(e.id)+'" onclick="editCalEvent(this.dataset.id)">Edit</button>';
-    html+='<button class="btn btn-d btn-xs" data-id="'+esc(e.id)+'" onclick="deleteCalEvent(this.dataset.id)">Del</button>';
-    html+='</div></div>';
-  });
-  el.innerHTML=html;
-}
-function renderCalLedger(){
-  var el=G('calLedgerContent');if(!el)return;
-  var whFilter=G('calWhFilter')?G('calWhFilter').value:'';
-  var events=S.get('calEvents');
-  if(whFilter)events=events.filter(function(e){return e.wh_id===whFilter||!e.wh_id;});
-  events=events.sort(function(a,b){return a.date.localeCompare(b.date);});
-  var tod=todayStr();
-  var upcoming=events.filter(function(e){return e.date>=tod;});
-  var past=events.filter(function(e){return e.date<tod;});
-  function mkRow(e,isPast){
-    var wh=e.wh_id?S.find('locations',e.wh_id):null;
-    var col=(CAL_TYPES[e.type]||CAL_TYPES.Custom).color;
-    var d=new Date(e.date+'T12:00:00');var now=new Date(tod+'T12:00:00');
-    var diff=Math.round((d-now)/86400000);
-    var daysAway='';
-    if(!isPast){
-      if(diff===0)daysAway='<span style="color:var(--green);font-weight:700;font-size:10px">TODAY</span>';
-      else if(diff===1)daysAway='<span style="color:var(--amber);font-size:10px">Tomorrow</span>';
-      else daysAway='<span style="color:var(--text3);font-size:10px">in '+diff+' days</span>';
-    } else daysAway='<span style="color:var(--text3);font-size:10px">'+Math.abs(diff)+' days ago</span>';
-    var row='<tr style="opacity:'+(isPast?'0.5':'1')+'"><td style="padding:8px 10px"><div style="font-weight:600;font-size:12px">'+e.date+'</div>'+daysAway+'</td>';
-    row+='<td style="padding:8px 10px"><span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;background:rgba(0,0,0,.3);color:'+col+'">'+esc(e.type||'Event')+'</span></td>';
-    row+='<td style="padding:8px 10px;font-weight:600;font-size:12px">'+esc(e.title||'')+'</td>';
-    row+='<td style="padding:8px 10px;font-size:11px;color:var(--text2)">'+esc(wh?wh.name:'All')+'</td>';
-    row+='<td style="padding:8px 10px;font-size:11px;color:var(--text3)">'+esc(e.assigned_to||'')+'</td>';
-    row+='<td style="padding:8px 4px;white-space:nowrap">';
-    row+='<button class="btn btn-g btn-xs" data-id="'+esc(e.id)+'" onclick="editCalEvent(this.dataset.id)">Edit</button> ';
-    row+='<button class="btn btn-d btn-xs" data-id="'+esc(e.id)+'" onclick="deleteCalEvent(this.dataset.id)">Del</button>';
-    row+='</td></tr>';
-    return row;
-  }
-  var tHead='<thead><tr style="border-bottom:2px solid var(--border)"><th style="padding:6px 10px;font-size:10px;color:var(--text3);text-transform:uppercase">Date</th><th style="padding:6px 10px;font-size:10px;color:var(--text3);text-transform:uppercase">Type</th><th style="padding:6px 10px;font-size:10px;color:var(--text3);text-transform:uppercase">Title</th><th style="padding:6px 10px;font-size:10px;color:var(--text3);text-transform:uppercase">Waterhouse</th><th style="padding:6px 10px;font-size:10px;color:var(--text3);text-transform:uppercase">Assigned</th><th></th></tr></thead>';
-  var out='';
-  if(upcoming.length){
-    out+='<div style="font-size:11px;font-weight:700;color:var(--cyan);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Upcoming</div>';
-    out+='<div style="overflow-x:auto;margin-bottom:24px"><table style="width:100%;border-collapse:collapse">'+tHead+'<tbody>';
-    upcoming.forEach(function(e){out+=mkRow(e,false);});
-    out+='</tbody></table></div>';
+function calCellClick(el){
+  if(calState.view==='month'){
+    openCalEventMo(el.dataset.date||'');
   } else {
-    out+='<div class="cl cl-i" style="margin-bottom:20px"><span>i</span><div>No upcoming events. Use + Event to add one.</div></div>';
+    calState.dayDate=el.dataset.date||calState.dayDate;
+    calState.view='day';
+    document.querySelectorAll('[data-cv]').forEach(function(p){p.classList.remove('on');});
+    var dvBtn=document.querySelector('[data-cv="day"]');if(dvBtn)dvBtn.classList.add('on');
+    renderCalendar();
   }
-  if(past.length){
-    out+='<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Past Events</div>';
-    out+='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">'+tHead+'<tbody>';
-    past.forEach(function(e){out+=mkRow(e,true);});
-    out+='</tbody></table></div>';
-  }
-  el.innerHTML=out;
 }
 
 function populateMonWhSel(){const el=G('monWhSel');if(!el)return;const whs=S.get('locations').filter(l=>l.type==='Waterhouse');const cur=el.value;el.innerHTML='<option value="">Select Waterhouse...</option>'+whs.map(w=>'<option value="'+w.id+'">'+esc(w.name)+'</option>').join('');if(cur)el.value=cur;}
@@ -3647,9 +3711,10 @@ function saveContact(){
   var roles=ctGetRoles();
   var apptDate=G('ct-appt-date')?.value||'';var termLen=G('ct-term-length')?.value||'';var termExp=G('ct-term-expiry')?.value||'';
   S.upsert('contacts',{id:editContactId||uid(),name,type:G('ct-type').value,twwp_roles:roles,email:G('ct-email').value.trim(),phone:G('ct-phone').value.trim(),org:G('ct-org').value.trim(),addr:G('ct-addr').value.trim(),wh_id:G('ct-wh').value,status:G('ct-status').value,tags:G('ct-tags').value.trim(),memid:G('ct-memid').value.trim(),notes:G('ct-notes').value.trim(),appt_date:apptDate,term_length:termLen,term_expiry:termExp,created:editContactId?(S.find('contacts',editContactId)?.created||new Date().toISOString()):new Date().toISOString()});
+  logEvent('contact', editContactId?'update':'create', (editContactId?'Updated':'Created')+' contact: '+name);
   CM('contactMo');renderContacts();updStats();
 }
-function delContact(id){if(!confirm('Delete this contact?'))return;S.rm('contacts',id);renderContacts();updStats();}
+function delContact(id){if(!confirm('Delete this contact?'))return;var c=S.find('contacts',id);logEvent('contact','delete','Deleted contact: '+(c?c.name:id));S.rm('contacts',id);renderContacts();updStats();}
 function impContactsCSV(){
   var inp=document.createElement('input');inp.type='file';inp.accept='.csv,text/csv';
   inp.onchange=function(){
@@ -5301,6 +5366,7 @@ function saveTask(){
     notes:G('tk-notes')&&G('tk-notes').value.trim()||'',
     created:editTaskId?(S.find('tasks',editTaskId)?.created||new Date().toISOString()):new Date().toISOString()
   });
+  logEvent('task', editTaskId?'update':'create', (editTaskId?'Updated':'Created')+' task: '+title);
   CM('taskMo');
   renderTasksPage();
   updStats();
@@ -5308,6 +5374,8 @@ function saveTask(){
 
 function deleteTask(id){
   if(!confirm('Delete this task?'))return;
+  var t=S.find('tasks',id);
+  logEvent('task','delete','Deleted task: '+(t?t.title:id));
   S.rm('tasks',id);
   renderTasksPage();
   updStats();
@@ -5334,12 +5402,19 @@ var CAL_TYPES = {
   'Task Due':             {color:'#ff9f43'},
   'Dev Task Due':         {color:'#a29bfe'},
   'Financial':            {color:'#55efc4'},
+  'Reimbursement':        {color:'#f39c12'},
+  'Meeting':              {color:'#74b9ff'},
+  'Reminder':             {color:'#00cec9'},
+  'Personal':             {color:'#b2bec3'},
   'Custom':               {color:'#b2bec3'}
 };
 
 var calState = {
   year: new Date().getFullYear(),
   month: new Date().getMonth(),
+  view: 'month',
+  weekDate: todayStr ? todayStr() : new Date().toISOString().slice(0,10),
+  dayDate: todayStr ? todayStr() : new Date().toISOString().slice(0,10),
   whFilter: '',
   sourceFilter: 'all'
 };
@@ -5471,60 +5546,6 @@ function calSyncAll(){
   S.set('calEvents', evts);
 }
 
-// ── renderCalendar with unified items ─────────────────────────────────────
-function renderCalendar(){
-  var yr=calState.year, mo=calState.month;
-  var label=G('calMonthLabel');
-  if(label) label.textContent=new Date(yr,mo,1).toLocaleDateString('en-NZ',{month:'long',year:'numeric'});
-
-  var hdrs=G('calDayHeaders');
-  if(hdrs) hdrs.innerHTML=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(function(d){
-    return '<div style="text-align:center;font-size:10px;color:var(--text3);padding:4px;font-weight:700">'+d+'</div>';
-  }).join('');
-
-  var grid=G('calGrid'); if(!grid) return;
-  var firstDay=new Date(yr,mo,1).getDay();
-  var daysInMonth=new Date(yr,mo+1,0).getDate();
-  var daysInPrev=new Date(yr,mo,0).getDate();
-  var tod=todayStr();
-
-  // Get all items and group by date
-  var allItems=getUnifiedCalItems();
-  var byDate={};
-  allItems.forEach(function(item){
-    var d=item.date;if(!d)return;
-    if(!byDate[d])byDate[d]=[];
-    byDate[d].push(item);
-  });
-
-  var cells='';
-  for(var i=0;i<firstDay;i++){
-    var dd=daysInPrev-firstDay+1+i;
-    cells+='<div class="cal-cell other-month"><div class="cal-day-num">'+dd+'</div></div>';
-  }
-  for(var d=1;d<=daysInMonth;d++){
-    var mm=String(mo+1).padStart(2,'0'), dd2=String(d).padStart(2,'0');
-    var dateStr=yr+'-'+mm+'-'+dd2;
-    var dayItems=byDate[dateStr]||[];
-    var isToday=dateStr===tod;
-
-    var chips='';
-    dayItems.slice(0,3).forEach(function(item){
-      var icon = item.source==='task'?'&#9989; ':item.source==='devtask'?'&#128736; ':'';
-      chips+='<div class="cal-chip" style="background:'+item.color+'22;color:'+item.color+';border:1px solid '+item.color+'44" data-id="'+esc(item.id)+'" data-src="'+item.source+'" onclick="calChipClick(this);event.stopPropagation()" title="'+esc(item.title)+'">'+icon+esc(item.title.slice(0,16))+'</div>';
-    });
-    var more=dayItems.length>3?'<div style="font-size:9px;color:var(--text3)">+'+( dayItems.length-3)+' more</div>':'';
-    cells+='<div class="cal-cell'+(isToday?' today':'')+'" data-date="'+dateStr+'" onclick="calCellClick(this)"><div class="cal-day-num">'+d+'</div>'+chips+more+'</div>';
-  }
-  var totalCells=firstDay+daysInMonth;
-  var rem=(7-totalCells%7)%7;
-  for(var i=1;i<=rem;i++) cells+='<div class="cal-cell other-month"><div class="cal-day-num">'+i+'</div></div>';
-  grid.innerHTML=cells;
-
-  renderCalUpcoming();
-  renderCalLegend();
-}
-
 function calChipClick(el){
   var src=el.dataset.src, id=el.dataset.id;
   if(src==='task'){
@@ -5636,6 +5657,438 @@ function renderCalLedger(){
     out+='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">'+tHead+'<tbody>'+past.map(function(i){return mkRow(i,true);}).join('')+'</tbody></table></div>';
   }
   el.innerHTML=out;
+}
+
+// ── Calendar CRUD ─────────────────────────────────────────────────────────
+var calEditId = null;
+
+function openCalEventMo(date, type, whId, title){
+  calEditId = null;
+  G('calEventMoT').textContent = '// ADD EVENT';
+  G('ce-title').value = title || '';
+  G('ce-type').value = type || 'Maintenance Visit';
+  var whSel = G('ce-wh');
+  if(whId && whSel) whSel.value = whId;
+  G('ce-date').value = date || new Date().toISOString().slice(0,10);
+  G('ce-time').value = '';
+  G('ce-assign').value = '';
+  G('ce-email').value = '';
+  G('ce-notes').value = '';
+  G('ce-recur').value = '';
+  G('ce-remind').checked = false;
+  G('ce-del-btn').style.display = 'none';
+  populateCalWhFilter && populateCeWh && populateCeWh();
+  CM('calEventMo');
+}
+
+function populateCeWh(){
+  var sel = G('ce-wh'); if(!sel) return;
+  var whs = S.get('locations').filter(function(l){return l.type==='Waterhouse';});
+  sel.innerHTML = '<option value="">-- None --</option>' +
+    whs.map(function(w){return '<option value="'+w.id+'">'+esc(w.name)+'</option>';}).join('');
+}
+
+function editCalEvent(id){
+  var ev = S.find('calEvents', id); if(!ev) return;
+  calEditId = id;
+  G('calEventMoT').textContent = '// EDIT EVENT';
+  populateCeWh();
+  G('ce-title').value = ev.title || '';
+  G('ce-type').value = ev.type || 'Custom';
+  G('ce-wh').value = ev.wh || '';
+  G('ce-date').value = ev.date || '';
+  G('ce-time').value = ev.time || '';
+  G('ce-assign').value = ev.assign || '';
+  G('ce-email').value = ev.email || '';
+  G('ce-notes').value = ev.notes || '';
+  G('ce-recur').value = ev.recurrence || '';
+  G('ce-remind').checked = !!ev.remind;
+  G('ce-del-btn').style.display = '';
+  CM('calEventMo');
+}
+
+function saveCalEvent(){
+  var title = G('ce-title').value.trim();
+  if(!title){showDbToast('Title is required',true);return;}
+  var date = G('ce-date').value;
+  if(!date){showDbToast('Date is required',true);return;}
+  var ev = {
+    id: calEditId || uid(),
+    title: title,
+    type: G('ce-type').value,
+    wh: G('ce-wh').value,
+    date: date,
+    time: G('ce-time').value,
+    assign: G('ce-assign').value.trim(),
+    email: G('ce-email').value.trim(),
+    notes: G('ce-notes').value.trim(),
+    recurrence: G('ce-recur').value,
+    remind: G('ce-remind').checked,
+    source: 'manual'
+  };
+  S.upsert('calEvents', ev);
+  logEvent('calendar', calEditId?'update':'create', (calEditId?'Updated':'Created')+' calendar event: '+title);
+  CM('calEventMo');
+  renderCalendar();
+  showDbToast(calEditId ? 'Event updated' : 'Event created');
+}
+
+function deleteCalEvent(id){
+  if(!id){return;}
+  if(!confirm('Delete this calendar event?'))return;
+  S.rm('calEvents', id);
+  CM('calEventMo');
+  renderCalendar();
+  showDbToast('Event deleted');
+}
+
+// ── Calendar provider connection ─────────────────────────────────────────
+function openCalProviderPanel(){
+  updateCalProviderUI();
+  CM('calProviderMo');
+}
+
+function updateCalProviderUI(){
+  var providers = JSON.parse(localStorage.getItem('twwp_cal_providers')||'{}');
+  var gp = providers.google || {};
+  var statusEl = G('gcal-status');
+  var syncBtn = G('gcal-sync-btn');
+  var discBtn = G('gcal-disconnect-btn');
+  if(!statusEl) return;
+  if(gp.connected){
+    statusEl.textContent = 'Connected';
+    statusEl.style.background = 'rgba(46,204,113,0.15)';
+    statusEl.style.color = 'var(--green)';
+    if(syncBtn) syncBtn.style.display='';
+    if(discBtn) discBtn.style.display='';
+  } else {
+    statusEl.textContent = 'Not connected';
+    statusEl.style.background = 'var(--surface2)';
+    statusEl.style.color = 'var(--text3)';
+    if(syncBtn) syncBtn.style.display='none';
+    if(discBtn) discBtn.style.display='none';
+  }
+}
+
+function connectGoogleCal(){
+  var token = localStorage.getItem('twwp_google_access_token');
+  if(!token){
+    showDbToast('Google OAuth not connected. Use AI & Integrations → Connect via Rails API first.', true);
+    return;
+  }
+  var providers = JSON.parse(localStorage.getItem('twwp_cal_providers')||'{}');
+  providers.google = {connected: true, lastSync: null};
+  localStorage.setItem('twwp_cal_providers', JSON.stringify(providers));
+  updateCalProviderUI();
+  showDbToast('Google Calendar connected — syncing...');
+  syncGoogleCal();
+}
+
+function syncGoogleCal(){
+  var token = localStorage.getItem('twwp_google_access_token');
+  if(!token){showDbToast('No Google token. Please reconnect.',true);return;}
+  var now = new Date();
+  var tMin = now.toISOString();
+  var tMaxD = new Date(now); tMaxD.setDate(tMaxD.getDate()+90);
+  var tMax = tMaxD.toISOString();
+  fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin='+encodeURIComponent(tMin)+'&timeMax='+encodeURIComponent(tMax)+'&maxResults=250&singleEvents=true&orderBy=startTime', {
+    headers: {Authorization: 'Bearer '+token}
+  }).then(function(r){return r.json();}).then(function(data){
+    if(data.error){showDbToast('Google Calendar error: '+data.error.message, true);return;}
+    var items = data.items||[];
+    var imported = 0;
+    items.forEach(function(ev){
+      if(!ev.start) return;
+      var date = (ev.start.date||ev.start.dateTime||'').slice(0,10);
+      if(!date) return;
+      var existing = S.get('calEvents').find(function(e){return e.gcal_id===ev.id;});
+      if(!existing){
+        S.upsert('calEvents',{
+          id: uid(), gcal_id: ev.id,
+          title: ev.summary||'(no title)',
+          type: 'Meeting', date: date,
+          time: ev.start.dateTime?(ev.start.dateTime.slice(11,16)):'',
+          notes: ev.description||'', source: 'google'
+        });
+        imported++;
+      }
+    });
+    var providers = JSON.parse(localStorage.getItem('twwp_cal_providers')||'{}');
+    providers.google = {connected: true, lastSync: new Date().toISOString()};
+    localStorage.setItem('twwp_cal_providers', JSON.stringify(providers));
+    showDbToast('Google Calendar synced — '+imported+' new events imported');
+    renderCalendar();
+  }).catch(function(e){showDbToast('Google Calendar sync failed: '+e.message,true);});
+}
+
+function disconnectCalProvider(name){
+  if(!confirm('Disconnect '+name+' calendar? Imported events will remain.'))return;
+  var providers = JSON.parse(localStorage.getItem('twwp_cal_providers')||'{}');
+  delete providers[name];
+  localStorage.setItem('twwp_cal_providers', JSON.stringify(providers));
+  updateCalProviderUI();
+  showDbToast(name+' calendar disconnected');
+}
+
+// ── Calendar view switching ───────────────────────────────────────────────
+function setCalView(el){
+  document.querySelectorAll('[data-cv]').forEach(function(p){p.classList.remove('on');});
+  el.classList.add('on');
+  calState.view = el.dataset.cv || 'month';
+  renderCalendar();
+}
+
+function calNavToday(){
+  var t = new Date();
+  calState.year = t.getFullYear();
+  calState.month = t.getMonth();
+  calState.weekDate = todayStr();
+  calState.dayDate = todayStr();
+  renderCalendar();
+}
+
+function renderCalendar(){
+  if(calState.view === 'week'){
+    renderCalWeek();
+  } else if(calState.view === 'day'){
+    renderCalDay();
+  } else {
+    renderCalMonth();
+  }
+}
+
+function renderCalMonth(){
+  var yr=calState.year, mo=calState.month;
+  var label=G('calMonthLabel');
+  if(label) label.textContent=new Date(yr,mo,1).toLocaleDateString('en-NZ',{month:'long',year:'numeric'});
+
+  G('calMonthView').style.display='grid';
+  G('calWeekDayView').style.display='none';
+
+  var hdrs=G('calDayHeaders');
+  if(hdrs) hdrs.innerHTML=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(function(d){
+    return '<div style="text-align:center;font-size:10px;color:var(--text3);padding:4px;font-weight:700">'+d+'</div>';
+  }).join('');
+
+  var grid=G('calGrid'); if(!grid) return;
+  var firstDay=new Date(yr,mo,1).getDay();
+  var daysInMonth=new Date(yr,mo+1,0).getDate();
+  var daysInPrev=new Date(yr,mo,0).getDate();
+  var tod=todayStr();
+
+  var allItems=getUnifiedCalItems();
+  var byDate={};
+  allItems.forEach(function(item){
+    var d=item.date;if(!d)return;
+    if(!byDate[d])byDate[d]=[];
+    byDate[d].push(item);
+  });
+
+  var cells='';
+  for(var i=0;i<firstDay;i++){
+    var dd=daysInPrev-firstDay+1+i;
+    cells+='<div class="cal-cell other-month"><div class="cal-day-num">'+dd+'</div></div>';
+  }
+  for(var d=1;d<=daysInMonth;d++){
+    var mm=String(mo+1).padStart(2,'0'), dd2=String(d).padStart(2,'0');
+    var dateStr=yr+'-'+mm+'-'+dd2;
+    var dayItems=byDate[dateStr]||[];
+    var isToday=dateStr===tod;
+    var chips='';
+    dayItems.slice(0,3).forEach(function(item){
+      var icon=item.source==='task'?'&#9989; ':item.source==='devtask'?'&#128736; ':'';
+      chips+='<div class="cal-chip" style="background:'+item.color+'22;color:'+item.color+';border:1px solid '+item.color+'44" data-id="'+esc(item.id)+'" data-src="'+item.source+'" onclick="calChipClick(this);event.stopPropagation()" title="'+esc(item.title)+'">'+icon+esc(item.title.slice(0,16))+'</div>';
+    });
+    var more=dayItems.length>3?'<div style="font-size:9px;color:var(--text3)">+'+(dayItems.length-3)+' more</div>':'';
+    cells+='<div class="cal-cell'+(isToday?' today':'')+'" data-date="'+dateStr+'" onclick="calCellClick(this)"><div class="cal-day-num">'+d+'</div>'+chips+more+'</div>';
+  }
+  var totalCells=firstDay+daysInMonth;
+  var rem=(7-totalCells%7)%7;
+  for(var i=1;i<=rem;i++) cells+='<div class="cal-cell other-month"><div class="cal-day-num">'+i+'</div></div>';
+  grid.innerHTML=cells;
+
+  renderCalUpcoming();
+  renderCalLegend();
+}
+
+function renderCalWeek(){
+  // Find Monday of the week containing calState.weekDate
+  var ref = new Date(calState.weekDate+'T00:00:00');
+  var dow = ref.getDay(); // 0=Sun
+  var monOffset = (dow === 0) ? -6 : 1 - dow;
+  var mon = new Date(ref); mon.setDate(mon.getDate() + monOffset);
+
+  // Update label
+  var sun = new Date(mon); sun.setDate(sun.getDate() + 6);
+  var label = G('calMonthLabel');
+  if(label) label.textContent = mon.toLocaleDateString('en-NZ',{day:'numeric',month:'short',year:'numeric'}) + ' — ' + sun.toLocaleDateString('en-NZ',{day:'numeric',month:'short',year:'numeric'});
+
+  G('calMonthView').style.display='none';
+  G('calWeekDayView').style.display='';
+
+  var allItems = getUnifiedCalItems();
+  var byDate = {};
+  allItems.forEach(function(item){ if(item.date){if(!byDate[item.date])byDate[item.date]=[];byDate[item.date].push(item);} });
+
+  var days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  var tod = todayStr();
+  var html = '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">';
+  for(var i=0;i<7;i++){
+    var d = new Date(mon); d.setDate(d.getDate()+i);
+    var ds = d.toISOString().slice(0,10);
+    var items = byDate[ds]||[];
+    var isToday = ds===tod;
+    html += '<div style="border:1px solid var(--border);border-radius:6px;padding:6px;min-height:120px;background:'+(isToday?'var(--surface2)':'var(--surface)')+';">';
+    html += '<div style="font-size:11px;font-weight:700;color:'+(isToday?'var(--cyan)':'var(--text2)')+';margin-bottom:6px">'+days[i]+' '+d.getDate()+'</div>';
+    items.forEach(function(item){
+      html += '<div class="cal-chip" style="background:'+item.color+'22;color:'+item.color+';border:1px solid '+item.color+'44;margin-bottom:2px" data-id="'+esc(item.id)+'" data-src="'+item.source+'" onclick="calChipClick(this)" title="'+esc(item.title)+'">'+esc(item.title.slice(0,18))+'</div>';
+    });
+    if(!items.length) html += '<div style="font-size:10px;color:var(--text3)">—</div>';
+    html += '</div>';
+  }
+  html += '</div>';
+  G('calWeekDayGrid').innerHTML = html;
+}
+
+function renderCalDay(){
+  var ds = calState.dayDate;
+  var d = new Date(ds+'T00:00:00');
+  var label = G('calMonthLabel');
+  if(label) label.textContent = d.toLocaleDateString('en-NZ',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+  G('calMonthView').style.display='none';
+  G('calWeekDayView').style.display='';
+
+  var items = getUnifiedCalItems().filter(function(item){ return item.date===ds; });
+
+  var html = '<div style="max-width:600px">';
+  if(!items.length){
+    html += '<div class="cl cl-i"><span>i</span><div>No events on this day. Click + Event to add one.</div></div>';
+  } else {
+    items.forEach(function(item){
+      html += '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:6px;margin-bottom:6px;border-left:4px solid '+item.color+'">';
+      html += '<div style="flex:1"><div style="font-weight:700;font-size:13px;color:var(--text)">'+esc(item.title)+'</div><div style="font-size:11px;color:var(--text3)">'+esc(item.type||'')+(item.raw&&item.raw.time?' · '+esc(item.raw.time):'')+'</div></div>';
+      if(item.source==='event') html += '<button class="btn btn-g btn-sm" style="font-size:11px" onclick="editCalEvent(\''+esc(item.id)+'\')">Edit</button>';
+      html += '</div>';
+    });
+  }
+  html += '</div>';
+  G('calWeekDayGrid').innerHTML = html;
+}
+
+// ── Events Ledger page ────────────────────────────────────────────────────
+var CAT_COLORS = {
+  auth:'#a29bfe', task:'#00e5ff', contact:'#2ecc71', financial:'#55efc4',
+  maintenance:'#f39c12', capture:'#fd79a8', calendar:'#74b9ff', ai:'#e17055',
+  nav:'#636e72', report:'#fdcb6e', app:'#b2bec3'
+};
+
+function renderEventLedgerPage(){
+  var entries = S.get('eventLedger');
+  var catFilter = (G('ledger-filter-cat')||{}).value||'';
+  var search = ((G('ledger-filter-search')||{}).value||'').toLowerCase();
+  var dateFilter = (G('ledger-filter-date')||{}).value||'';
+
+  // Stats bar
+  var statsEl = G('ledger-stats');
+  if(statsEl){
+    var today = todayStr();
+    var todayCount = entries.filter(function(e){return e.date===today;}).length;
+    var aiCount = entries.filter(function(e){return e.category==='ai';}).length;
+    var cats = {};
+    entries.forEach(function(e){cats[e.category]=(cats[e.category]||0)+1;});
+    var topCat = Object.keys(cats).sort(function(a,b){return cats[b]-cats[a];})[0]||'—';
+    var size = Math.round(JSON.stringify(entries).length/1024);
+    statsEl.innerHTML = [
+      ['Total entries', entries.length],
+      ['Today', todayCount],
+      ['AI calls', aiCount],
+      ['Top category', topCat],
+      ['Store size', size+'KB']
+    ].map(function(s){
+      return '<div style="background:var(--surface2);border-radius:8px;padding:8px 14px;text-align:center"><div style="font-size:18px;font-weight:700;color:var(--cyan)">'+s[1]+'</div><div style="font-size:10px;color:var(--text3)">'+s[0]+'</div></div>';
+    }).join('');
+  }
+
+  // Storage bar
+  var storEl = G('ledger-storage-bar');
+  if(storEl){
+    var maxEnt = parseInt(localStorage.getItem('twwp_ledger_max_entries')||'5000');
+    var pct = Math.min(100, Math.round(entries.length/maxEnt*100));
+    var barCol = pct>80?'var(--red)':pct>60?'var(--amber)':'var(--green)';
+    storEl.innerHTML = '<div style="display:flex;align-items:center;gap:10px"><div style="font-size:11px;color:var(--text3);white-space:nowrap">'+entries.length+' / '+maxEnt+' entries</div><div style="flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden"><div style="width:'+pct+'%;height:100%;background:'+barCol+';border-radius:3px"></div></div><div style="font-size:11px;color:var(--text3)">'+pct+'%</div></div>';
+  }
+
+  // Filter
+  var filtered = entries;
+  if(catFilter) filtered = filtered.filter(function(e){return e.category===catFilter;});
+  if(search) filtered = filtered.filter(function(e){return (e.detail||'').toLowerCase().includes(search)||(e.action||'').toLowerCase().includes(search);});
+  if(dateFilter) filtered = filtered.filter(function(e){return (e.date||'')===dateFilter;});
+
+  var wrap = G('ledger-table-wrap'); if(!wrap) return;
+  if(!filtered.length){
+    wrap.innerHTML = '<div class="cl cl-i"><span>i</span><div>No ledger entries match the current filters.</div></div>';
+    return;
+  }
+
+  var rows = filtered.slice(0,500).map(function(e){
+    var col = CAT_COLORS[e.category]||'#b2bec3';
+    var ts = e.ts ? new Date(e.ts).toLocaleString('en-NZ',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '—';
+    return '<tr>'+
+      '<td style="padding:6px 10px;font-size:11px;color:var(--text3);white-space:nowrap">'+ts+'</td>'+
+      '<td style="padding:6px 10px"><span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;background:'+col+'22;color:'+col+'">'+esc(e.category||'')+'</span></td>'+
+      '<td style="padding:6px 10px;font-size:11px;color:var(--text2)">'+esc(e.action||'')+'</td>'+
+      '<td style="padding:6px 10px;font-size:12px;color:var(--text)">'+esc(e.detail||'')+'</td>'+
+      '</tr>';
+  }).join('');
+
+  wrap.innerHTML = '<table style="width:100%;border-collapse:collapse">'+
+    '<thead><tr style="border-bottom:2px solid var(--border)">'+
+    '<th style="padding:6px 10px;font-size:10px;color:var(--text3);text-align:left">Time</th>'+
+    '<th style="padding:6px 10px;font-size:10px;color:var(--text3);text-align:left">Category</th>'+
+    '<th style="padding:6px 10px;font-size:10px;color:var(--text3);text-align:left">Action</th>'+
+    '<th style="padding:6px 10px;font-size:10px;color:var(--text3);text-align:left">Detail</th>'+
+    '</tr></thead><tbody>'+rows+'</tbody></table>'+
+    (filtered.length>500?'<div style="font-size:11px;color:var(--text3);padding:8px 0">Showing 500 of '+filtered.length+' entries — use filters to narrow.</div>':'');
+}
+
+function toggleLedger(){
+  ledgerEnabled = !ledgerEnabled;
+  var btn = G('ledger-pause-btn');
+  var badge = G('ledger-status-badge');
+  if(btn) btn.textContent = ledgerEnabled ? 'Pause' : 'Resume';
+  if(badge){
+    badge.textContent = ledgerEnabled ? '● Recording' : '○ Paused';
+    badge.style.background = ledgerEnabled ? 'rgba(46,204,113,0.15)' : 'rgba(180,180,180,0.15)';
+    badge.style.color = ledgerEnabled ? 'var(--green)' : 'var(--text3)';
+  }
+}
+
+function clearLedger(){
+  if(!confirm('Clear all ledger entries? This cannot be undone.'))return;
+  S.set('eventLedger', []);
+  showDbToast('Ledger cleared');
+  renderEventLedgerPage();
+}
+
+function clearLedgerFilters(){
+  var cat=G('ledger-filter-cat'); if(cat) cat.value='';
+  var srch=G('ledger-filter-search'); if(srch) srch.value='';
+  var dt=G('ledger-filter-date'); if(dt) dt.value='';
+  renderEventLedgerPage();
+}
+
+function exportLedger(){
+  var entries = S.get('eventLedger');
+  var rows = [['ts','date','category','action','detail']].concat(
+    entries.map(function(e){return [e.ts,e.date,e.category,e.action,(e.detail||'').replace(/,/g,';')];})
+  );
+  var csv = rows.map(function(r){return r.map(function(v){return '"'+(v||'')+'"';}).join(',');}).join('\n');
+  var a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'twwp-event-ledger-'+todayStr()+'.csv';
+  a.click();
+  showDbToast('Ledger exported');
 }
 
 // ── Tasks page — view + group toggles ────────────────────────────────────
@@ -7564,7 +8017,9 @@ async function aiCallJSON(prompt,imageB64,mediaType){
     var res=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify({model:'gpt-4o-mini',max_tokens:1500,messages:msgs})});
     var d=await res.json();raw=d.choices?.[0]?.message?.content?.trim()||'';
   }
-  return JSON.parse(raw.replace(/^```json\n?|```$/g,'').trim());
+  var parsed = JSON.parse(raw.replace(/^```json\n?|```$/g,'').trim());
+  logEvent('ai','ai_call','AI call via '+provider+' ('+prompt.slice(0,60).replace(/\n/g,' ')+'…)', {provider: provider});
+  return parsed;
 }
 
 async function aiExtractFromUrl(url){
@@ -10816,7 +11271,7 @@ function enforceRoleUI(){
   if(!role)return; // local login = full access, no restrictions
   if(role!=='admin'){
     // Hide admin-only nav items for staff and read-only users
-    ['ni-developer','ni-ai-integrations','ni-trustees'].forEach(function(id){var el=G(id);if(el)el.style.display='none';});
+    ['ni-developer','ni-ai-integrations','ni-trustees','ni-eventledger'].forEach(function(id){var el=G(id);if(el)el.style.display='none';});
   }
   if(role==='read-only'){
     // Banner so it's clear why write actions are blocked
