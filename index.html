@@ -2365,19 +2365,23 @@ function isLoggedIn(){try{return JSON.parse(sessionStorage.getItem(SK))?.ok===tr
 async function doLogin(){
   let u=G('lu').value.trim(),p=G('lp').value,c=getCreds();
   // Convenience: typing "admin" maps to the full admin email
-  if(u==='admin')u='admin@thewholeywaterproject.com';
+  if(u==='admin')u='thewholeywaterproject@gmail.com';
   const devMode=c.u===''&&c.p==='';
   const railsUrl=getIntegration('rails-api');
 
   if(railsUrl){
+    const loginUrl=railsUrl.replace(/\/$/,'')+'/auth/login';
+    console.log('[doLogin] email being sent:', u);
+    console.log('[doLogin] posting to:', loginUrl);
     G('le').textContent='Signing in...';
     try{
-      const res=await fetch(railsUrl.replace(/\/$/,'')+'/auth/login',{
+      const res=await fetch(loginUrl,{
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({email:u,password:p})
       });
       const data=await res.json();
+      console.log('[doLogin] response status:', res.status, '| body:', JSON.stringify(data));
       if(res.ok){
         // Store JWT so railsAPIRequest can use it immediately
         localStorage.setItem('twwp_rails_session',JSON.stringify({

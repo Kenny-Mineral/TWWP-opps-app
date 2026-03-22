@@ -63,7 +63,8 @@ Rails API at `https://twwp-ops-api.fly.dev`.
 - Wrong credentials from Rails: shows error, does **not** fall back to local
 - Rails unreachable (network error): falls back silently to local admin/twwp2024 check
 - Login field label changed from **Username** to **Email**; placeholder shows `admin@thewholeywaterproject.com`
-- Typing `admin` in the email field auto-expands to `admin@thewholeywaterproject.com`
+- Typing `admin` in the email field auto-expands to `thewholeywaterproject@gmail.com` (production admin email)
+- Temporary debug `console.log` in `doLogin()` — logs email sent, URL posted to, and full response status + body
 
 ---
 
