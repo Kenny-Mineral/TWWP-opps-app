@@ -1,10 +1,19 @@
 # Known Issues, Bugs, and Stubs
 
-Last updated: 2026-03-21 (reconciled from two chat sessions)
+Last updated: 2026-03-22 (session 7 — Sprint 1)
 
 ---
 
-## Fixed this session (session 6)
+## Fixed this session (session 7 — Sprint 1)
+
+- ✅ Duplicate `buildRptFormModal` / `closeRptFormMo` — already resolved; backlog entry was stale
+- ✅ Cloudflare Proxy URL had no Test button — added (AI & Integrations modal)
+- ✅ Rails API auto-save: logout (confirmed), report generation, 30-min timer — all wired
+- ⚠️ `sendRptChatMsg()` and `updateFinForm()` — still stubs, `console.warn` added for visibility
+
+---
+
+## Fixed in session 6
 
 - ✅ Connection status dot added to page header (top right, fixed position)
 - ✅ Status panel (slide-in from right, 6 services, individual Test buttons)
@@ -54,17 +63,17 @@ Last updated: 2026-03-21 (reconciled from two chat sessions)
 Active one: `...39mavd5fmtl0s688dcfa26gdq64sjvkd`
 Old broken one: `...nljl` — do not use.
 
-### A2 — Duplicate `buildRptFormModal`
-Two definitions, second wins. Low impact.
+### ✅ A2 — Duplicate `buildRptFormModal` — RESOLVED
+Already gone in current file. Backlog item was based on stale line numbers.
 
-### A3 — Duplicate `closeRptFormMo`
-Same. Low impact.
+### ✅ A3 — Duplicate `closeRptFormMo` — RESOLVED
+Same as A2.
 
-### A4 — `sendRptChatMsg()` empty
-Report AI chat does nothing.
+### A4 — `sendRptChatMsg()` stub
+Report AI chat does nothing. `console.warn` added — visible in DevTools. Full wiring pending.
 
-### A5 — `updateFinForm()` empty
-Financial form doesn't adapt to type.
+### A5 — `updateFinForm()` stub
+Financial form doesn't adapt to type. `console.warn` added — visible in DevTools. Full wiring pending.
 
 ### A6 — Contacts CSV import shows alert
 Not implemented.

@@ -8,14 +8,14 @@
 
 ## GROUP A — Bug Fixes
 
-- `[FIX]` Remove duplicate `buildRptFormModal` + `closeRptFormMo` functions
-- `[FIX]` Wire `sendRptChatMsg()` — empty function
-- `[FIX]` Wire `updateFinForm()` — empty function
+- ✅ `[FIX]` Remove duplicate `buildRptFormModal` + `closeRptFormMo` — already resolved in current file
+- `[FIX]` Wire `sendRptChatMsg()` — console.warn added, full wiring pending
+- `[FIX]` Wire `updateFinForm()` — console.warn added, full wiring pending
 - `[FIX]` Contacts CSV import — shows alert, not implemented
 - `[FIX]` Duplicate `dtk_I1` dev task seed
 - `[FIX]` Wire `callModelForFeature()` into autofill, AI helper, import wizard, classify
 - ✅ `[FIX]` CRITICAL — Rails API OAuth: oauth_states DB fix — DONE
-- `[FIX]` Add Test button for Cloudflare Proxy URL field in AI & Integrations
+- ✅ `[FIX]` Add Test button for Cloudflare Proxy URL field in AI & Integrations — DONE
 
 ---
 
@@ -139,7 +139,7 @@
 - ✅ Status panel slides in from right
 - ✅ 6 services: AI, Google Drive, Cloudflare Proxy, Rails API, Home Assistant, Local Storage
 - ✅ Individual Test buttons + Test All button
-- ⬜ Status dot Test button for Cloudflare Proxy URL
+- ✅ Test button for Cloudflare Proxy URL — DONE (AI & Integrations modal)
 
 ---
 
@@ -147,9 +147,9 @@
 
 - ✅ OAuth unblocked (Mar 22 2026)
 - ⬜ Activate silent sync on login if server data is newer
-- ⬜ Activate save to Rails API on logout
-- ⬜ Save to Rails API when report/receipt generated
-- ⬜ Auto-save to Rails API every 30 minutes
+- ✅ Save to Rails API on logout — DONE (was already wired)
+- ✅ Save to Rails API when report generated — DONE (previewRptFromForm)
+- ✅ Auto-save to Rails API every 30 minutes — DONE (setInterval in initApp)
 
 ---
 
@@ -215,8 +215,8 @@ branding, users and config — without touching the code.
 
 1. ✅ Rails API OAuth (GROUP N) — DONE
 2. ✅ Rails API connection + multi-device sync unblocked — DONE
-3. Wire Drive auto-save — logout, report generation, 30 min timer (GROUP N, R)
-4. Fix GROUP A bugs — duplicate functions, empty wired functions
+3. ✅ Wire Rails API auto-save — logout, report generation, 30 min timer (GROUP R) — DONE
+4. Fix GROUP A bugs — CSV import, sendRptChatMsg, updateFinForm (duplicates already resolved)
 5. GitHub Actions auto-deploy (GROUP S) — quick win, saves manual uploads
 6. Security & User Management (GROUP T) — proper login, roles, user DB
 7. Multi-Organisation Architecture (GROUP U) — org_id everywhere, org switcher
