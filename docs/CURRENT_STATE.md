@@ -44,6 +44,16 @@ Rails API at `https://twwp-ops-api.fly.dev`.
 
 ---
 
+## Sprint 2 changes (2026-03-22)
+
+### Task 4 — GitHub Actions auto-deploy (GROUP S)
+- `.github/workflows/deploy.yml` created
+- Triggers on every push to `main`, deploys repo root to GitHub Pages
+- Uses `actions/checkout@v4`, `configure-pages@v5`, `upload-pages-artifact@v3`, `deploy-pages@v4`
+- **One-time manual step required:** repo Settings → Pages → Source → set to **GitHub Actions**
+
+---
+
 ## Next up (Sprint 1 remaining)
 
 - Fix Contacts CSV import (shows alert — GROUP A)

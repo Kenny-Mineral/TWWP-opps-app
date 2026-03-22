@@ -155,8 +155,8 @@
 
 ## GROUP S — GitHub / Deployment
 
-- ⬜ GitHub Actions auto-deploy workflow (discussed, not implemented)
-  Would auto-deploy on every commit — removes manual upload step
+- ✅ GitHub Actions auto-deploy workflow — DONE (.github/workflows/deploy.yml)
+  Triggers on push to main. **Manual step:** Settings → Pages → Source → GitHub Actions
 
 ---
 
@@ -217,7 +217,7 @@ branding, users and config — without touching the code.
 2. ✅ Rails API connection + multi-device sync unblocked — DONE
 3. ✅ Wire Rails API auto-save — logout, report generation, 30 min timer (GROUP R) — DONE
 4. Fix GROUP A bugs — CSV import, sendRptChatMsg, updateFinForm (duplicates already resolved)
-5. GitHub Actions auto-deploy (GROUP S) — quick win, saves manual uploads
+5. ✅ GitHub Actions auto-deploy (GROUP S) — DONE
 6. Security & User Management (GROUP T) — proper login, roles, user DB
 7. Multi-Organisation Architecture (GROUP U) — org_id everywhere, org switcher
 8. Email Registry + Document Creation tabs (GROUP Z)

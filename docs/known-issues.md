@@ -9,6 +9,7 @@ Last updated: 2026-03-22 (session 7 — Sprint 1)
 - ✅ Duplicate `buildRptFormModal` / `closeRptFormMo` — already resolved; backlog entry was stale
 - ✅ Cloudflare Proxy URL had no Test button — added (AI & Integrations modal)
 - ✅ Rails API auto-save: logout (confirmed), report generation, 30-min timer — all wired
+- ✅ GitHub Actions auto-deploy — `.github/workflows/deploy.yml` created (need to flip Pages source to GitHub Actions in repo settings)
 - ⚠️ `sendRptChatMsg()` and `updateFinForm()` — still stubs, `console.warn` added for visibility
 
 ---
