@@ -1159,6 +1159,7 @@ tbody tr:hover{background:var(--surface2);}
     <div class="sb-item" id="ni-tasks" onclick="go('tasks',this)"><span class="sb-icon">&#9989;</span><span class="sb-lbl">Tasks</span></div>
     <div class="sb-item" id="ni-rd" onclick="go('rd',this)"><span class="sb-icon">&#128300;</span><span class="sb-lbl">R&amp;D</span></div>
     <div class="sb-item" id="ni-trustees" onclick="go('trustees',this)"><span class="sb-icon">&#9878;</span><span class="sb-lbl">Trustees / Legal</span><span class="sb-badge hid" id="trusteeBadge">0</span></div>
+    <div class="sb-item" id="ni-docbuilder" onclick="go('docbuilder',this)"><span class="sb-icon">&#128196;</span><span class="sb-lbl">Doc Builder</span></div>
     <div class="sb-sect">Finance</div>
     <div class="sb-item" id="ni-financials" onclick="go('financials',this)"><span class="sb-icon">&#128180;</span><span class="sb-lbl">Financials</span></div>
     <div class="sb-item" id="ni-shops" onclick="go('shops',this)"><span class="sb-icon">&#127963;</span><span class="sb-lbl">Organisations</span></div>
@@ -1773,6 +1774,25 @@ tbody tr:hover{background:var(--surface2);}
   </div>
 </div>
 
+<!-- ====== DOC BUILDER PAGE ====== -->
+<div class="page" id="page-docbuilder">
+  <div class="ph">
+    <div><div class="ph-ey">Tools</div><div class="ph-title">Doc Builder</div></div>
+  </div>
+  <div class="pb">
+    <div class="helper-bubble"><div class="hb-icon">&#128196;</div><div><strong>Doc Builder</strong> generates legal and operational documents prefilled from your app data. Pick a template, fill in the details, preview, then download as PDF or upload to Drive.</div></div>
+    <div class="pills" id="dbTemplatePills" style="margin-bottom:20px">
+      <div class="pill on" data-tmpl="host-agreement" onclick="selectDbTemplate(this)">Host Agreement</div>
+      <div class="pill" data-tmpl="reimbursement-receipt" onclick="selectDbTemplate(this)">Reimbursement Receipt</div>
+      <div class="pill" data-tmpl="waterhouse-report" onclick="selectDbTemplate(this)">Waterhouse Report</div>
+    </div>
+    <div id="dbForm" style="max-width:600px"></div>
+    <div style="margin-top:20px">
+      <button class="btn btn-p" onclick="previewDocBuilder()">Preview Document</button>
+    </div>
+  </div>
+</div>
+
 <!-- ====== FINANCIALS PAGE ====== -->
 <div class="page" id="page-financials">
   <div class="ph">
@@ -2095,7 +2115,10 @@ tbody tr:hover{background:var(--surface2);}
     <!-- KNOWLEDGE BASE tab -->
     <div id="dev-tab-kb" style="display:none">
       <div class="helper-bubble" style="margin-bottom:16px"><div class="hb-icon">&#128218;</div><div><strong>Knowledge Base</strong> is a living staff handbook fed into every AI call. Write SOPs, FAQs, glossary entries, and procedures here. Toggle <strong>Always Inject</strong> to include an entry in every AI request automatically — the AI will read it before answering anything.</div></div>
-      <div style="margin-bottom:16px"><button class="btn btn-p btn-sm" onclick="openKBMo()">+ Add Entry</button></div>
+      <div style="margin-bottom:16px;display:flex;gap:8px">
+        <button class="btn btn-p btn-sm" onclick="openKBMo()">+ Add Entry</button>
+        <button class="btn btn-s btn-sm" onclick="openKBImportDocsMo()">Import from Docs</button>
+      </div>
       <div id="kbList"></div>
     </div>
 
@@ -2118,6 +2141,35 @@ tbody tr:hover{background:var(--surface2);}
     <div class="md-f">
       <button class="btn btn-g btn-sm" onclick="CM('kbMo')">Cancel</button>
       <button class="btn btn-p btn-sm" onclick="saveKBEntry()">Save Entry</button>
+    </div>
+  </div>
+</div>
+
+<!-- DOC BUILDER PREVIEW MODAL -->
+<div class="mo" id="docBuilderPreviewMo">
+  <div class="md" style="max-width:740px;width:100%;height:90vh;display:flex;flex-direction:column">
+    <div class="md-h"><div class="md-t">// DOCUMENT PREVIEW</div><button class="md-x" onclick="CM('docBuilderPreviewMo')">x</button></div>
+    <iframe id="docBuilderFrame" style="flex:1;border:none;width:100%;background:#fff"></iframe>
+    <div class="md-f">
+      <button class="btn btn-g btn-sm" onclick="CM('docBuilderPreviewMo')">Close</button>
+      <button class="btn btn-s btn-sm" onclick="saveDocBuilderToDocs()">Save to Docs</button>
+      <button class="btn btn-s btn-sm" id="driveUploadBtn" onclick="uploadDocBuilderToDrive(this)">Upload to Drive</button>
+      <button class="btn btn-p btn-sm" onclick="printDocBuilder()">&#8595; Download PDF</button>
+    </div>
+  </div>
+</div>
+
+<!-- KB IMPORT FROM DOCS MODAL -->
+<div class="mo" id="kbImportDocsMo">
+  <div class="md" style="max-width:580px">
+    <div class="md-h"><div class="md-t">// IMPORT DOCS TO KNOWLEDGE BASE</div><button class="md-x" onclick="CM('kbImportDocsMo')">x</button></div>
+    <div class="md-b">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:14px">Select documents to import. Each document's title and description become a Knowledge Base entry. Documents without a description are skipped.</div>
+      <div id="kbImportDocList" style="max-height:380px;overflow-y:auto;display:flex;flex-direction:column;gap:8px"></div>
+    </div>
+    <div class="md-f">
+      <button class="btn btn-g btn-sm" onclick="CM('kbImportDocsMo')">Cancel</button>
+      <button class="btn btn-p btn-sm" onclick="kbImportSelectedDocs()">Import Selected</button>
     </div>
   </div>
 </div>
@@ -2612,6 +2664,7 @@ function go(page,el){
   if(page==='contacts')renderContacts();
   if(page==='projects')renderProjects();
   if(page==='rd')renderRD();
+  if(page==='docbuilder')renderDocBuilder();
   if(page==='trustees'){renderTrusteeSummary();renderLegal();renderWorkflowFlags('trustees','trusteesWorkflowFlags');}
   if(page==='financials'){seedServices();renderFinancials();}
   if(page==='shops'){renderOrgsPage();}
@@ -7968,6 +8021,7 @@ function renderDocs(){
     html+='<div style="display:flex;gap:6px;margin-top:2px">';
     html+='<button class="btn btn-g btn-xs" data-did="'+esc(doc.id)+'" onclick="event.stopPropagation();editDoc(this.dataset.did)">Edit</button>';
     if(doc.url)html+='<a href="'+esc(doc.url)+'" target="_blank" class="btn btn-s btn-xs" onclick="event.stopPropagation()">&#8599; Open</a>';
+    html+='<button class="btn btn-s btn-xs" data-did="'+esc(doc.id)+'" onclick="event.stopPropagation();docToKB(this.dataset.did)">&#8594; KB</button>';
     html+='<button class="btn btn-d btn-xs" data-did="'+esc(doc.id)+'" onclick="event.stopPropagation();deleteDoc(this.dataset.did)">Del</button>';
     html+='</div></div>';
   });
@@ -8122,6 +8176,30 @@ async function handleDocFile(input){
       var result=await aiCallJSON(prompt,null,null);
       populateDocFromAI(result,file.name);
       if(statusEl)statusEl.textContent='✓ AI extracted document details — review and adjust before saving.';
+    } else if(file.name.toLowerCase().endsWith('.docx')||file.type==='application/vnd.openxmlformats-officedocument.wordprocessingml.document'){
+      // Load mammoth.js dynamically, extract text from Word document
+      if(!window.mammoth){
+        if(statusEl)statusEl.textContent='Loading Word doc parser...';
+        await new Promise(function(res,rej){
+          var s=document.createElement('script');
+          s.src='https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js';
+          s.onload=res;s.onerror=function(){rej(new Error('Could not load mammoth.js — check your internet connection.'));};
+          document.head.appendChild(s);
+        });
+      }
+      if(statusEl)statusEl.textContent='Extracting text from Word document...';
+      await new Promise(function(res){reader.onload=res;reader.readAsArrayBuffer(file);});
+      var mammothResult=await mammoth.extractRawText({arrayBuffer:reader.result});
+      var text=(mammothResult.value||'').slice(0,4000);
+      if(!text.trim()){
+        if(statusEl)statusEl.textContent='Could not extract text from .docx — fill in details manually.';
+        return;
+      }
+      if(statusEl)statusEl.textContent='AI is reading Word document...';
+      var prompt='Read this document text and respond ONLY with JSON (no markdown):\n{"title":"document title","type":"document type e.g. Constitution, Policy, Contract, Agreement, Deed, Minutes, Procedure, Report, Waiver, Other","desc":"2-3 sentence summary of what this document covers","tags":"comma-separated relevant tags","entity":"organisation this belongs to if mentioned"}\n\nDocument text:\n'+text;
+      var aiResult=await aiCallJSON(prompt,null,null);
+      populateDocFromAI(aiResult,file.name);
+      if(statusEl)statusEl.textContent='✓ AI extracted document details from Word file — review and adjust before saving.';
     } else {
       // Unsupported type — just set the filename
       if(statusEl)statusEl.textContent='File type not supported for AI reading — fill in details manually.';
@@ -9733,6 +9811,261 @@ async function saveToRailsAPI(){
     console.error('Rails sync save failed:', e.message);
     return false;
   }
+}
+
+// ============================================================
+// DOC BUILDER
+// ============================================================
+var dbTemplate='host-agreement';
+var dbPreviewHTML='';
+
+function renderDocBuilder(){
+  document.querySelectorAll('#dbTemplatePills .pill').forEach(function(p){
+    p.classList.toggle('on',p.dataset.tmpl===dbTemplate);
+  });
+  renderDbForm();
+}
+
+function selectDbTemplate(el){
+  document.querySelectorAll('#dbTemplatePills .pill').forEach(function(p){p.classList.remove('on');});
+  el.classList.add('on');
+  dbTemplate=el.dataset.tmpl;
+  renderDbForm();
+}
+
+function gv(id){var el=G(id);return el?el.value.trim():'';}
+
+function renderDbForm(){
+  var el=G('dbForm');if(!el)return;
+  var whs=S.get('locations').filter(function(l){return l.type==='Waterhouse';});
+  var contacts=S.get('contacts');
+  var whOpts='<option value="">-- Select Waterhouse --</option>'+whs.map(function(w){return '<option value="'+esc(w.id)+'">'+esc(w.name)+'</option>';}).join('');
+  var ctOpts='<option value="">-- Select Contact --</option>'+contacts.map(function(c){return '<option value="'+esc(c.id)+'">'+esc(c.name+(c.type?' ('+c.type+')':''))+'</option>';}).join('');
+  var today=new Date().toISOString().split('T')[0];
+  var html='';
+  if(dbTemplate==='host-agreement'){
+    html+='<div class="fg"><label>Host / Guardian</label><select id="db-contact">'+ctOpts+'</select></div>';
+    html+='<div class="fg"><label>Waterhouse</label><select id="db-wh" onchange="dbWhChange()">'+whOpts+'</select></div>';
+    html+='<div class="fg"><label>Waterhouse Address <span style="font-weight:400;color:var(--text3)">(auto-filled from selection or type manually)</span></label><input type="text" id="db-wh-addr" placeholder="e.g. 14 River Rd, Auckland"></div>';
+    html+='<div class="fr"><div class="fg"><label>Agreement Date</label><input type="date" id="db-date" value="'+today+'"></div><div class="fg"><label>Start Date</label><input type="date" id="db-start-date" value="'+today+'"></div></div>';
+    html+='<div class="fg"><label>Monthly Reimbursement (NZD)</label><input type="number" id="db-amount" step="0.01" placeholder="50.00"></div>';
+  } else if(dbTemplate==='reimbursement-receipt'){
+    html+='<div class="fg"><label>Payee</label><select id="db-contact">'+ctOpts+'</select></div>';
+    html+='<div class="fg"><label>Description</label><input type="text" id="db-desc" placeholder="e.g. Power reimbursement — WH1 January"></div>';
+    html+='<div class="fr"><div class="fg"><label>Date</label><input type="date" id="db-date" value="'+today+'"></div><div class="fg"><label>Amount (NZD)</label><input type="number" id="db-amount" step="0.01" placeholder="0.00"></div></div>';
+    html+='<div class="fg"><label>Receipt / Reference #</label><input type="text" id="db-ref" placeholder="e.g. REC-2026-001"></div>';
+    html+='<div class="fg"><label>Approved By</label><input type="text" id="db-approved-by" value="Kendall"></div>';
+  } else if(dbTemplate==='waterhouse-report'){
+    html+='<div class="fg"><label>Waterhouse</label><select id="db-wh">'+whOpts+'</select></div>';
+    html+='<div class="fr"><div class="fg"><label>Report Date</label><input type="date" id="db-date" value="'+today+'"></div><div class="fg"><label>Technician</label><input type="text" id="db-tech" placeholder="e.g. Kendall"></div></div>';
+    html+='<div class="fg" style="margin-top:4px"><label>Water Quality Readings <span style="font-weight:400;color:var(--text3)">(all optional)</span></label></div>';
+    html+='<div class="fr"><div class="fg"><label style="font-size:10px">TDS Inlet (ppm)</label><input type="number" id="db-tds-in"></div><div class="fg"><label style="font-size:10px">TDS Post-RO (ppm)</label><input type="number" id="db-tds-post"></div><div class="fg"><label style="font-size:10px">TDS Final (ppm)</label><input type="number" id="db-tds-final"></div></div>';
+    html+='<div class="fr"><div class="fg"><label style="font-size:10px">pH</label><input type="number" id="db-ph" step="0.1"></div><div class="fg"><label style="font-size:10px">ORP (mV)</label><input type="number" id="db-orp"></div></div>';
+    html+='<div class="fg"><label>Maintenance Notes</label><textarea id="db-notes" rows="3" placeholder="Describe what was done, parts replaced, issues found..."></textarea></div>';
+  }
+  el.innerHTML=html;
+}
+
+function dbWhChange(){
+  var wh=S.find('locations',gv('db-wh'));
+  var addrEl=G('db-wh-addr');
+  if(wh&&addrEl&&!addrEl.value)addrEl.value=wh.addr||wh.address||'';
+}
+
+function previewDocBuilder(){
+  var baseCSS='<style>body{font-family:Georgia,serif;color:#111;max-width:700px;margin:40px auto;font-size:13px;line-height:1.7;padding:0 20px}h1{font-size:18px;text-align:center;margin-bottom:4px}h2{font-size:13px;font-weight:bold;margin-top:24px;margin-bottom:8px;border-bottom:1px solid #ddd;padding-bottom:3px}.hdr{text-align:center;margin-bottom:28px}.meta{font-size:11px;color:#555;text-align:center;margin-bottom:22px}p{margin:0 0 10px}.tbl{border-collapse:collapse;width:100%;margin:12px 0;font-size:12px}.tbl td,.tbl th{border:1px solid #ccc;padding:6px 10px;text-align:left}.tbl th{background:#f5f5f5;font-weight:bold;width:38%}.sig{margin-top:48px;display:flex;gap:60px}.sig-block{flex:1}.sig-line{border-bottom:1px solid #555;margin-bottom:4px;height:32px}.sig-lbl{font-size:10px;color:#666}footer{margin-top:36px;font-size:10px;color:#888;text-align:center;border-top:1px solid #ddd;padding-top:8px}</style>';
+  var today=new Date().toLocaleDateString('en-NZ',{day:'numeric',month:'long',year:'numeric'});
+  var html='<!DOCTYPE html><html><head><meta charset="utf-8">'+baseCSS+'</head><body>';
+  if(dbTemplate==='host-agreement'){
+    var contact=S.find('contacts',gv('db-contact'))||{};
+    var wh=S.find('locations',gv('db-wh'))||{};
+    var hostName=contact.name||gv('db-contact')||'[Host Name]';
+    var hostEmail=contact.email||'';
+    var whName=wh.name||gv('db-wh')||'[Waterhouse]';
+    var whAddr=gv('db-wh-addr')||wh.addr||wh.address||'[Address]';
+    var date=gv('db-date')||today;
+    var startDate=gv('db-start-date')||'TBC';
+    var amount=gv('db-amount')||'[amount]';
+    html+='<div class="hdr"><div style="font-size:11px;color:#888;margin-bottom:5px">The Wholey Water Project</div><h1>Waterhouse Host Agreement</h1><div style="font-size:11px;color:#666">Private Membership Association</div></div>';
+    html+='<div class="meta">Agreement Date: <strong>'+date+'</strong> &nbsp;&bull;&nbsp; Start Date: <strong>'+startDate+'</strong></div>';
+    html+='<h2>1. Parties</h2><p>This agreement is between <strong>The Wholey Water Project PMA</strong> (&ldquo;TWWP&rdquo;) and <strong>'+hostName+'</strong>'+(hostEmail?' ('+hostEmail+')':'')+'(&ldquo;the Host&rdquo;).</p>';
+    html+='<h2>2. Waterhouse Location</h2><p>The Host agrees to host a TWWP reverse osmosis water station (&ldquo;Waterhouse&rdquo;, known as <strong>'+whName+'</strong>) at: <strong>'+whAddr+'</strong>.</p>';
+    html+='<h2>3. Host Responsibilities</h2><p>The Host agrees to: (a) keep the Waterhouse premises safe and accessible to TWWP members during reasonable hours; (b) promptly report any faults or damage to TWWP; (c) not tamper with or modify the equipment without TWWP consent; (d) allow TWWP technicians reasonable access for installation and maintenance.</p>';
+    html+='<h2>4. TWWP Responsibilities</h2><p>TWWP agrees to: (a) maintain the equipment in good working order; (b) reimburse the Host NZD <strong>'+amount+'</strong> per month for power consumption and goodwill; (c) carry relevant liability insurance covering the equipment; (d) remove the equipment upon request with 30 days written notice.</p>';
+    html+='<h2>5. Liability</h2><p>TWWP carries liability for the equipment and its operation. The Host is not responsible for equipment failure or water quality issues arising from the Waterhouse system.</p>';
+    html+='<h2>6. Term &amp; Termination</h2><p>This agreement commences on the Start Date and continues until terminated by either party giving 30 days written notice to thewholeywaterproject@gmail.com.</p>';
+    html+='<div class="sig"><div class="sig-block"><div class="sig-line"></div><div class="sig-lbl">Host &mdash; '+hostName+'</div></div><div class="sig-block"><div class="sig-line"></div><div class="sig-lbl">TWWP Representative</div></div></div>';
+  } else if(dbTemplate==='reimbursement-receipt'){
+    var contact=S.find('contacts',gv('db-contact'))||{};
+    var payee=contact.name||gv('db-contact')||'[Payee]';
+    var payeeEmail=contact.email||'';
+    var desc=gv('db-desc')||'Reimbursement';
+    var date=gv('db-date')||today;
+    var amount=gv('db-amount')||'0.00';
+    var ref=gv('db-ref')||('REC-'+Date.now().toString().slice(-6));
+    var approvedBy=gv('db-approved-by')||'Kendall';
+    html+='<div class="hdr"><div style="font-size:11px;color:#888;margin-bottom:5px">The Wholey Water Project</div><h1>Reimbursement Receipt</h1></div>';
+    html+='<div class="meta">Ref: <strong>'+ref+'</strong> &nbsp;&bull;&nbsp; Date: <strong>'+date+'</strong></div>';
+    html+='<table class="tbl"><tbody>';
+    html+='<tr><th>Payee</th><td>'+payee+(payeeEmail?' &lt;'+payeeEmail+'&gt;':'')+'</td></tr>';
+    html+='<tr><th>Description</th><td>'+desc+'</td></tr>';
+    html+='<tr><th>Amount</th><td><strong>NZD '+amount+'</strong></td></tr>';
+    html+='<tr><th>Payment Method</th><td>Bank Transfer</td></tr>';
+    html+='<tr><th>Approved By</th><td>'+approvedBy+'</td></tr>';
+    html+='</tbody></table>';
+    html+='<div class="sig"><div class="sig-block"><div class="sig-line"></div><div class="sig-lbl">Payee Acknowledgment &mdash; '+payee+'</div></div><div class="sig-block"><div class="sig-line"></div><div class="sig-lbl">Authorised By &mdash; '+approvedBy+'</div></div></div>';
+  } else if(dbTemplate==='waterhouse-report'){
+    var wh=S.find('locations',gv('db-wh'))||{};
+    var whName=wh.name||gv('db-wh')||'[Waterhouse]';
+    var date=gv('db-date')||today;
+    var tech=gv('db-tech')||'Kendall';
+    var tdsIn=gv('db-tds-in');var tdsPost=gv('db-tds-post');var tdsFinal=gv('db-tds-final');
+    var ph=gv('db-ph');var orp=gv('db-orp');
+    var notes=gv('db-notes')||'No issues noted.';
+    html+='<div class="hdr"><div style="font-size:11px;color:#888;margin-bottom:5px">The Wholey Water Project</div><h1>Waterhouse Maintenance Report</h1><div style="font-size:11px;color:#666">'+whName+'</div></div>';
+    html+='<div class="meta">Date: <strong>'+date+'</strong> &nbsp;&bull;&nbsp; Technician: <strong>'+tech+'</strong></div>';
+    html+='<h2>Water Quality Readings</h2>';
+    html+='<table class="tbl"><thead><tr><th style="width:40%">Parameter</th><th>Reading</th><th>Target</th></tr></thead><tbody>';
+    if(tdsIn)html+='<tr><td>TDS Inlet</td><td>'+tdsIn+' ppm</td><td>Municipal source level</td></tr>';
+    if(tdsPost)html+='<tr><td>TDS Post-RO</td><td>'+tdsPost+' ppm</td><td>&lt; 30 ppm</td></tr>';
+    if(tdsFinal)html+='<tr><td>TDS Final</td><td>'+tdsFinal+' ppm</td><td>30&ndash;80 ppm</td></tr>';
+    if(ph)html+='<tr><td>pH</td><td>'+ph+'</td><td>7.0&ndash;7.5</td></tr>';
+    if(orp)html+='<tr><td>ORP</td><td>'+orp+' mV</td><td>&gt; 300 mV</td></tr>';
+    if(!tdsIn&&!tdsPost&&!tdsFinal&&!ph&&!orp)html+='<tr><td colspan="3" style="text-align:center;color:#888">No readings recorded</td></tr>';
+    html+='</tbody></table>';
+    html+='<h2>Maintenance Notes</h2><p>'+notes.replace(/\n/g,'<br>')+'</p>';
+    html+='<div class="sig"><div class="sig-block"><div class="sig-line"></div><div class="sig-lbl">Technician &mdash; '+tech+'</div></div></div>';
+  }
+  html+='<footer>The Wholey Water Project PMA &bull; thewholeywaterproject@gmail.com &bull; Generated '+today+'</footer></body></html>';
+  dbPreviewHTML=html;
+  var frame=G('docBuilderFrame');
+  if(frame)frame.srcdoc=html;
+  OM('docBuilderPreviewMo');
+}
+
+function printDocBuilder(){
+  var w=window.open('','_blank');
+  if(!w){alert('Allow pop-ups to download the PDF.');return;}
+  w.document.write(dbPreviewHTML);
+  w.document.close();
+  w.focus();
+  setTimeout(function(){w.print();},500);
+}
+
+function saveDocBuilderToDocs(){
+  var labels={'host-agreement':'Host Agreement','reimbursement-receipt':'Reimbursement Receipt','waterhouse-report':'Waterhouse Report'};
+  var typeMap={'host-agreement':'Agreement','reimbursement-receipt':'Other','waterhouse-report':'Report'};
+  var label=labels[dbTemplate]||'Document';
+  var contact=S.find('contacts',gv('db-contact'))||{};
+  var wh=S.find('locations',gv('db-wh'))||{};
+  var extra=contact.name?(' — '+contact.name):(wh.name?' — '+wh.name:'');
+  S.upsert('docs',{
+    id:uid(),title:label+extra,type:typeMap[dbTemplate]||'Other',
+    status:'draft',version:'v1.0',
+    date:gv('db-date')||new Date().toISOString().split('T')[0],
+    owner:'Kendall',entity:'TWWP PMA',
+    desc:'Generated using Doc Builder ('+label+' template).',
+    tags:'doc-builder,generated',url:'',filename:'',notes:'',
+    created:new Date().toISOString(),updated:new Date().toISOString()
+  });
+  alert('"'+label+extra+'" saved to Documents library.');
+}
+
+async function uploadDocBuilderToDrive(btn){
+  if(!isRailsConnected()){
+    alert('Not connected to Rails API.\n\nTo enable Drive upload:\n1. Add your Rails API URL in AI & Integrations\n2. Log in — this stores your Bearer token\n3. The Rails API will forward the file to Google Drive');
+    return;
+  }
+  if(btn){btn.disabled=true;btn.textContent='Uploading...';}
+  try{
+    var apiUrl=getIntegration('rails-api').replace(/\/$/,'');
+    var labels={'host-agreement':'host-agreement','reimbursement-receipt':'reimbursement-receipt','waterhouse-report':'waterhouse-report'};
+    var fileName=(labels[dbTemplate]||dbTemplate)+'-'+new Date().toISOString().split('T')[0]+'.html';
+    var blob=new Blob([dbPreviewHTML],{type:'text/html'});
+    var fd=new FormData();fd.append('file',blob,fileName);fd.append('folder','TWWP Documents');
+    var session=getRailsSession();
+    var res=await fetch(apiUrl+'/api/drive/upload',{
+      method:'POST',
+      headers:{'Authorization':'Bearer '+session.token},
+      body:fd
+    });
+    var data=await res.json();
+    if(res.ok){
+      if(btn){btn.textContent='✓ Uploaded';}
+      var link=data.url?(' <a href="'+data.url+'" target="_blank" style="color:var(--cyan)">Open in Drive</a>'):'';
+      showDbToast('Uploaded to Drive successfully.'+link);
+    } else {
+      throw new Error(data.error||'Upload failed (HTTP '+res.status+')');
+    }
+  }catch(e){
+    if(btn){btn.disabled=false;btn.textContent='Upload to Drive';}
+    showDbToast('Drive upload failed: '+e.message,true);
+  }
+}
+
+function showDbToast(msg,isError){
+  var t=G('dbToast');
+  if(!t){t=document.createElement('div');t.id='dbToast';t.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:8px;font-size:13px;z-index:99999;transition:opacity .3s;max-width:400px;text-align:center';document.body.appendChild(t);}
+  t.style.background=isError?'var(--red)':'var(--green)';t.style.color='#fff';t.style.opacity='1';
+  t.innerHTML=msg;
+  clearTimeout(t._to);t._to=setTimeout(function(){t.style.opacity='0';},4000);
+}
+
+function docToKB(id){
+  var doc=S.find('docs',id);if(!doc)return;
+  if(!doc.desc){alert('This document has no description to import. Add a description first.');return;}
+  var tags=(doc.tags||'').split(',').map(function(t){return t.trim();}).filter(Boolean);
+  S.upsert('knowledgeBase',{
+    id:uid(),title:doc.title,
+    body:(doc.type?'Type: '+doc.type+'\n\n':'')+doc.desc+(doc.notes?'\n\nNotes: '+doc.notes:''),
+    tags:tags,always_inject:false,
+    created:new Date().toISOString(),updated:new Date().toISOString()
+  });
+  alert('"'+doc.title+'" added to Knowledge Base.');
+}
+
+// ============================================================
+// KB IMPORT FROM DOCS
+// ============================================================
+function openKBImportDocsMo(){
+  var docs=S.get('docs');
+  var el=G('kbImportDocList');if(!el)return;
+  if(!docs.length){
+    el.innerHTML='<div class="cl cl-i"><span>i</span><div>No documents in the library yet. Add documents first.</div></div>';
+    OM('kbImportDocsMo');return;
+  }
+  var sorted=docs.slice().sort(function(a,b){return (a.title||'').localeCompare(b.title||'');});
+  var html='';
+  sorted.forEach(function(doc){
+    var hasDesc=!!(doc.desc&&doc.desc.trim());
+    html+='<label style="display:flex;gap:12px;align-items:flex-start;padding:10px 12px;background:var(--surface2);border-radius:8px;cursor:'+(hasDesc?'pointer':'default')+';border:1px solid var(--border);opacity:'+(hasDesc?'1':'0.45')+'">';
+    html+='<input type="checkbox" class="kb-import-check" value="'+esc(doc.id)+'" style="margin-top:2px;flex-shrink:0"'+(hasDesc?'':' disabled')+'>';
+    html+='<div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:700;color:var(--text)">'+esc(doc.title)+'</div>';
+    if(doc.type)html+='<div style="font-size:10px;color:var(--cyan);margin-bottom:2px">'+esc(doc.type)+'</div>';
+    html+='<div style="font-size:11px;color:var(--text3)">'+esc(hasDesc?doc.desc.slice(0,120):'No description — add one in the Document Library first.')+'</div></div></label>';
+  });
+  el.innerHTML=html;
+  OM('kbImportDocsMo');
+}
+
+function kbImportSelectedDocs(){
+  var checks=document.querySelectorAll('.kb-import-check:checked');
+  if(!checks.length){alert('Select at least one document.');return;}
+  var imported=0;
+  checks.forEach(function(cb){
+    var doc=S.find('docs',cb.value);if(!doc||!doc.desc)return;
+    var tags=(doc.tags||'').split(',').map(function(t){return t.trim();}).filter(Boolean);
+    S.upsert('knowledgeBase',{
+      id:uid(),title:doc.title,
+      body:(doc.type?'Type: '+doc.type+'\n\n':'')+doc.desc+(doc.notes?'\n\nNotes: '+doc.notes:''),
+      tags:tags,always_inject:false,
+      created:new Date().toISOString(),updated:new Date().toISOString()
+    });
+    imported++;
+  });
+  CM('kbImportDocsMo');
+  renderKB();
+  alert(imported+' document'+(imported!==1?'s':'')+' imported to Knowledge Base.');
 }
 
 function enforceRoleUI(){

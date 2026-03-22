@@ -9,6 +9,7 @@
 ## GROUP A — Bug Fixes
 
 - ✅ `[FIX]` Remove duplicate `buildRptFormModal` + `closeRptFormMo` — already resolved in current file
+- ✅ `[FIX]` .docx AI extraction — DONE (session 10): mammoth.js loaded dynamically, text passed to aiCallJSON
 - ✅ `[FIX]` Wire `sendRptChatMsg()` — DONE (session 9): all-provider AI chat with report context + KB injection
 - ✅ `[FIX]` Wire `updateFinForm()` — DONE (session 9): contact label/placeholder + category + waterhouse row adapt to type
 - ✅ `[FIX]` Contacts CSV import — DONE (session 9): file picker, parseCsvText, email dedup, confirm dialog

@@ -1,6 +1,6 @@
 # TWWP Ops App — Current State
 
-**Last updated:** 2026-03-23 (session 9)
+**Last updated:** 2026-03-23 (session 10)
 
 ---
 
@@ -139,10 +139,45 @@ Rails API at `https://twwp-ops-api.fly.dev`.
 
 ---
 
+---
+
+## Session 10 changes (2026-03-23)
+
+### Task A — Word doc (.docx) extraction with mammoth.js
+- `handleDocFile()` now handles `.docx` files
+- Dynamically loads mammoth.js from CDN (`cdnjs.cloudflare.com/libs/mammoth/1.6.0`) on first use
+- Extracts raw text via `mammoth.extractRawText()`, passes up to 4000 chars to `aiCallJSON()` with same extraction prompt as text files
+- Status line guides user through loading → extracting → AI reading → result
+- **"→ KB" button** added to every document card — creates a KB entry from title + description
+
+### Task B — Doc Builder page
+- New sidebar item "Doc Builder" under Trustees/Legal (`ni-docbuilder`, `page-docbuilder`)
+- Three templates: **Host Agreement**, **Reimbursement Receipt**, **Waterhouse Report**
+- Form populates from live app data: contact picker, waterhouse picker, date, amounts, readings
+- `renderDbForm()` renders the correct fields per template; `dbWhChange()` auto-fills address from waterhouse record
+- `previewDocBuilder()` renders a print-quality HTML document with TWWP branding into an iframe modal (`docBuilderPreviewMo`)
+- `printDocBuilder()` opens doc in new window and calls `window.print()` for PDF download
+- `saveDocBuilderToDocs()` saves the generated document to the Documents library
+
+### Task C — Upload to Drive via Rails
+- `uploadDocBuilderToDrive(btn)` in the preview modal footer
+- POSTs HTML file to `{railsApiUrl}/api/drive/upload` with Bearer token
+- Shows `showDbToast()` — green on success (with Drive link if returned), red on failure
+- If Rails not connected: alert explains the three setup steps
+- Note: `/api/drive/upload` endpoint needs to be added to the Rails API
+
+### Task D — KB import from Document Library
+- "Import from Docs" button in the Knowledge Base tab header
+- `openKBImportDocsMo()` lists all docs with checkboxes; docs without descriptions are disabled + greyed
+- `kbImportSelectedDocs()` creates one KB entry per selected doc: title + type + description + notes as body, tags carried over, `always_inject: false`
+
+---
+
 ## Next up
 
 1. Flip GitHub Pages source to GitHub Actions (manual step: repo Settings → Pages → Source → GitHub Actions)
-2. Resolve Google OAuth `drive.file` scope (external blocker — see known-issues A1)
-3. `dtk_I1` duplicate seed (minor)
-4. User management page (admin only) — invite, deactivate, change role
-5. `callModelForFeature()` — wire into autofill and import wizard
+2. Add `/api/drive/upload` endpoint to Rails API (accepts multipart HTML, uploads to Drive)
+3. Resolve Google OAuth `drive.file` scope (external blocker — see known-issues A1)
+4. `dtk_I1` duplicate seed (minor)
+5. User management page (admin only) — invite, deactivate, change role
+6. `callModelForFeature()` — wire into autofill and import wizard

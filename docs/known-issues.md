@@ -1,6 +1,6 @@
 # Known Issues, Bugs, and Stubs
 
-Last updated: 2026-03-23 (session 9)
+Last updated: 2026-03-23 (session 10)
 
 ---
 
@@ -90,6 +90,9 @@ Financial form now adapts on type change: contact label and placeholder update (
 ### ✅ A6 — Contacts CSV import — FIXED (session 9)
 `impContactsCSV()` now opens a file picker, parses CSV via `parseCsvText()`, auto-maps columns (name, email, phone, type, org, addr, tags, notes), deduplicates by email, and imports with a confirmation dialog.
 
+### A8 — Rails `/api/drive/upload` endpoint not yet built
+Doc Builder "Upload to Drive" button POSTs to `{railsApiUrl}/api/drive/upload` — frontend wired but Rails endpoint doesn't exist yet. Needs: accept multipart file, authenticate with Google Drive, upload HTML, return `{url: ...}`. Blocked by OAuth drive.file scope issue (A1).
+
 ### A7 — `dtk_I1` seeded twice
 Duplicate dev task ID.
 
@@ -103,6 +106,7 @@ Duplicate dev task ID.
 | Deployments → inventory auto-move | Checkbox not built |
 | Shop Destinations management UI | Store exists, no UI |
 | ✅ Report chat | Wired (session 9) |
+| ✅ .docx extraction | mammoth.js (session 10) |
 | Tap-Map sync | JSON export works, Rails endpoint not built |
 | HA test connection | Fields saved, no test call |
 | Slack / Zapier webhooks | Fields saved, no event wiring |
