@@ -1,6 +1,6 @@
 # TWWP Ops App — Build Backlog
 
-**Last updated:** 2026-03-23 (session 12)
+**Last updated:** 2026-03-23 (session 14)
 
 **Labels:** `[EXPLICIT]` `[IMPLIED]` `[FIX]` `[OPEN]` ✅ done
 
@@ -40,7 +40,7 @@
 ## GROUP D — Import / Approval Workflow
 
 - ✅ `approval_status` on financial entries — DONE (session 12): Approve/Reject buttons in Approval Queue set approval_status field
-- ✅ Global Approval Queue page — DONE (session 12): aggregates captures, financials, maintenance jobs
+- ✅ Global Approval Queue page — DONE (session 12): aggregates captures, financials, maintenance jobs; expanded session 14 to also pull contacts, R&D, email drafts, campaign ideas
 - ⬜ Wire Receipt Inbox AI Parse tab
 - ✅ Approval items → Calendar events — DONE (session 12): reimbursement approval creates calendar event
 

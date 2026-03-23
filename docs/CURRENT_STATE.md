@@ -381,6 +381,124 @@ Rails API at `https://twwp-ops-api.fly.dev`.
 
 ---
 
+---
+
+## Session 14 changes (2026-03-23) — SPEC_VERSION 4.4
+
+### Task 1 — Calendar header buttons wired
+- Sync (↻) calls `doCalHeaderSync()`: triggers `calSyncAll()`, re-renders, fetches Google Calendar API if provider connected
+- Activity (📓) calls `toggleCalActivityLog()` (was already defined, button onclick was wrong)
+- + Event calls `openCalEventMo()` (already defined, button was missing onclick)
+- 🔗 Connect calls `openCalProviderPanel()` (already defined, button was missing onclick)
+- All 4 buttons also have `data-tip` attributes for the tooltip system
+
+### Task 2 — Global tooltip system
+- `#globalTip` div added before resource bar; CSS added for positioning + fade
+- `initGlobalTooltip()` called from `initApp()` — listens for `mouseover` on `[data-tip]` elements
+- 800ms hover delay before showing; clears on mouseout or click
+- Positions near cursor with overflow-prevention (stays within viewport)
+- `data-tip` added to all major action buttons across all pages
+
+### Task 3 — Tasks → Calendar auto-sync
+- `syncTaskToCalendar(src, taskId)` — creates or updates a calendar event linked to a task via `_task_id` field
+- Called from `saveTask()` (pre-calculates taskId before upsert), `deleteTask()`, `saveDevTask()`, `delDevTask()`
+- Tasks with no due date or status=complete/cancelled have their calendar event removed
+- Calendar events tagged with `_auto:true`; title prefixed `[Dev]` for dev tasks
+- Event type: "Task Due" or "Dev Task Due" (colour-coded)
+
+### Task 4 — Event Ledger multi-select filter
+- Category and action dropdowns replaced with checkbox multi-select panels
+- `toggleLedgerDropdown(type)` opens/closes dropdown with outside-click dismissal
+- `saveLedgerFilterState()` / `loadLedgerFilterState()` persist selection to `twwp_ledger_filter_v1`
+- `renderEventLedgerPage()` reads checked boxes for filtering (supports all checked = show all)
+
+### Task 5 — SPEC_GROWTH populated
+- 12+ entries added covering sessions 1–14 (newest first)
+- Runtime override from `twwp_spec_growth_v1` localStorage merged on render
+
+### Task 6 — SPEC_ADRS populated
+- 11 ADRs added (ADR-001 through ADR-011):
+  Single-file architecture, Rails API, PKCE, GitHub Pages, localStorage, JWT, Postgres sync, mammoth.js, Drive proxy, multi-org (deferred), Event Ledger 5000-entry cap
+
+### Task 7 — Date Wizard modal
+- `openDateWizard(title, callback)` — opens `dateWizardMo` modal with preset buttons
+- Presets: Today / This Week / This Month / This Year / Custom date picker
+- Callback receives YYYY-MM-DD string; used for backlog scheduling and task due dates
+
+### Task 8 — Completion Note modal
+- `openCompletionModal(title, confirmMsg, callback)` — opens `completionNoteMo` modal
+- Optional note textarea + auto-filled ISO timestamp
+- `confirmCompletion()` calls callback with (note, timestamp)
+- Wired into `toggleDevTask()` for dev task completion
+
+### Task 9 — Backlog → Calendar scheduling
+- `renderDevBacklog()` rewritten with filter pills: All / Scheduled / Overdue
+- `scheduleBacklogItem(id, title)` calls `openDateWizard()` then saves to `twwp_backlog_scheduled_v1` and creates a calendar event with `_backlog_id`
+- Scheduled items show calendar badge; overdue items highlighted red
+
+### Task 10 — Dev Tasks: seed ALL backlog groups
+- `syncBacklogToDevTasks()` rewritten to iterate ALL `BACKLOG_GROUPS` (A–V)
+- Only adds items not already present (idempotent); returns count of newly added
+- `seedDevTasks()` calls `syncBacklogToDevTasks()` on every init
+- "Re-sync Backlog" button added to Dev Tasks page header
+
+### Task 11 — Dev History: addGrowthEntry, Log Session, Import
+- `addGrowthEntry(date, by, summary)` — prepends to `twwp_spec_growth_v1` localStorage
+- `openSessionLogModal()` / `saveSessionLog()` — manual session log modal with date + author + summary
+- `aiExtractSessionSummary()` — paste session text → AI extracts structured entry via `aiCallJSON()`
+- Log Session + Import buttons appear in Dev History tab header via `updateDevPageActions()`
+
+### Task 12 — DEVNOTES populated for all pages
+- Added DEVNOTES entries for: calendar, campaigns, emailregistry, docbuilder, approvalqueue, eventledger, locations, inventory, kits, deployments, reports, monitor, member
+- All 15+ pages now have descriptive dev notes in the slide-out panel
+
+### Task 13 — Sprint session logger
+- `updateDevPageActions(tab)` called from `switchDevTab()` and `renderDevPage()`
+- Injects context-sensitive action buttons into `devPageActions` div
+- History tab: Log Session + Import; KB tab: + Entry + Import from Docs; others: empty
+
+### Task 14 — data-tip tooltip pass on all pages
+- `data-tip` attributes added to: Maintenance + Log Job, Contacts + Add Contact, Projects + New Project, Financials + Log Entry, Email + Compose, Campaigns + New Campaign, Reports + New Report, Locations + Add Location, Re-sync Backlog, Dev Tasks + button, Dashboard Refresh, Calendar all 4 header buttons
+
+### Task 15 — Recurring event edit flow
+- `editCalEvent(id)` now detects composite IDs (`baseId_YYYY-MM-DD`), checks if base event is recurring
+- If recurring: opens `recurEditMo` modal with 3 options: This event only / This and future / All events
+- `recurEditMode(mode)` handles single (creates exception date record), future (updates start date + clears recurrence note), all (edits base event directly)
+- `openCalEventEditor(id)` extracted from editCalEvent — does actual modal population
+- `getNextOccurrences(ev, count)` returns next N occurrence strings for display
+
+### Task 16 — Approval Queue expanded
+- `getAQItems()` now also pulls: contacts (type=lead or unverified), R&D captures (validated, not promoted), email drafts, campaign ideas
+- `renderApprovalQueue()` handles all new types with per-type action buttons
+- `aqVerifyContact(id)` sets contact status='active'; `aqMoveCampaignToPlanning(id)` moves stage to planning
+- Type colour map expanded
+
+### Task 17 — Dashboard live data
+- Dashboard already pulls live data from all stores; confirmed all panels populated
+- `dashLastUpdated` span added to page header showing last refresh time
+- Dashboard Refresh button gets `data-tip`
+
+### Task 18 — Resource bar expanded
+- Session duration: `twwp_session_start` stored in sessionStorage on login (both Rails + local paths)
+- New resource bar items: ⏱ session duration, ✅ tasks completed today (from ledger), 📷 captures today, service dots (Rails/Drive/AI/HA)
+- Service dots are clickable → navigates to AI & Integrations page
+- `openRbSettings()` / `toggleRbItem()` — gear icon opens settings panel; each item individually show/hide-able
+- Settings persisted in `twwp_rb_cfg_v1` localStorage
+
+### Task 19 — Global search (Ctrl+K)
+- `Ctrl+K` (or Cmd+K) opens `globalSearchMo` — full-width search modal
+- `runGlobalSearch(q)` searches: tasks, contacts, financials, documents, captures, campaigns, inventory, knowledge base, projects
+- Results grouped by store with icon + label; click to navigate to that page
+- Arrow key navigation through results; Enter selects; Escape closes
+- Search events logged to ledger as `nav / search`
+- `escH()` helper for XSS-safe HTML rendering of search results
+
+### Task 20 — Version bump + docs
+- `SPEC_VERSION` updated to `'4.4'`
+- `SPEC_LAST_UPDATED` updated to `'2026-03-23'`
+
+---
+
 ## Next up
 
 1. **Re-authorise Google OAuth** — scope changed from `drive.file` → `drive`
@@ -391,4 +509,4 @@ Rails API at `https://twwp-ops-api.fly.dev`.
 6. **Wire Receipt Inbox AI Parse tab**
 7. **Ledger Rails endpoint persistence** — add `ledger_entries` table to Rails (currently placeholder)
 
-See `docs/handoff/session-handoff-march23f.md` for session 13 full summary.
+See `docs/handoff/session-handoff-march23g.md` for session 14 full summary.

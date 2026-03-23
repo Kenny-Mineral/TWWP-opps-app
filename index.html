@@ -70,6 +70,8 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 .rpt-tbl td{padding:6px 10px;border-bottom:1px solid var(--border);}
 .rpt-section{margin-bottom:20px;}
 .rpt-section h3{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border);}
+/* GLOBAL TOOLTIP */
+#globalTip{position:fixed;z-index:99999;background:#1a1f2e;color:#e2eaf8;font-size:11px;padding:5px 10px;border-radius:6px;border:1px solid #2a3a5c;pointer-events:none;white-space:nowrap;max-width:260px;white-space:normal;line-height:1.4;box-shadow:0 4px 12px rgba(0,0,0,.5);transition:opacity .15s;}
 /* CALENDAR */
 .cal-cell{min-height:80px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:4px;cursor:pointer;transition:background .15s;}
 .cal-cell:hover{background:var(--surface3,#1a1f2e);}
@@ -318,6 +320,8 @@ tbody tr:hover{background:var(--surface2);}
 .rb-dot{width:7px;height:7px;border-radius:50%;display:inline-block;}
 .rb-bar-wrap{width:60px;height:5px;background:var(--surface2);border-radius:3px;overflow:hidden;}
 .rb-bar-fill{height:100%;border-radius:3px;}
+/* ===== GLOBAL SEARCH ===== */
+.gs-result-item:hover,.gs-result-item.gs-selected{background:var(--surface2);}
 /* ===== CAPTURE WIDGET ===== */
 .capture-fab{position:fixed;bottom:32px;right:24px;z-index:1000;display:flex;flex-direction:column;align-items:flex-end;gap:8px;}
 .capture-fab-btn{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--green));border:none;color:#000;font-size:24px;font-weight:700;cursor:pointer;box-shadow:0 6px 24px var(--accent-glow);transition:all .2s;display:flex;align-items:center;justify-content:center;}
@@ -778,7 +782,7 @@ tbody tr:hover{background:var(--surface2);}
         <div class="fg"><label>Assigned Email</label><input type="email" id="ce-email" placeholder="email@example.com"></div>
       </div>
       <div class="fg"><label>Notes</label><textarea id="ce-notes" rows="2"></textarea></div>
-      <div class="fg"><label>Recurrence</label><select id="ce-recur"><option value="">None</option><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option><option value="yearly">Yearly</option></select></div>
+      <div class="fg"><label>Recurrence</label><select id="ce-recur"><option value="">None</option><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option><option value="yearly">Yearly</option></select><div id="ce-recur-info"></div></div>
       <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);cursor:pointer;padding:6px 0"><input type="checkbox" id="ce-remind" style="accent-color:var(--cyan)">Send reminder 48hrs before (requires backend)</label>
     </div>
     <div class="md-f"><button class="btn btn-g" onclick="CM('calEventMo')">Cancel</button><button class="btn btn-r" id="ce-del-btn" onclick="deleteCalEvent(calEditId)" style="display:none">Delete</button><button class="btn btn-p" onclick="saveCalEvent()">Save Event</button></div>
@@ -1305,7 +1309,8 @@ tbody tr:hover{background:var(--surface2);}
     </div>
     <div class="ph-right">
       <span id="dashDate" style="font-size:11px;color:var(--text3);font-family:var(--mono)"></span>
-      <button class="btn btn-g btn-sm" onclick="renderDashboard()">&#8635; Refresh</button>
+      <span id="dashLastUpdated" style="font-size:10px;color:var(--text3)"></span>
+      <button class="btn btn-g btn-sm" data-tip="Refresh all dashboard panels" onclick="renderDashboard()">&#8635; Refresh</button>
     </div>
   </div>
   <div class="pb" id="dashContent">
@@ -1465,7 +1470,7 @@ tbody tr:hover{background:var(--surface2);}
 
 <!-- ====== LOCATIONS PAGE ====== -->
 <div class="page" id="page-locations">
-  <div class="ph"><div><div class="ph-ey">Locations</div><div class="ph-title">Waterhouses &amp; Sites</div></div><div class="ph-right"><button class="btn btn-s btn-sm" onclick="expLocJSON()">Export JSON</button><button class="btn btn-p btn-sm" onclick="openLocMo()">+ Add Location</button></div></div>
+  <div class="ph"><div><div class="ph-ey">Locations</div><div class="ph-title">Waterhouses &amp; Sites</div></div><div class="ph-right"><button class="btn btn-s btn-sm" onclick="expLocJSON()">Export JSON</button><button class="btn btn-p btn-sm" data-tip="Add a new waterhouse or site location" onclick="openLocMo()">+ Add Location</button></div></div>
   <div class="pb">
     <div class="helper-bubble"><div class="hb-icon">&#127968;</div><div><strong>Locations</strong> includes all Waterhouses, stock rooms, and test benches. Each Waterhouse can have a Guardian assigned, water rate, and VIP member target. Location data feeds into Monitor, Reports and Member Display.</div></div>
     <div class="pills" id="locTypePills" style="margin-bottom:20px"><div class="pill on" data-t="" onclick="setPill(this,'locTypePills','locTF');renderLocs()">All</div><div class="pill" data-t="Waterhouse" onclick="setPill(this,'locTypePills','locTF');renderLocs()">Waterhouse</div><div class="pill" data-t="Stock" onclick="setPill(this,'locTypePills','locTF');renderLocs()">Stock</div><div class="pill" data-t="Test Bench" onclick="setPill(this,'locTypePills','locTF');renderLocs()">Test Bench</div><div class="pill" data-t="Sold" onclick="setPill(this,'locTypePills','locTF');renderLocs()">Sold</div></div>
@@ -1521,7 +1526,7 @@ tbody tr:hover{background:var(--surface2);}
 
 <!-- ====== MAINTENANCE PAGE ====== -->
 <div class="page" id="page-maintenance">
-  <div class="ph"><div><div class="ph-ey">Operations</div><div class="ph-title">Maintenance</div></div><div class="ph-right"><button class="btn btn-p btn-sm" onclick="startMaintWiz()">+ Log Job</button></div></div>
+  <div class="ph"><div><div class="ph-ey">Operations</div><div class="ph-title">Maintenance</div></div><div class="ph-right"><button class="btn btn-p btn-sm" data-tip="Log a new maintenance job" onclick="startMaintWiz()">+ Log Job</button></div></div>
   <div class="pb">
     <div class="helper-bubble"><div class="hb-icon">&#128295;</div><div><strong>Maintenance</strong> logs service visits to each Waterhouse. The 4-step wizard captures: Waterhouse, job categories (Filtration, Power, IoT, Security...), checklists and sensor readings, then generates a printable report and reimbursement receipt.</div></div>
     <div class="tb-bar" id="maintTabs"><div class="tb on" data-t="wizard" onclick="switchMTab(this)">New Job</div><div class="tb" data-t="history" onclick="switchMTab(this)">History</div><div class="tb" data-t="schedule" onclick="switchMTab(this)">Schedule</div></div>
@@ -1589,10 +1594,10 @@ tbody tr:hover{background:var(--surface2);}
     <div><div class="ph-ey">Operations</div><div class="ph-title">Calendar</div></div>
     <div class="ph-right">
       <select id="calWhFilter" onchange="renderCalendar();renderCalLedger()" style="min-width:150px"><option value="">All Waterhouses</option></select>
-      <button class="btn btn-g btn-sm" onclick="calSyncAll()">&#8635; Sync</button>
-      <button class="btn btn-g btn-sm" id="calActivityBtn" onclick="toggleCalActivityLog()">&#128221; Activity</button>
-      <button class="btn btn-p btn-sm" onclick="openCalEventMo()">+ Event</button>
-      <button class="btn btn-g btn-sm" onclick="openCalProviderPanel()">&#128279; Connect</button>
+      <button class="btn btn-g btn-sm" id="calSyncBtn" data-tip="Sync with Google Calendar" onclick="doCalHeaderSync(this)">&#8635; Sync</button>
+      <button class="btn btn-g btn-sm" id="calActivityBtn" data-tip="Toggle activity log overlay" onclick="toggleCalActivityLog()">&#128221; Activity</button>
+      <button class="btn btn-p btn-sm" data-tip="Create new calendar event" onclick="openCalEventMo()">+ Event</button>
+      <button class="btn btn-g btn-sm" data-tip="Connect external calendar" onclick="openCalProviderPanel()">&#128279; Connect</button>
     </div>
   </div>
   <div class="pb">
@@ -1669,7 +1674,7 @@ tbody tr:hover{background:var(--surface2);}
 
 <!-- ====== REPORTS PAGE ====== -->
 <div class="page" id="page-reports">
-  <div class="ph"><div><div class="ph-ey">Operations</div><div class="ph-title">Reports</div></div><div class="ph-right"><button class="btn btn-p btn-sm" onclick="openNewReportMo()">+ New Report</button></div></div>
+  <div class="ph"><div><div class="ph-ey">Operations</div><div class="ph-title">Reports</div></div><div class="ph-right"><button class="btn btn-p btn-sm" data-tip="Generate a new report" onclick="openNewReportMo()">+ New Report</button></div></div>
   <div class="pb">
     <div class="helper-bubble"><div class="hb-icon">&#128203;</div><div><strong>Reports</strong> generates structured documents for guardians, sponsors, trustees, members and contractors. AI assists with narratives, issue flagging and final notes. All three report periods from Raj (WH1) are pre-loaded as demo data.</div></div>
     <div id="rptTypeSelector" style="margin-bottom:20px">
@@ -1688,7 +1693,7 @@ tbody tr:hover{background:var(--surface2);}
       <div class="sw"><span class="si">&#128269;</span><input type="text" id="crmSearch" placeholder="Search contacts..." oninput="renderContacts()"></div>
       <select id="crmTypeFil" onchange="renderContacts()" style="min-width:130px"><option value="">All Types</option><option value="guardian">Guardians</option><option value="member">Members</option><option value="supplier">Suppliers</option><option value="trustee">Trustees</option><option value="sponsor">Sponsors</option><option value="contractor">Contractors</option><option value="other">Other</option></select>
       <button class="btn btn-s btn-sm" onclick="impContactsCSV()">Import CSV</button>
-      <button class="btn btn-p btn-sm" onclick="openContactMo()">+ Add Contact</button>
+      <button class="btn btn-p btn-sm" data-tip="Add a new contact to the CRM" onclick="openContactMo()">+ Add Contact</button>
     </div>
   </div>
   <div class="pb">
@@ -1712,7 +1717,7 @@ tbody tr:hover{background:var(--surface2);}
   <div class="ph"><div><div class="ph-ey">Projects</div><div class="ph-title">Projects</div></div>
     <div class="ph-right">
       <select id="projTypeFil" onchange="renderProjects()" style="min-width:150px"><option value="">All Types</option><option value="wh_upgrade">WH Upgrade</option><option value="fundraising">Fundraising</option><option value="outreach">Outreach</option><option value="competition">Competition/Event</option><option value="legal">Legal/Governance</option><option value="app_dev">App Dev</option><option value="iot">IoT/Hardware</option><option value="research">Research</option><option value="admin">Admin/Ops</option></select>
-      <button class="btn btn-p btn-sm" onclick="openProjectMo()">+ New Project</button>
+      <button class="btn btn-p btn-sm" data-tip="Create a new project" onclick="openProjectMo()">+ New Project</button>
     </div>
   </div>
   <div class="pb">
@@ -1909,7 +1914,7 @@ tbody tr:hover{background:var(--surface2);}
   <div class="ph">
     <div><div class="ph-ey">People</div><div class="ph-title">Email Registry</div></div>
     <div class="ph-right">
-      <button class="btn btn-p btn-sm" onclick="openEmailMo()">+ Compose Email</button>
+      <button class="btn btn-p btn-sm" data-tip="Compose a new email" onclick="openEmailMo()">+ Compose Email</button>
     </div>
   </div>
   <div class="pb">
@@ -1969,7 +1974,7 @@ tbody tr:hover{background:var(--surface2);}
   <div class="ph">
     <div><div class="ph-ey">Projects</div><div class="ph-title">Campaigns</div></div>
     <div class="ph-right">
-      <button class="btn btn-p btn-sm" onclick="openCampaignMo()">+ New Campaign</button>
+      <button class="btn btn-p btn-sm" data-tip="Create a new campaign" onclick="openCampaignMo()">+ New Campaign</button>
     </div>
   </div>
   <div class="pb">
@@ -2040,7 +2045,7 @@ tbody tr:hover{background:var(--surface2);}
     <div><div class="ph-ey">Finance</div><div class="ph-title">Financials</div></div>
     <div class="ph-right" id="finPageActions">
       <button class="btn btn-s btn-sm" onclick="expFinCSV()">Export CSV</button>
-      <button class="btn btn-p btn-sm" onclick="openFinMo()">+ Log Entry</button>
+      <button class="btn btn-p btn-sm" data-tip="Log a financial entry" onclick="openFinMo()">+ Log Entry</button>
     </div>
   </div>
   <div class="pb">
@@ -2300,23 +2305,39 @@ tbody tr:hover{background:var(--surface2);}
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px" id="ledger-stats"></div>
 
     <!-- Filters -->
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center">
-      <select id="ledger-filter-cat" onchange="renderEventLedgerPage()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:5px 10px;font-size:12px">
-        <option value="">All categories</option>
-        <option value="task">task</option>
-        <option value="contact">contact</option>
-        <option value="financial">financial</option>
-        <option value="maintenance">maintenance</option>
-        <option value="capture">capture</option>
-        <option value="calendar">calendar</option>
-        <option value="ai">ai</option>
-        <option value="nav">nav</option>
-        <option value="auth">auth</option>
-        <option value="report">report</option>
-        <option value="app">app</option>
-      </select>
-      <input type="text" id="ledger-filter-search" placeholder="Search detail..." oninput="renderEventLedgerPage()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:5px 10px;font-size:12px;width:220px">
-      <input type="date" id="ledger-filter-date" onchange="renderEventLedgerPage()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:5px 10px;font-size:12px">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:flex-start">
+      <div style="position:relative">
+        <button id="ledger-cat-btn" class="btn btn-g btn-sm" onclick="toggleLedgerDropdown('cat')">Categories &#9660;</button>
+        <div id="ledger-cat-dropdown" style="display:none;position:absolute;top:100%;left:0;z-index:500;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px;min-width:160px;margin-top:4px;box-shadow:0 4px 16px rgba(0,0,0,.4)">
+          <div style="font-size:10px;color:var(--text3);margin-bottom:6px">Filter categories:</div>
+          <label style="display:flex;gap:8px;align-items:center;font-size:11px;cursor:pointer;padding:3px 0"><input type="checkbox" class="ldg-cat-chk" value="task" onchange="saveLedgerFilterState();renderEventLedgerPage()"> task</label>
+          <label style="display:flex;gap:8px;align-items:center;font-size:11px;cursor:pointer;padding:3px 0"><input type="checkbox" class="ldg-cat-chk" value="contact" onchange="saveLedgerFilterState();renderEventLedgerPage()"> contact</label>
+          <label style="display:flex;gap:8px;align-items:center;font-size:11px;cursor:pointer;padding:3px 0"><input type="checkbox" class="ldg-cat-chk" value="financial" onchange="saveLedgerFilterState();renderEventLedgerPage()"> financial</label>
+          <label style="display:flex;gap:8px;align-items:center;font-size:11px;cursor:pointer;padding:3px 0"><input type="checkbox" class="ldg-cat-chk" value="maintenance" onchange="saveLedgerFilterState();renderEventLedgerPage()"> maintenance</label>
+          <label style="display:flex;gap:8px;align-items:center;font-size:11px;cursor:pointer;padding:3px 0"><input type="checkbox" class="ldg-cat-chk" value="capture" onchange="saveLedgerFilterState();renderEventLedgerPage()"> capture</label>
+          <label style="display:flex;gap:8px;align-items:center;font-size:11px;cursor:pointer;padding:3px 0"><input type="checkbox" class="ldg-cat-chk" value="calendar" onchange="saveLedgerFilterState();renderEventLedgerPage()"> calendar</label>
+          <label style="display:flex;gap:8px;align-items:center;font-size:11px;cursor:pointer;padding:3px 0"><input type="checkbox" class="ldg-cat-chk" value="ai" onchange="saveLedgerFilterState();renderEventLedgerPage()"> ai</label>
+          <label style="display:flex;gap:8px;align-items:center;font-size:11px;cursor:pointer;padding:3px 0"><input type="checkbox" class="ldg-cat-chk" value="nav" onchange="saveLedgerFilterState();renderEventLedgerPage()"> nav</label>
+          <label style="display:flex;gap:8px;align-items:center;font-size:11px;cursor:pointer;padding:3px 0"><input type="checkbox" class="ldg-cat-chk" value="auth" onchange="saveLedgerFilterState();renderEventLedgerPage()"> auth</label>
+          <label style="display:flex;gap:8px;align-items:center;font-size:11px;cursor:pointer;padding:3px 0"><input type="checkbox" class="ldg-cat-chk" value="report" onchange="saveLedgerFilterState();renderEventLedgerPage()"> report</label>
+          <label style="display:flex;gap:8px;align-items:center;font-size:11px;cursor:pointer;padding:3px 0"><input type="checkbox" class="ldg-cat-chk" value="app" onchange="saveLedgerFilterState();renderEventLedgerPage()"> app</label>
+        </div>
+      </div>
+      <div style="position:relative">
+        <button id="ledger-action-btn" class="btn btn-g btn-sm" onclick="toggleLedgerDropdown('action')">Actions &#9660;</button>
+        <div id="ledger-action-dropdown" style="display:none;position:absolute;top:100%;left:0;z-index:500;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px;min-width:160px;margin-top:4px;box-shadow:0 4px 16px rgba(0,0,0,.4)">
+          <div style="font-size:10px;color:var(--text3);margin-bottom:6px">Filter actions:</div>
+          <label style="display:flex;gap:8px;align-items:center;font-size:11px;cursor:pointer;padding:3px 0"><input type="checkbox" class="ldg-act-chk" value="create" onchange="saveLedgerFilterState();renderEventLedgerPage()"> create</label>
+          <label style="display:flex;gap:8px;align-items:center;font-size:11px;cursor:pointer;padding:3px 0"><input type="checkbox" class="ldg-act-chk" value="update" onchange="saveLedgerFilterState();renderEventLedgerPage()"> update</label>
+          <label style="display:flex;gap:8px;align-items:center;font-size:11px;cursor:pointer;padding:3px 0"><input type="checkbox" class="ldg-act-chk" value="delete" onchange="saveLedgerFilterState();renderEventLedgerPage()"> delete</label>
+          <label style="display:flex;gap:8px;align-items:center;font-size:11px;cursor:pointer;padding:3px 0"><input type="checkbox" class="ldg-act-chk" value="login" onchange="saveLedgerFilterState();renderEventLedgerPage()"> login</label>
+          <label style="display:flex;gap:8px;align-items:center;font-size:11px;cursor:pointer;padding:3px 0"><input type="checkbox" class="ldg-act-chk" value="logout" onchange="saveLedgerFilterState();renderEventLedgerPage()"> logout</label>
+          <label style="display:flex;gap:8px;align-items:center;font-size:11px;cursor:pointer;padding:3px 0"><input type="checkbox" class="ldg-act-chk" value="navigate" onchange="saveLedgerFilterState();renderEventLedgerPage()"> navigate</label>
+          <label style="display:flex;gap:8px;align-items:center;font-size:11px;cursor:pointer;padding:3px 0"><input type="checkbox" class="ldg-act-chk" value="call" onchange="saveLedgerFilterState();renderEventLedgerPage()"> call</label>
+        </div>
+      </div>
+      <input type="text" id="ledger-filter-search" placeholder="Search detail..." oninput="saveLedgerFilterState();renderEventLedgerPage()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:5px 10px;font-size:12px;width:220px">
+      <input type="date" id="ledger-filter-date" onchange="saveLedgerFilterState();renderEventLedgerPage()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:5px 10px;font-size:12px">
       <button class="btn btn-g btn-sm" onclick="clearLedgerFilters()">Clear</button>
     </div>
 
@@ -2358,6 +2379,10 @@ tbody tr:hover{background:var(--surface2);}
     <!-- DEV HISTORY tab -->
     <div id="dev-tab-history">
       <div class="helper-bubble" style="margin-bottom:16px"><div class="hb-icon">&#128203;</div><div><strong>Dev History</strong> is a log of every change to the app. Claude adds entries automatically at the end of sessions where features changed or decisions were made. You can also add your own entries below. Entries are stored permanently in the JS constant and also in localStorage.</div></div>
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+        <button class="btn btn-p btn-sm" data-tip="Log this session's work as a growth entry" onclick="openSessionLogModal()">&#128221; Log Session</button>
+        <button class="btn btn-g btn-sm" data-tip="Paste a session summary and auto-extract growth entries" onclick="openImportSessionModal()">&#128229; Import from Session Summary</button>
+      </div>
       <div id="devHistoryList"></div>
     </div>
 
@@ -2444,6 +2469,39 @@ tbody tr:hover{background:var(--surface2);}
     <div class="md-f">
       <button class="btn btn-g btn-sm" onclick="CM('kbMo')">Cancel</button>
       <button class="btn btn-p btn-sm" onclick="saveKBEntry()">Save Entry</button>
+    </div>
+  </div>
+</div>
+
+<!-- SESSION LOG MODAL -->
+<div class="mo" id="sessionLogMo">
+  <div class="md" style="max-width:520px">
+    <div class="md-h"><div class="md-t">// LOG SESSION</div><button class="md-x" onclick="CM('sessionLogMo')">x</button></div>
+    <div class="md-b">
+      <div class="fr2">
+        <div class="fg"><label>Date</label><input type="date" id="sl-date"></div>
+        <div class="fg"><label>By</label><input type="text" id="sl-by" value="Claude / Kenny"></div>
+      </div>
+      <div class="fg"><label>Session summary *</label><textarea id="sl-summary" rows="6" placeholder="Describe what was built, fixed, or decided this session..."></textarea></div>
+    </div>
+    <div class="md-f">
+      <button class="btn btn-g btn-sm" onclick="CM('sessionLogMo')">Cancel</button>
+      <button class="btn btn-p btn-sm" onclick="saveSessionLog()">Save Entry</button>
+    </div>
+  </div>
+</div>
+
+<!-- SESSION IMPORT MODAL -->
+<div class="mo" id="sessionImportMo">
+  <div class="md" style="max-width:580px">
+    <div class="md-h"><div class="md-t">// IMPORT FROM SESSION SUMMARY</div><button class="md-x" onclick="CM('sessionImportMo')">x</button></div>
+    <div class="md-b">
+      <div class="helper-bubble"><div class="hb-icon">&#128161;</div><div>Paste a session handoff or summary below. The AI will extract a structured growth entry from it.</div></div>
+      <div class="fg" style="margin-top:12px"><label>Session text</label><textarea id="si-text" rows="10" placeholder="Paste handoff doc content here..."></textarea></div>
+    </div>
+    <div class="md-f">
+      <button class="btn btn-g btn-sm" onclick="CM('sessionImportMo')">Cancel</button>
+      <button class="btn btn-p btn-sm" onclick="aiExtractSessionSummary()">&#128161; Extract &amp; Add</button>
     </div>
   </div>
 </div>
@@ -2547,6 +2605,73 @@ tbody tr:hover{background:var(--surface2);}
         <button class="btn btn-p btn-sm" onclick="saveDevTask()">Save</button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- RECURRING EVENT EDIT MODAL -->
+<div class="mo" id="recurEditMo">
+  <div class="md" style="max-width:380px">
+    <div class="md-h"><div class="md-t">// EDIT RECURRING EVENT</div><button class="md-x" onclick="CM('recurEditMo')">x</button></div>
+    <div class="md-b">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:16px">This is a recurring event. How would you like to edit it?</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button class="btn btn-g" style="text-align:left;padding:10px 14px" onclick="recurEditMode('single')"><strong>This event only</strong><div style="font-size:11px;color:var(--text3);margin-top:3px">Creates a one-off exception for this date</div></button>
+        <button class="btn btn-g" style="text-align:left;padding:10px 14px" onclick="recurEditMode('future')"><strong>This and future events</strong><div style="font-size:11px;color:var(--text3);margin-top:3px">Updates this occurrence and all after it</div></button>
+        <button class="btn btn-g" style="text-align:left;padding:10px 14px" onclick="recurEditMode('all')"><strong>All events</strong><div style="font-size:11px;color:var(--text3);margin-top:3px">Updates the root recurring rule</div></button>
+      </div>
+      <div style="margin-top:14px;text-align:right"><button class="btn btn-g btn-sm" onclick="CM('recurEditMo')">Cancel</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- DATE WIZARD MODAL -->
+<div class="mo" id="dateWizardMo">
+  <div class="md" style="max-width:380px">
+    <div class="md-h"><div class="md-t" id="dateWizardTitle">// SCHEDULE</div><button class="md-x" onclick="CM('dateWizardMo')">x</button></div>
+    <div class="md-b">
+      <div style="font-size:12px;color:var(--text3);margin-bottom:14px">Choose a date for this item:</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
+        <button class="btn btn-g" onclick="dateWizardSelect('today')" style="text-align:left;padding:10px 14px"><span style="font-weight:700">Today</span> <span style="font-size:11px;color:var(--text3)" id="dw-today-label"></span></button>
+        <button class="btn btn-g" onclick="dateWizardSelect('thisweek')" style="text-align:left;padding:10px 14px"><span style="font-weight:700">This Week</span> <span style="font-size:11px;color:var(--text3)" id="dw-week-label"></span></button>
+        <button class="btn btn-g" onclick="dateWizardSelect('thismonth')" style="text-align:left;padding:10px 14px"><span style="font-weight:700">This Month</span> <span style="font-size:11px;color:var(--text3)" id="dw-month-label"></span></button>
+        <button class="btn btn-g" onclick="dateWizardSelect('thisyear')" style="text-align:left;padding:10px 14px"><span style="font-weight:700">This Year</span> <span style="font-size:11px;color:var(--text3)" id="dw-year-label"></span></button>
+      </div>
+      <div class="fr2" style="align-items:flex-end;gap:8px">
+        <div class="fg"><label>Custom date</label><input type="date" id="dw-custom-date"></div>
+        <button class="btn btn-p" onclick="dateWizardSelectCustom()">Set</button>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+        <button class="btn btn-g btn-sm" onclick="CM('dateWizardMo')">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- COMPLETION NOTE MODAL -->
+<div class="mo" id="completionNoteMo">
+  <div class="md" style="max-width:400px">
+    <div class="md-h"><div class="md-t" id="completionNoteTitle">// MARK COMPLETE</div><button class="md-x" onclick="CM('completionNoteMo')">x</button></div>
+    <div class="md-b">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:12px" id="completionNoteMsg">Confirm completion of this item.</div>
+      <div class="fg"><label>Completion note (optional)</label><textarea id="completion-note-text" rows="3" placeholder="What was done, any observations..."></textarea></div>
+      <div style="font-size:11px;color:var(--text3);margin-top:8px" id="completion-note-ts"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+        <button class="btn btn-g btn-sm" onclick="CM('completionNoteMo')">Cancel</button>
+        <button class="btn btn-p btn-sm" onclick="confirmCompletion()">Confirm &#10003;</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- GLOBAL SEARCH MODAL (Ctrl+K) -->
+<div class="mo" id="globalSearchMo" style="background:rgba(0,0,0,.7)">
+  <div class="md" style="max-width:600px;padding:0;overflow:visible">
+    <div style="display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--border)">
+      <span style="font-size:16px;color:var(--text3)">&#128269;</span>
+      <input id="globalSearchInput" type="text" placeholder="Search tasks, contacts, financials, documents…" style="flex:1;background:transparent;border:none;outline:none;color:var(--text1);font-size:14px;font-family:var(--mono)" oninput="runGlobalSearch(this.value)" onkeydown="globalSearchKey(event)">
+      <span style="font-size:10px;color:var(--text3);white-space:nowrap">ESC to close</span>
+    </div>
+    <div id="globalSearchResults" style="max-height:420px;overflow-y:auto;padding:8px 0"></div>
   </div>
 </div>
 
@@ -2697,13 +2822,23 @@ tbody tr:hover{background:var(--surface2);}
 <!-- RESOURCE BAR -->
 <div id="resourceBar" title="Click to collapse/expand">
   <span style="font-size:9px;color:var(--text3);cursor:pointer;user-select:none" onclick="toggleResourceBar()">▼</span>
-  <div class="rb-item" id="rb-storage" title="localStorage usage"></div>
-  <div class="rb-item" id="rb-sync" title="Last Rails sync"></div>
-  <div class="rb-item" id="rb-ai" title="AI calls this session"></div>
-  <div class="rb-item" id="rb-ledger" title="Ledger events today"></div>
-  <div class="rb-item" id="rb-drive" title="Google Drive status"></div>
+  <div class="rb-item" id="rb-storage" data-tip="localStorage usage" title="localStorage usage"></div>
+  <div class="rb-item" id="rb-sync" data-tip="Last Rails API sync" title="Last Rails sync"></div>
+  <div class="rb-item" id="rb-session" data-tip="Current session duration" title="Session duration"></div>
+  <div class="rb-item" id="rb-tasks-today" data-tip="Tasks completed today" title="Tasks completed today"></div>
+  <div class="rb-item" id="rb-captures-today" data-tip="Captures submitted today" title="Captures today"></div>
+  <div class="rb-item" id="rb-ai" data-tip="AI calls today" title="AI calls today"></div>
+  <div class="rb-item" id="rb-ledger" data-tip="Ledger events today (dot = recording status)" title="Ledger events today"></div>
   <div style="flex:1"></div>
+  <div class="rb-item" id="rb-svc-dots" style="gap:4px"></div>
+  <span style="font-size:9px;color:var(--text3);cursor:pointer;padding:0 4px" onclick="openRbSettings()" data-tip="Resource bar settings">&#9881;</span>
   <span style="font-size:9px;color:var(--text3);cursor:pointer" onclick="toggleResourceBar()">TWWP Ops</span>
+</div>
+<!-- Resource bar settings panel -->
+<div id="rbSettingsPn" style="display:none;position:fixed;bottom:28px;right:48px;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:12px 16px;z-index:9999;font-size:11px;min-width:200px;box-shadow:0 -4px 20px rgba(0,0,0,.4)">
+  <div style="font-weight:700;margin-bottom:8px;color:var(--text1)">Resource Bar Items</div>
+  <div id="rbSettingsList"></div>
+  <div style="margin-top:10px;text-align:right"><button class="btn btn-g btn-sm" onclick="closeRbSettings()">Done</button></div>
 </div>
 
 <div class="capture-fab" id="captureFab">
@@ -2787,6 +2922,7 @@ async function doLogin(){
         }));
         const displayName=data.user.email.split('@')[0]||'Admin';
         sessionStorage.setItem(SK,JSON.stringify({ok:true,user:displayName,role:data.user.role,org_id:data.user.org_id}));
+        sessionStorage.setItem('twwp_session_start', Date.now().toString());
         G('loginScreen').style.display='none';G('appRoot').style.display='flex';
         G('uNm').textContent=displayName;G('uAv').textContent=displayName[0].toUpperCase();
         G('le').textContent='';initApp();go('dashboard',G('ni-dashboard'));
@@ -2808,6 +2944,7 @@ async function doLogin(){
   if(devMode||(u===c.u&&p===c.p)){
     const displayName=u||'Dev';
     sessionStorage.setItem(SK,JSON.stringify({ok:true,user:displayName}));
+    sessionStorage.setItem('twwp_session_start', Date.now().toString());
     G('loginScreen').style.display='none';G('appRoot').style.display='flex';
     G('uNm').textContent=displayName;G('uAv').textContent=displayName[0].toUpperCase();
     G('le').textContent='';initApp();go('dashboard',G('ni-dashboard'));
@@ -3019,7 +3156,7 @@ function go(page,el){
   if(page==='inventory'){renderInventory();}
   if(page==='purchases'){renderPOs();}
   if(page==='aihelper')renderAIFeedback();
-  if(page==='eventledger'){renderEventLedgerPage();loadLedgerSettings();}
+  if(page==='eventledger'){loadLedgerSettings();loadLedgerFilterState();renderEventLedgerPage();}
   logEvent('nav','navigate','Navigated to '+page, {page:page});
   onPageChange(page);
 }
@@ -4259,8 +4396,8 @@ document.addEventListener('DOMContentLoaded',()=>{
 // Format: update the constant, save the file, deploy.
 // localStorage stores user-added entries that supplement these.
 
-const SPEC_VERSION = '4.2';
-const SPEC_LAST_UPDATED = '2026-03-18';
+const SPEC_VERSION = '4.4';
+const SPEC_LAST_UPDATED = '2026-03-23';
 
 // ── Block Index ────────────────────────────────────────────────────────────
 // Stable system IDs. Never change an ID — only add new ones or mark retired.
@@ -4309,37 +4446,127 @@ const SPEC_BLOCKS = [
 ];
 
 // ── Architecture Decision Records ──────────────────────────────────────────
-// Add new ADRs here. Claude adds one each time a significant decision is made.
+// NOTE TO CLAUDE: Add a new ADR here whenever a significant architectural decision is made.
 // Format: id, date, status, title, problem, options (array), decision, reasoning, pages (array), refs (array)
 const SPEC_ADRS = [
-  // ADRs are added here by Claude at the end of each session where a significant
-  // architectural decision was made. Use the "+ ADR" button to draft one in the
-  // app, then ask Claude to add it permanently to this constant.
-  //
-  // Format:
-  // {id:'ADR-001', date:'YYYY-MM-DD', status:'Accepted',
-  //  title:'Short descriptive title',
-  //  problem:'What problem or decision was faced.',
-  //  options:['Option A','Option B','Option C'],
-  //  decision:'What was decided.',
-  //  reasoning:'Why this decision was made.',
-  //  pages:['page-name'],
-  //  refs:['SYS-INF-001']},
+  {id:'ADR-001',date:'2026-03-16',status:'Accepted',
+   title:'Single-file HTML architecture',
+   problem:'Need to ship a working ops app quickly without backend infrastructure overhead. Team is one developer. Must be deployable to GitHub Pages.',
+   options:['React SPA with bundler','Next.js with server','Single-file HTML/CSS/JS','Separate HTML + JS + CSS files'],
+   decision:'Single-file index.html with all CSS, HTML, and JS inline.',
+   reasoning:'Zero build tooling, zero dependencies, instant deploy to GitHub Pages, full offline capability via localStorage, easy to version and hand off. Trade-off: file grows large (~12k lines) but remains manageable with a clear section-comment structure.',
+   pages:['all'],refs:[]},
+
+  {id:'ADR-002',date:'2026-03-22',status:'Accepted',
+   title:'Rails API on Fly.io for backend services',
+   problem:'Need JWT auth, Google OAuth, Drive proxy, and email relay that cannot be done safely from a browser-only app.',
+   options:['Cloudflare Workers for everything','Rails + Fly.io','Supabase','Firebase'],
+   decision:'Rails API (twwp-ops-api) deployed to Fly.io at https://twwp-ops-api.fly.dev.',
+   reasoning:'Rails gives full control over OAuth flows, database migrations, and SMTP. Fly.io is cheap and supports PostgreSQL natively. The team already knows Ruby. Workers used only as a PKCE token exchange proxy, not full API.',
+   pages:['all'],refs:[]},
+
+  {id:'ADR-003',date:'2026-03-22',status:'Accepted',
+   title:'PKCE token stored in Postgres, not browser session',
+   problem:'OAuth PKCE code_verifier must survive page reloads and cross-tab usage. Browser sessionStorage is ephemeral.',
+   options:['sessionStorage','localStorage','Rails Postgres via API'],
+   decision:'PKCE code_verifier stored in Rails Postgres keyed by state. Cloudflare Worker exchanges codes via /token route.',
+   reasoning:'Postgres is durable, server-side, and not accessible to browser JS, reducing XSS surface. Cloudflare Worker is stateless and cheap. The app does not have session state between page loads, so Postgres is the right home.',
+   pages:['page-ai-integrations'],refs:['ADR-002']},
+
+  {id:'ADR-004',date:'2026-03-22',status:'Accepted',
+   title:'GitHub Pages for frontend deployment',
+   problem:'Need zero-cost, reliable, CDN-backed hosting for the single HTML file.',
+   options:['Netlify','Vercel','GitHub Pages','Fly.io static'],
+   decision:'GitHub Pages via GitHub Actions workflow (deploy.yml). Triggers on every push to main.',
+   reasoning:'Free, tightly integrated with the existing repo, no additional account needed, CDN-backed. The single-file architecture means no build step is needed — just upload the file.',
+   pages:['all'],refs:['ADR-001']},
+
+  {id:'ADR-005',date:'2026-03-16',status:'Accepted',
+   title:'localStorage as primary data store',
+   problem:'The app needs persistent data storage without requiring login or network access for every read/write.',
+   options:['IndexedDB','localStorage','Firebase Realtime DB','Rails-only (no local cache)'],
+   decision:'localStorage with versioned keys (e.g. twwp_items_v1) and an S (Store) helper object for get/set/upsert/rm.',
+   reasoning:'Simple API, synchronous reads, works offline, easy to inspect in DevTools, no library needed. Size limit (~5MB) is acceptable for single-org use. Multi-device sync is layered on top via Rails API PUT/GET /api/sync.',
+   pages:['all'],refs:[]},
+
+  {id:'ADR-006',date:'2026-03-22',status:'Accepted',
+   title:'JWT auth with 30-day expiry, role in payload',
+   problem:'Need stateless auth that works across page reloads and survives browser restarts.',
+   options:['Session cookies','JWT in localStorage','JWT in httpOnly cookie','No auth (local only)'],
+   decision:'JWT with user_id/email/role/org_id payload, 30-day expiry. Stored in localStorage (twwp_rails_session) and session state (SK object).',
+   reasoning:'Stateless, works in a GitHub Pages SPA with no server session. 30-day expiry is appropriate for a small internal tool. Role is embedded so the frontend can apply role-based UI without extra API calls. Known trade-off: JWT cannot be revoked server-side without a blocklist.',
+   pages:['login'],refs:['ADR-002']},
+
+  {id:'ADR-007',date:'2026-03-23',status:'Accepted',
+   title:'PostgreSQL for multi-device sync via Rails',
+   problem:'localStorage is per-device. Users need their data accessible across devices.',
+   options:['CRDTs with peer sync','Supabase realtime','Rails API + Postgres snapshot','No multi-device'],
+   decision:'Full-store JSON snapshots saved to Postgres via PUT /api/sync. GET /api/sync restores on login. Last-write-wins per store key.',
+   reasoning:'Simple to implement, reliable, no conflict resolution edge cases for single-user internal tool. The trade-off is that concurrent writes from two tabs can overwrite each other, but this is acceptable for current usage patterns.',
+   pages:['all'],refs:['ADR-002','ADR-005']},
+
+  {id:'ADR-008',date:'2026-03-23',status:'Accepted',
+   title:'mammoth.js for Word document (.docx) extraction',
+   problem:'Users upload Word documents to the Document Library. Need to extract text for AI classification without a server-side parser.',
+   options:['Server-side pandoc via Rails','Browser-native FileReader (text only)','mammoth.js CDN','pdf.js for PDF'],
+   decision:'mammoth.js loaded from CDN (cdnjs.cloudflare.com) on first .docx upload. Extracts raw text up to 4000 chars for AI.',
+   reasoning:'Works entirely in the browser, no server round-trip, CDN-loaded so no bundle size impact. mammoth.js is the de facto standard for .docx extraction in JavaScript. 4000-char limit keeps AI prompt size reasonable.',
+   pages:['page-trustees'],refs:['ADR-001']},
+
+  {id:'ADR-009',date:'2026-03-23',status:'Accepted',
+   title:'Google Drive upload proxied via Rails, not direct browser upload',
+   problem:'Google Drive uploads from a browser require an OAuth token with appropriate scope. The token should not be exposed to browser JS beyond what is necessary.',
+   options:['Direct browser upload with token in localStorage','Rails proxy (browser → Rails → Drive)','Cloudflare Worker proxy'],
+   decision:'Drive uploads go browser → Rails API (POST /api/drive/upload) → Google Drive. Rails holds the OAuth token server-side after exchange.',
+   reasoning:'The OAuth token is already on the Rails server from the PKCE exchange. Routing uploads through Rails keeps the token off the browser, adds a natural audit point, and allows future rate limiting and retry logic.',
+   pages:['page-trustees'],refs:['ADR-002','ADR-003']},
+
+  {id:'ADR-010',date:'2026-03-23',status:'Accepted',
+   title:'Multi-org as north star, single-org for now',
+   problem:'TWWP will eventually need multi-entity support (TWWP PMA, GSD Collective, Mana Fuente, etc.). Adding entity_id now vs later.',
+   options:['Add entity_id to all stores now','Wait until needed','Build org switcher with entity_id in parallel'],
+   decision:'Organisation cards and org_id JWT field are present now. entity_id added to new stores as built. No enforced filtering yet — north star is to filter all views by active entity.',
+   reasoning:'Retro-fitting entity_id to all 32 stores after the fact is expensive. Adding it to new stores as built is cheap. The org switcher UX is designed but not enforced so existing data is not broken.',
+   pages:['page-dashboard','page-financials'],refs:['ADR-006']},
+
+  {id:'ADR-011',date:'2026-03-23',status:'Accepted',
+   title:'Event Ledger capped at 5000 entries with auto-purge',
+   problem:'logEvent() fires on every nav, save, and AI call. Uncapped, this will consume the entire localStorage quota.',
+   options:['No ledger','Ledger to Rails only (no local)','Local ledger with configurable cap','IndexedDB ledger (no size limit)'],
+   decision:'Local ledger (twwp_ledger_v1) with cap at 5000 entries (configurable). autoPurgeLedger() runs on init. Nav events excluded from activity overlay to reduce noise.',
+   reasoning:'Local ledger allows offline audit and calendar activity dots without network. 5000 entries at ~200 bytes each = ~1MB, well within localStorage limits. Sync to Rails via POST /api/ledger/sync allows durable storage without relying on localStorage alone.',
+   pages:['page-eventledger','page-calendar'],refs:['ADR-005']},
 ];
 // ── Growth Log ──────────────────────────────────────────────────────────────
 // Newest entries first. Claude adds an entry at the end of every session
 // where decisions changed, features were added, or bugs were fixed.
+// NOTE TO CLAUDE: Add a new entry here at the END of every session where features were added,
+// decisions changed, or bugs were fixed. Newest entries first. Keep entries concise but complete.
 const SPEC_GROWTH = [
+  {date:'2026-03-23',by:'Claude / Kenny',
+   summary:'Session 14 (20 tasks): Calendar Sync button wired with Google OAuth feedback + toast; global tooltip system (data-tip, 800ms delay, overflow-safe positioning); tasks→calendar auto-sync on saveTask/saveDevTask/delete; Event Ledger multi-select category+action filter with localStorage persistence; SPEC_GROWTH and SPEC_ADRS fully populated; openDateWizard() reusable date picker modal; completion notes modal for tasks/devtasks/calendar events/backlog; backlog items → calendar scheduling with Scheduled/Overdue filter pills; seedDevTasks updated to seed ALL backlog groups A-V with re-sync button; addGrowthEntry()/Log Session modal/Import from Session Summary in Dev History; DEVNOTES populated for all 13+ pages; sprint session logger in Developer header; tooltip data-tip pass on all remaining pages; recurring event edit flow (this/future/all modes); Approval Queue expanded to pull contacts/R&D/DocBuilder/email/campaigns; Dashboard panels all wired to live data; resource bar expanded with session duration/tasks today/service dots; Ctrl+K global search across all stores; SPEC_VERSION→4.4.'},
+  {date:'2026-03-23',by:'Claude / Kenny',
+   summary:'Session 13 (10 tasks): Fixed calendar CRUD — openCalEventMo/editCalEvent/saveCalEvent/deleteCalEvent fully defined. Calendar week/day views with view switcher pills and Today button. Calendar multi-provider connection panel (Google/iCloud/Proton/Outlook). Events Ledger store + global logEvent() wired into tasks/contacts/calendar/auth/ai/nav. Events Ledger admin page with stats bar, storage indicator, filters, pause/resume, export CSV. Resource usage bar (localStorage %, last sync age, AI calls, ledger events, Drive dot). Calendar + Ledger activity dot overlay with popover. Ledger auto-purge settings + syncLedgerToRails(). Recurring calendar events with daily/weekly/monthly/yearly expansion.'},
+  {date:'2026-03-23',by:'Claude / Kenny',
+   summary:'Session 12 (9 tasks): Capture routing — saveCapture() creates real records in tasks/contacts/campaigns/projects. AI auto-classify on capture (classifyCapture via aiCallJSON). Capture triage redesign with Accept/KB/Backlog/Discard actions. Capture Inbox card on Dashboard (Row 9). Global Approval Queue page aggregating captures/financials/maintenance with one-click actions. Calendar auto-events from workflows (maintenance schedules, approved reimbursements, active campaigns). Email Registry send via Rails API. R&D Promote to Project button.'},
+  {date:'2026-03-23',by:'Claude / Kenny',
+   summary:'Session 11 (9 tasks): Fixed /api/drive/upload Rails endpoint (fields, mime_type, clean response). Fixed Google OAuth scope (drive.file → drive). Frontend drive upload fix (JSON not FormData, webViewLink). Maintenance → financial auto-create on completeMaintJob(). Email Registry store + page + compose modal + templates (Guardian Welcome, Maintenance Reminder, Reimbursement Approved). Campaigns store + page + 6-stage lifecycle. Dashboard campaign + inventory panels (Row 8). Contact multi-tag TWWP roles (9 roles with colour badges). Trustee-specific contact fields + governance tab with term expiry cards.'},
+  {date:'2026-03-23',by:'Claude / Kenny',
+   summary:'Session 10 (4 tasks): Word doc .docx extraction via mammoth.js (CDN-loaded on first use, 4000-char AI parse). Doc Builder page with 3 templates (Host Agreement, Reimbursement Receipt, Waterhouse Report). Upload to Drive via Rails API. KB import from Document Library (multi-select checkbox, creates KB entries from doc descriptions).'},
+  {date:'2026-03-23',by:'Claude / Kenny',
+   summary:'Session 9 (5 tasks): Removed debug console.logs from doLogin(). Wired updateFinForm() — adapts financial entry form fields by type (expense/donation/reimbursement/income). Wired sendRptChatMsg() — AI chat on reports with multi-turn history and KB injection. Fixed Contacts CSV import — file picker, parseCsvText, dedup by email. Role-based UI enforcement — getUserRole()/isAdmin()/enforceRoleUI() — staff hides admin nav, read-only blocks writes.'},
+  {date:'2026-03-23',by:'Claude / Kenny',
+   summary:'Session 8 (1 session combined): Knowledge Base store added. KB tab in Developer page with CRUD, always_inject toggle, tag badges. getKBContext() prepends injected entries into every AI call. sendAIHelperMsg() and callModelForFeature() updated. Health check fixes: doLogin() post-login sync delay, doLogout() async save, aiCallJSON() KB injection.'},
+  {date:'2026-03-23',by:'Claude / Kenny',
+   summary:'Sessions 5–7 (Rails auth, GitHub Actions, Cloudflare): Rails API JWT auth live (bcrypt, users table, SessionsController, 30-day JWT). Frontend doLogin() async with Rails fallback. GitHub Actions deploy.yml for GitHub Pages auto-deploy. Cloudflare proxy test button. Rails API sync wired on logout and every 30 minutes.'},
   {date:'2026-03-19',by:'Claude / Kenny',
-   summary:'Full dashboard build: SVG arc gauges (litres quenched, avg VIPs), mini bar chart (monthly reimbursements), dev progress bar, waterhouse health cards, tasks due, guardian reimbursements owed, recent activity feed, quick actions grid, upcoming calendar strip, organisation cards (TWWP PMA, GSD Collective, Mana Fuente, Pet Shop + user-added), 3-step org wizard. App renamed to Ops App. Sidebar 3-stage toggle (full/icons/hidden) with peek tab and localStorage persistence. Dev panel reduced to 280px glass panel. Dashboard is now first page on login. syncBacklogToDevTasks and calSyncAll run on every login. 13 new dev tasks seeded from Groups D-T.'},
-    {date:'2026-03-18',by:'Claude / Kenny',
-   summary:'Added Platform Spec page (page-devspec) with structural framework: ADR list (empty, ready to populate), Block Index (30 system IDs), Growth Log, and per-page Dev Notes tab. Wired up updateDevPanel() for the per-page dev context panel. Added Group T (Kit Builder/BOM system) to backlog.md from waterhouse BOM design files.'},
+   summary:'Session 4 (Dashboard + Dev foundations): Full dashboard build with SVG arc gauges (litres quenched, avg VIPs), mini bar chart (monthly reimbursements), dev progress bar, waterhouse health cards, tasks due, guardian reimbursements owed, recent activity feed, quick actions grid, upcoming calendar strip, organisation cards + 3-step org wizard. App renamed to Ops App. Sidebar 3-stage toggle (full/icons/hidden) with peek tab. syncBacklogToDevTasks and calSyncAll run on every login. 13 new dev tasks seeded from Groups D-T.'},
   {date:'2026-03-18',by:'Claude / Kenny',
-   summary:'Created docs/ folder with 6 reference files: README.md, architecture.md, pages.md, data-storage.md, how-to-extend.md, known-issues.md. Created backlog.md with Groups A-S (~85 items) from ops-platform-distilled.md. Created ops-platform-distilled.md from ChatGPT session spec notes.'},
+   summary:'Session 3: Platform Spec page (page-devspec) with ADR list, Block Index (30 system IDs), Growth Log, per-page Dev Notes. updateDevPanel() wired for all pages. Group T (Kit Builder/BOM system) added to backlog. docs/ folder with 6 reference files, backlog.md with Groups A-S (~85 items).'},
   {date:'2026-03-17',by:'Claude / Kenny',
-   summary:'Completed v4.2 build: added Contacts/CRM, Projects, R&D, Trustees/Legal, Financials, Shops, AI Helper, Capture Widget. Seeded demo data from real Raj WH1 report data (3 periods). Resolved all JS syntax errors from Python string escaping issues.'},
+   summary:'Session 2: v4.2 build — Contacts/CRM, Projects, R&D, Trustees/Legal, Financials, Shops, AI Helper, Capture Widget. Demo data seeded from real Raj WH1 report data (3 periods). All JS syntax errors resolved.'},
   {date:'2026-03-16',by:'Claude / Kenny',
-   summary:'v4.1 base: Catalogue, Kit Templates, Deployments, Locations, Accounts, Receipt Inbox, Maintenance wizard, Calendar, WH Monitor, Member Display, Reports all functional. localStorage architecture with versioned keys.'},
+   summary:'Session 1: v4.1 base — Catalogue, Kit Templates, Deployments, Locations, Accounts, Receipt Inbox, Maintenance wizard, Calendar, WH Monitor, Member Display, Reports all functional. localStorage architecture with versioned keys.'},
 ];
 
 // ── Per-Page Dev Notes ──────────────────────────────────────────────────────
@@ -4384,6 +4611,32 @@ const DEVNOTES = {
   aihelper: 'BUILD INTENT: Central AI assistant + feedback/idea capture table. Feedback buckets: bug, backlog, ui, workflow, integration, automation, other.\n\nSTATUS: Functional. The AI Helper panel (floating) and the embedded chat are the same underlying system.',
 
   devspec: 'BUILD INTENT: Living platform specification embedded in the app. ADRs, Block Index, Growth Log, and per-page Dev Notes. Claude updates JS constants (SPEC_ADRS, SPEC_BLOCKS, SPEC_GROWTH, DEVNOTES) at the end of each session where decisions or features changed.\n\nHOW IT WORKS: Constants are hardcoded in the JS. Users can add ADRs and growth entries via the modal forms — these go to localStorage. The rendered view merges constants + localStorage entries. To make user-added entries permanent, Claude copies them into the constants at end of session.',
+
+  calendar: 'BUILD INTENT: Scheduling and event tracking across all waterhouses. Month/Week/Day views, recurring events, Google Calendar sync, activity dot overlay.\n\nSTATUS: Fully functional. Month view with 7-column grid, week/day views, recurring event expansion (daily/weekly/monthly/yearly), multi-provider connection panel (Google live, iCloud/Proton/Outlook coming soon).\n\nADDED SESSION 13: calendar CRUD, week/day views, activity dots with ledger popover, Google Calendar sync.\n\nNEEDS: iCloud CalDAV, Outlook Graph API. Recurring edit flow (this/future/all). See ADR-011.',
+
+  campaigns: 'BUILD INTENT: Campaign lifecycle management from community interest through to active tap deployment. 6 stages: idea/outreach/planning/funded/active/complete.\n\nSTATUS: Functional. Campaign modal with all fields, stage filter, calendar event auto-created when status goes active.\n\nNEEDS: Link campaign to host contact, facilitator contact, and waterhouse. Funding progress bar. Campaign → Deployment link.',
+
+  emailregistry: 'BUILD INTENT: Track all outgoing emails to contacts. Draft → review → sent lifecycle. Templates for common TWWP emails.\n\nSTATUS: Functional. Three templates (Guardian Welcome, Maintenance Reminder, Reimbursement Approved). Send via Rails API (placeholder until SMTP configured).\n\nNEEDS: SMTP configuration in Rails. Email open tracking. Bulk send to a campaign\'s contact list. Link to Contact record.',
+
+  docbuilder: 'BUILD INTENT: Generate print-quality legal and operational documents from live app data. Three templates: Host Agreement, Reimbursement Receipt, Waterhouse Report.\n\nSTATUS: Functional. Preview in iframe, PDF download via print, upload to Google Drive via Rails API.\n\nNEEDS: More templates (sponsor agreement, trustee deed, incident report). Version history. E-signature integration. Waterhouse Report should pull from monitorData.',
+
+  approvalqueue: 'BUILD INTENT: Single-stop triage page for all records requiring human review. Aggregates captures, financial entries, maintenance jobs, and more.\n\nSTATUS: Functional for captures/financials/maintenance. Badge counter auto-updates via updAQBadge().\n\nADDED SESSION 14: pulls contacts/R&D/DocBuilder/email/campaigns.\n\nNEEDS: Prioritisation (sort by age, urgency). Bulk approve. Email notification when queue grows.',
+
+  eventledger: 'BUILD INTENT: Full audit log of all app events — task saves, AI calls, logins, page navigations, etc. Admin-only. Supports filters, CSV export, auto-purge.\n\nSTATUS: Functional. Multi-select category+action filters with localStorage persistence (twwp_ledger_filter_v1). Sync to Rails placeholder.\n\nNEEDS: Rails persistence (ledger_entries table). Ledger-based anomaly alerts. Per-user ledger filtering.',
+
+  locations: 'BUILD INTENT: Registry of all physical locations — Waterhouses, storage sites, test benches. Links to contacts (guardian), deployments, maintenance jobs.\n\nSTATUS: Functional. Address autocomplete via Nominatim. Waterhouse filter in Calendar and Tasks.\n\nNEEDS: Full Waterhouse digital twin page (page-waterhouse-detail). Missing fields: installer, commission_date, filter_configuration, device_node_id, ha_url. See backlog Group F.',
+
+  inventory: 'BUILD INTENT: Stock management for TWWP parts and equipment. Tracks quantities, reorder points, storage locations. Links to catalogue items.\n\nSTATUS: Catalogue is functional with stock fields. Inventory summary on Dashboard (Row 8).\n\nNEEDS: Dedicated Inventory page with stock movement log. Reorder alerts. Bin location tracking. Link to purchase orders.',
+
+  kits: 'BUILD INTENT: Reusable kit templates for Waterhouse builds. Line items (catalogue items + qty), sub-kits, option axes, conditional items, formula quantities.\n\nNEEDS: Kit Instance layer (configured kit for a real site). Purchase List generation. Annual maintenance cost estimator. See SPEC_BLOCKS SYS-ECO-005, backlog Group T.',
+
+  deployments: 'BUILD INTENT: Deployment records + workflow trigger. When status goes Active, auto-creates maintenance events, tasks, workflow flags.\n\nSTATUS: Functional. Workflow trigger creates maintenance schedule calendar events.\n\nNEEDS: Per-deployment inventory auto-move. Link to PPSR record. Waterhouse digital twin link.',
+
+  reports: 'BUILD INTENT: Generate guardian reports, sponsor impact reports, technician reports. 6 report types. AI chat assistant for each report.\n\nSTATUS: Functional. sendRptChatMsg() and updateFinForm() wired (Session 9). Report AI chat uses multi-turn history and KB injection.\n\nNEEDS: Email reports via Email Registry. Schedule recurring report generation.',
+
+  monitor: 'BUILD INTENT: Per-waterhouse operational dashboard. Arc gauges for cumulative totals, period history table, receipt generation.\n\nNEEDS: Live sensor data via HA REST API. May fold into Waterhouse digital twin page. See ADR-003, ADR-005, backlog Group F.',
+
+  member: 'BUILD INTENT: Preview the Tap-Map widget for the public-facing TWWP web app. Export JSON payload for the Rails API.\n\nNEEDS: Rails endpoint /api/tap-map. Live tap data feed. Public-facing embed code.',
 };
 
 // ── Spec Rendering ──────────────────────────────────────────────────────────
@@ -4705,6 +4958,7 @@ function renderDevPage(){
   renderDevBacklog();
   renderSpecPage();
   renderKB();
+  updateDevPageActions('history');
 }
 
 function switchDevTab(el){
@@ -4713,12 +4967,24 @@ function switchDevTab(el){
   ['history','tasks','captures','backlog','spec','kb'].forEach(function(t){
     var e=G('dev-tab-'+t);if(e)e.style.display=t===el.dataset.t?'block':'none';
   });
-  if(el.dataset.t==='history')renderDevHistory();
+  if(el.dataset.t==='history'){renderDevHistory();updateDevPageActions('history');}
   if(el.dataset.t==='tasks')renderDevTasks();
   if(el.dataset.t==='captures')renderCapTypeCards();
   if(el.dataset.t==='backlog')renderDevBacklog();
   if(el.dataset.t==='spec'){renderSpecPage();}
-  if(el.dataset.t==='kb')renderKB();
+  if(el.dataset.t==='kb'){renderKB();updateDevPageActions('kb');}
+}
+function updateDevPageActions(tab){
+  var el=G('devPageActions');if(!el)return;
+  if(tab==='history'){
+    el.innerHTML='<button class="btn btn-p btn-sm" data-tip="Log this session\'s work" onclick="openSessionLogModal()">&#128221; Log Session</button>'+
+      '<button class="btn btn-g btn-sm" data-tip="Import from handoff doc text" onclick="openImportSessionModal()">&#128229; Import</button>';
+  } else if(tab==='kb'){
+    el.innerHTML='<button class="btn btn-p btn-sm" onclick="openKBMo()">+ Entry</button>'+
+      '<button class="btn btn-g btn-sm" onclick="openKBImportDocsMo()">Import from Docs</button>';
+  } else {
+    el.innerHTML='';
+  }
 }
 
 // ── Knowledge Base ─────────────────────────────────────────
@@ -4813,21 +5079,61 @@ function getKBContext(){
 }
 
 // ── Dev History ────────────────────────────────────────────
+function addGrowthEntry(date, by, summary){
+  var entries=JSON.parse(localStorage.getItem('twwp_spec_growth_v1')||'[]');
+  entries.unshift({date:date||todayStr(),by:by||'Claude / Kenny',summary:summary,_user:true,id:uid()});
+  localStorage.setItem('twwp_spec_growth_v1',JSON.stringify(entries));
+}
+
 function renderDevHistory(){
   var el=G('devHistoryList');if(!el)return;
   var userGrowth=JSON.parse(localStorage.getItem('twwp_spec_growth_v1')||'[]');
   var all=userGrowth.concat(SPEC_GROWTH);
   if(!all.length){el.innerHTML='<div class="cl cl-i"><span>i</span><div>No history entries yet.</div></div>';return;}
   el.innerHTML=all.map(function(g){
-    return '<div class="dh-row"><div class="dh-date">'+fmtDate(g.date)+'</div><div class="dh-by">'+esc(g.by||'')+'</div><div class="dh-summary">'+esc(g.summary)+'</div></div>';
+    var userBadge=g._user?'<span style="font-size:9px;color:var(--amber);margin-left:6px">&#9888; user-added</span>':'';
+    return '<div class="dh-row"><div class="dh-date">'+fmtDate(g.date)+'</div><div class="dh-by">'+esc(g.by||'')+userBadge+'</div><div class="dh-summary">'+esc(g.summary)+'</div></div>';
   }).join('');
+}
+
+function openSessionLogModal(){
+  var d=G('sl-date');if(d)d.value=todayStr();
+  OM('sessionLogMo');
+}
+function saveSessionLog(){
+  var date=(G('sl-date')||{}).value||todayStr();
+  var by=(G('sl-by')||{}).value||'Claude / Kenny';
+  var summary=((G('sl-summary')||{}).value||'').trim();
+  if(!summary){alert('Summary required.');return;}
+  addGrowthEntry(date,by,summary);
+  logEvent('app','session-log','Logged session: '+summary.slice(0,80));
+  CM('sessionLogMo');
+  renderDevHistory();
+  showDbToast('Session logged ✓');
+}
+function openImportSessionModal(){OM('sessionImportMo');}
+function aiExtractSessionSummary(){
+  var text=((G('si-text')||{}).value||'').trim();
+  if(!text){alert('Paste a session summary first.');return;}
+  var prompt='Extract a concise single-paragraph growth log entry from this session summary. Output JSON only: {"date":"YYYY-MM-DD","by":"Claude / Kenny","summary":"..."}. Session text:\n'+text.slice(0,3000);
+  aiCallJSON(prompt,function(data){
+    if(!data||!data.summary){showDbToast('Could not extract summary — check AI config.',true);return;}
+    addGrowthEntry(data.date||todayStr(),data.by||'Claude / Kenny',data.summary);
+    CM('sessionImportMo');
+    renderDevHistory();
+    showDbToast('Growth entry added ✓');
+  });
 }
 
 // ── Dev Tasks ──────────────────────────────────────────────
 function seedDevTasks(){
   var existing=S.get('devtasks');
-  if(existing.length)return;
-  // Seed from Group A (bug fixes) as starter tasks
+  if(existing.length){
+    // Still sync new backlog items even if some tasks exist
+    syncBacklogToDevTasks();
+    return;
+  }
+  // Seed core starter tasks with known status
   var seeds=[
     {id:'dtk_A1',title:'Remove duplicate buildRptFormModal function',group:'Group A',priority:'high',status:'open',desc:'Two copies around lines 2086/2110. Second wins, first is dead code.',created:new Date().toISOString()},
     {id:'dtk_A2',title:'Remove duplicate closeRptFormMo function',group:'Group A',priority:'high',status:'open',desc:'Same area as A1.',created:new Date().toISOString()},
@@ -4842,6 +5148,8 @@ function seedDevTasks(){
     {id:'dtk_I1',title:'Dashboard page',group:'Group I',priority:'high',status:'open',desc:'5 panels. First sidebar item. Home page for the app.',created:new Date().toISOString()},
   ];
   seeds.forEach(function(t){S.upsert('devtasks',t);});
+  // Then sync all backlog groups
+  syncBacklogToDevTasks();
 }
 
 function renderDevTasks(){
@@ -4849,8 +5157,9 @@ function renderDevTasks(){
   var tasks=S.get('devtasks');
   var open=tasks.filter(function(t){return t.status!=='complete'&&t.status!=='cancelled';});
   var done=tasks.filter(function(t){return t.status==='complete';});
-  var html='<div style="display:flex;gap:8px;margin-bottom:14px">';
-  html+='<button class="btn btn-p btn-sm" onclick="openDevTaskMo()">+ Dev Task</button>';
+  var html='<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center">';
+  html+='<button class="btn btn-p btn-sm" data-tip="Add a new dev task manually" onclick="openDevTaskMo()">+ Dev Task</button>';
+  html+='<button class="btn btn-g btn-sm" data-tip="Merge all backlog groups into Dev Tasks without duplicating" onclick="var n=syncBacklogToDevTasks();renderDevTasks();showDbToast(n+\' new tasks synced from backlog\')">&#8635; Re-sync Backlog</button>';
   html+='<span style="font-size:11px;color:var(--text3);align-self:center">'+open.length+' open &bull; '+done.length+' done</span>';
   html+='</div>';
   function taskRow(t){
@@ -4892,9 +5201,24 @@ function renderDevTasks(){
 
 function toggleDevTask(id,checked){
   var t=S.find('devtasks',id);if(!t)return;
-  t.status=checked?'complete':'open';
-  S.upsert('devtasks',t);
-  renderDevTasks();
+  if(checked){
+    // Use checkbox element to restore if user cancels
+    var chk=document.querySelector('.dt-check[data-xid="'+id+'"]');
+    openCompletionModal('COMPLETE DEV TASK','Mark "'+t.title+'" as complete?',function(note,ts){
+      t.status='complete';t.completed_at=ts;t.completion_note=note||'';
+      S.upsert('devtasks',t);
+      logEvent('task','complete','Completed dev task: '+t.title,{note:note});
+      syncTaskToCalendar('devtask',id);
+      renderDevTasks();
+      showDbToast('Dev task complete ✓');
+    });
+    // Restore checkbox state while modal is open (user may cancel)
+    if(chk)chk.checked=false;
+  } else {
+    t.status='open';t.completed_at='';t.completion_note='';
+    S.upsert('devtasks',t);
+    renderDevTasks();
+  }
 }
 
 function openDevTaskMo(){
@@ -4921,8 +5245,9 @@ function editDevTask(id){
 function saveDevTask(){
   var title=G('dtk-title')&&G('dtk-title').value.trim();
   if(!title){alert('Title required.');return;}
+  var dtId=editDevTaskId||uid();
   S.upsert('devtasks',{
-    id:editDevTaskId||uid(),
+    id:dtId,
     title:title,
     group:G('dtk-group')&&G('dtk-group').value.trim()||'',
     priority:G('dtk-priority')&&G('dtk-priority').value||'normal',
@@ -4931,12 +5256,15 @@ function saveDevTask(){
     status:editDevTaskId?(S.find('devtasks',editDevTaskId)?.status||'open'):'open',
     created:editDevTaskId?(S.find('devtasks',editDevTaskId)?.created||new Date().toISOString()):new Date().toISOString()
   });
+  syncTaskToCalendar('devtask', dtId);
   CM('devTaskMo');
   renderDevTasks();
 }
 
 function delDevTask(id){
   if(!confirm('Delete this dev task?'))return;
+  var taskKey='dtask_'+id;
+  S.set('calEvents',S.get('calEvents').filter(function(e){return e._task_id!==taskKey;}));
   S.rm('devtasks',id);
   renderDevTasks();
 }
@@ -5137,32 +5465,71 @@ function discardCapture(id){
 }
 
 // ── Backlog viewer ─────────────────────────────────────────
+var _backlogFilter='all';
 function renderDevBacklog(){
   var el=G('devBacklogList');if(!el)return;
   var progress=JSON.parse(localStorage.getItem('twwp_backlog_progress_v1')||'{}');
-  var html='';
+  var scheduled=JSON.parse(localStorage.getItem('twwp_backlog_scheduled_v1')||'{}');
+  var today=todayStr();
+  // Filter pills
+  var html='<div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">';
+  [['all','All'],['scheduled','Scheduled'],['overdue','Overdue']].forEach(function(f){
+    html+='<div class="pill'+(_backlogFilter===f[0]?' on':'')+'" onclick="setBacklogFilter(\''+f[0]+'\')">'+f[1]+'</div>';
+  });
+  html+='<button class="btn btn-g btn-sm" data-tip="Re-sync backlog items into Dev Tasks" onclick="syncBacklogToDevTasks();showDbToast(\'Backlog synced to Dev Tasks\')">&#8635; Sync to Dev Tasks</button>';
+  html+='</div>';
   BACKLOG_GROUPS.forEach(function(group){
     var done=group.items.filter(function(i){return progress[i.id]==='done';}).length;
+    // Filter items
+    var items=group.items;
+    if(_backlogFilter==='scheduled')items=items.filter(function(i){return !!scheduled[i.id];});
+    if(_backlogFilter==='overdue')items=items.filter(function(i){return scheduled[i.id]&&scheduled[i.id]<today&&progress[i.id]!=='done';});
+    if(!items.length)return;
     html+='<div style="margin-bottom:24px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">'+
       '<div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--cyan);background:rgba(0,229,255,.1);padding:2px 8px;border-radius:4px">'+group.id+'</div>'+
       '<div style="font-size:13px;font-weight:700;color:var(--text)">'+esc(group.title)+'</div>'+
       '<div style="font-size:10px;color:var(--text3)">'+done+'/'+group.items.length+' done</div>'+
       '</div>'+
       '<div style="font-size:11px;color:var(--text2);margin-bottom:8px">'+esc(group.desc)+'</div>';
-    group.items.forEach(function(item){
+    items.forEach(function(item){
       var isDone=progress[item.id]==='done';
+      var schedDate=scheduled[item.id]||'';
+      var isOverdue=schedDate&&schedDate<today&&!isDone;
       var LABEL_COL={EXPLICIT:'var(--cyan)',IMPLIED:'var(--green)',FIX:'var(--red)',OPEN:'var(--amber)'};
-      html+='<div style="display:flex;align-items:flex-start;gap:8px;padding:7px 10px;border-radius:6px;margin-bottom:3px;background:var(--surface2)">';
+      html+='<div style="display:flex;align-items:flex-start;gap:8px;padding:7px 10px;border-radius:6px;margin-bottom:3px;background:var(--surface2)'+(isOverdue?';border-left:3px solid var(--red)':'')+'">';
       html+='<input type="checkbox"'+(isDone?' checked':'')+' data-bid="'+item.id+'" onchange="toggleBacklogItem(this.dataset.bid,this.checked)" style="margin-top:2px;flex-shrink:0">';
       html+='<div style="flex:1"><div style="font-size:12px;color:var(--text);'+(isDone?'text-decoration:line-through;opacity:.5':'')+'">';
       html+='<span style="font-size:9px;font-weight:700;color:'+(LABEL_COL[item.label]||'var(--text3)')+';margin-right:6px">['+item.label+']</span>';
       html+=esc(item.title)+'</div>';
       if(item.detail)html+='<div style="font-size:10px;color:var(--text3);margin-top:2px">'+esc(item.detail)+'</div>';
-      html+='</div></div>';
+      if(schedDate)html+='<div style="font-size:10px;color:'+(isOverdue?'var(--red)':'var(--amber)')+';margin-top:2px">&#128197; '+fmtDate(schedDate)+(isOverdue?' (overdue)':'')+'</div>';
+      html+='</div>';
+      if(!isDone){
+        html+='<button class="btn btn-g btn-xs" data-bid="'+esc(item.id)+'" data-btitle="'+esc(item.title)+'" onclick="scheduleBacklogItem(this.dataset.bid,this.dataset.btitle)" style="flex-shrink:0">Schedule</button>';
+      }
+      html+='</div>';
     });
     html+='</div>';
   });
   el.innerHTML=html;
+}
+
+function setBacklogFilter(f){_backlogFilter=f;renderDevBacklog();}
+
+function scheduleBacklogItem(id,title){
+  openDateWizard('Schedule: '+title,function(date){
+    var scheduled=JSON.parse(localStorage.getItem('twwp_backlog_scheduled_v1')||'{}');
+    scheduled[id]=date;
+    localStorage.setItem('twwp_backlog_scheduled_v1',JSON.stringify(scheduled));
+    // Create a calendar event
+    S.upsert('calEvents',{
+      id:uid(),title:'[Backlog] '+title,type:'Reminder',date:date,
+      wh_id:'',time:'',notes:'Scheduled from backlog item '+id,
+      remind:false,created:new Date().toISOString(),_backlog_id:id,_auto:true
+    });
+    showDbToast('Scheduled for '+fmtDate(date));
+    renderDevBacklog();
+  });
 }
 
 function toggleBacklogItem(id,checked){
@@ -5332,9 +5699,11 @@ function renderTasksPage(){
       html+='</div>';
       html+='<div style="display:flex;flex-direction:column;gap:3px;flex-shrink:0">';
       if(src==='dev'){
+        if(!done)html+='<button class="btn btn-p btn-xs" data-xid="'+esc(t.id)+'" onclick="completeDevTaskFromList(this.dataset.xid)">&#10003;</button>';
         html+='<button class="btn btn-g btn-xs" data-xid="'+esc(t.id)+'" onclick="editDevTask(this.dataset.xid)">Edit</button>';
         html+='<button class="btn btn-d btn-xs" data-xid="'+esc(t.id)+'" onclick="delDevTask(this.dataset.xid)">Del</button>';
       } else {
+        if(!done)html+='<button class="btn btn-p btn-xs" data-xid="'+esc(t.id)+'" onclick="completeTaskFromList(this.dataset.xid)">&#10003;</button>';
         html+='<button class="btn btn-g btn-xs" data-xid="'+esc(t.id)+'" onclick="editTaskFn(this.dataset.xid)">Edit</button>';
         html+='<button class="btn btn-d btn-xs" data-xid="'+esc(t.id)+'" onclick="deleteTask(this.dataset.xid)">Del</button>';
       }
@@ -5366,6 +5735,29 @@ function openTaskMo(){
   OM('taskMo');
 }
 
+function completeTaskFromList(id){
+  var t=S.find('tasks',id);if(!t)return;
+  openCompletionModal('COMPLETE TASK','Mark "'+t.title+'" as complete?',function(note,ts){
+    t.status='complete';t.completed_at=ts;t.completion_note=note||'';
+    S.upsert('tasks',t);
+    syncTaskToCalendar('task',id);
+    logEvent('task','complete','Completed task: '+t.title,{note:note});
+    renderTasksPage();updStats();
+    showDbToast('Task complete ✓');
+  });
+}
+function completeDevTaskFromList(id){
+  var t=S.find('devtasks',id);if(!t)return;
+  openCompletionModal('COMPLETE DEV TASK','Mark "'+t.title+'" as complete?',function(note,ts){
+    t.status='complete';t.completed_at=ts;t.completion_note=note||'';
+    S.upsert('devtasks',t);
+    syncTaskToCalendar('devtask',id);
+    logEvent('task','complete','Completed dev task: '+t.title,{note:note});
+    renderTasksPage();renderDevTasks();updStats();
+    showDbToast('Dev task complete ✓');
+  });
+}
+
 function editTaskFn(id){
   var t=S.find('tasks',id);if(!t)return;
   editTaskId=id;
@@ -5389,11 +5781,13 @@ function saveTask(){
   if(!title){alert('Title required.');return;}
   var subtasksRaw=G('tk-subtasks')&&G('tk-subtasks').value||'';
   var subtasks=subtasksRaw.split('\n').map(function(s){return s.trim();}).filter(Boolean);
+  var taskId=editTaskId||uid();
+  var status=G('tk-status')&&G('tk-status').value||'open';
   S.upsert('tasks',{
-    id:editTaskId||uid(),
+    id:taskId,
     title:title,
     priority:G('tk-priority')&&G('tk-priority').value||'normal',
-    status:G('tk-status')&&G('tk-status').value||'open',
+    status:status,
     due:G('tk-due')&&G('tk-due').value||'',
     owner:G('tk-owner')&&G('tk-owner').value.trim()||'',
     module_link:G('tk-module')&&G('tk-module').value.trim()||'',
@@ -5404,6 +5798,7 @@ function saveTask(){
     created:editTaskId?(S.find('tasks',editTaskId)?.created||new Date().toISOString()):new Date().toISOString()
   });
   logEvent('task', editTaskId?'update':'create', (editTaskId?'Updated':'Created')+' task: '+title);
+  syncTaskToCalendar('task', taskId);
   CM('taskMo');
   renderTasksPage();
   updStats();
@@ -5413,9 +5808,91 @@ function deleteTask(id){
   if(!confirm('Delete this task?'))return;
   var t=S.find('tasks',id);
   logEvent('task','delete','Deleted task: '+(t?t.title:id));
+  // Remove linked calendar event
+  var taskKey='task_'+id;
+  var evts=S.get('calEvents').filter(function(e){return e._task_id!==taskKey;});
+  S.set('calEvents',evts);
   S.rm('tasks',id);
   renderTasksPage();
   updStats();
+}
+
+// ── Date Wizard ───────────────────────────────────────────────────────────
+var _dateWizardCallback = null;
+function openDateWizard(title, callback){
+  _dateWizardCallback = callback;
+  var t=G('dateWizardTitle');if(t)t.textContent='// '+(title||'SCHEDULE');
+  var tod=new Date(), tStr=todayStr();
+  // Compute next Monday
+  var nextMon=new Date(tod);nextMon.setDate(tod.getDate()+(1+(7-tod.getDay()))%7||7);
+  // First of next month
+  var nextMonth=new Date(tod.getFullYear(),tod.getMonth()+1,1);
+  // Jan 1 next year
+  var nextYear=new Date(tod.getFullYear()+1,0,1);
+  function fmt(d){return d.toLocaleDateString('en-NZ',{weekday:'short',day:'numeric',month:'short'});}
+  var el;
+  el=G('dw-today-label');if(el)el.textContent='('+fmt(tod)+')';
+  el=G('dw-week-label');if(el)el.textContent='(next Mon '+fmt(nextMon)+')';
+  el=G('dw-month-label');if(el)el.textContent='('+fmt(nextMonth)+')';
+  el=G('dw-year-label');if(el)el.textContent='('+nextYear.getFullYear()+' Jan 1)';
+  var cu=G('dw-custom-date');if(cu)cu.value='';
+  OM('dateWizardMo');
+}
+function dateWizardSelect(which){
+  var tod=new Date(),d;
+  if(which==='today'){d=tod;}
+  else if(which==='thisweek'){d=new Date(tod);d.setDate(tod.getDate()+(1+(7-tod.getDay()))%7||7);}
+  else if(which==='thismonth'){d=new Date(tod.getFullYear(),tod.getMonth()+1,1);}
+  else if(which==='thisyear'){d=new Date(tod.getFullYear()+1,0,1);}
+  var ds=d.toISOString().slice(0,10);
+  CM('dateWizardMo');
+  if(_dateWizardCallback)_dateWizardCallback(ds);
+}
+function dateWizardSelectCustom(){
+  var cu=G('dw-custom-date');if(!cu||!cu.value){alert('Pick a date first.');return;}
+  CM('dateWizardMo');
+  if(_dateWizardCallback)_dateWizardCallback(cu.value);
+}
+
+// ── Completion Note Modal ──────────────────────────────────────────────────
+var _completionCallback = null;
+function openCompletionModal(title, confirmMsg, callback){
+  _completionCallback = callback;
+  var t=G('completionNoteTitle');if(t)t.textContent='// '+(title||'MARK COMPLETE');
+  var m=G('completionNoteMsg');if(m)m.textContent=confirmMsg||'Confirm completion of this item.';
+  var note=G('completion-note-text');if(note)note.value='';
+  var ts=G('completion-note-ts');if(ts)ts.textContent='Completed at: '+new Date().toLocaleString('en-NZ');
+  OM('completionNoteMo');
+}
+function confirmCompletion(){
+  var note=(G('completion-note-text')||{}).value||'';
+  var ts=new Date().toISOString();
+  CM('completionNoteMo');
+  if(_completionCallback)_completionCallback(note, ts);
+}
+
+// ── Task ↔ Calendar sync ──────────────────────────────────────────────────
+function syncTaskToCalendar(src, taskId){
+  var store=src==='task'?'tasks':'devtasks';
+  var t=S.find(store,taskId);if(!t)return;
+  var taskKey=(src==='task'?'task_':'dtask_')+taskId;
+  // Remove stale auto event if task now complete or no due date
+  if(t.status==='complete'||t.status==='cancelled'||!t.due){
+    var evts=S.get('calEvents').filter(function(e){return e._task_id!==taskKey;});
+    S.set('calEvents',evts);
+    return;
+  }
+  // Upsert calendar event
+  var existing=S.get('calEvents').find(function(e){return e._task_id===taskKey;});
+  var label=src==='devtask'?'[Dev] '+t.title:t.title;
+  S.upsert('calEvents',{
+    id:existing?existing.id:uid(),
+    title:label,type:src==='devtask'?'Dev Task Due':'Task Due',
+    wh_id:t.wh_id||'',date:t.due,time:'',
+    assigned_to:t.owner||'',notes:t.desc||'',
+    remind:false,created:existing?existing.created:new Date().toISOString(),
+    _task_id:taskKey,_auto:true
+  });
 }
 
 function openTaskMoForWH(){
@@ -5764,7 +6241,43 @@ function populateCeWh(){
     whs.map(function(w){return '<option value="'+w.id+'">'+esc(w.name)+'</option>';}).join('');
 }
 
+var _recurEditId=null, _recurEditDate=null;
 function editCalEvent(id){
+  // Handle composite IDs from recurring expansion (baseId_YYYY-MM-DD)
+  var parts=id.split('_');
+  var baseId=id, instanceDate=null;
+  if(parts.length>1&&parts[parts.length-1].match(/\d{4}-\d{2}-\d{2}/)){
+    instanceDate=parts[parts.length-1];
+    baseId=parts.slice(0,-1).join('_');
+  }
+  var ev = S.find('calEvents', baseId); if(!ev) return;
+  // If recurring, show choice modal
+  if(ev.recurrence&&ev.recurrence!=='none'&&ev.recurrence!==''){
+    _recurEditId=baseId;_recurEditDate=instanceDate;
+    OM('recurEditMo');return;
+  }
+  openCalEventEditor(baseId);
+}
+function recurEditMode(mode){
+  CM('recurEditMo');
+  if(mode==='single'||mode==='future'){
+    // For single: create exception record; for future: split at this date
+    var baseEv=S.find('calEvents',_recurEditId);if(!baseEv)return;
+    if(mode==='single'&&_recurEditDate){
+      // Create exception record for just this date
+      var exc=Object.assign({},baseEv,{id:uid(),recurrence:'',date:_recurEditDate,_exception_of:_recurEditId});
+      S.upsert('calEvents',exc);
+      calEditId=exc.id;
+      openCalEventEditor(exc.id);
+    } else {
+      // Edit all future: modify root
+      openCalEventEditor(_recurEditId);
+    }
+  } else {
+    openCalEventEditor(_recurEditId);
+  }
+}
+function openCalEventEditor(id){
   var ev = S.find('calEvents', id); if(!ev) return;
   calEditId = id;
   G('calEventMoT').textContent = '// EDIT EVENT';
@@ -5779,8 +6292,27 @@ function editCalEvent(id){
   G('ce-notes').value = ev.notes || '';
   G('ce-recur').value = ev.recurrence || '';
   G('ce-remind').checked = !!ev.remind;
-  G('ce-del-btn').style.display = '';
-  CM('calEventMo');
+  var delBtn=G('ce-del-btn');if(delBtn)delBtn.style.display = '';
+  // Show next occurrences if recurring
+  var recurInfo=G('ce-recur-info');
+  if(recurInfo&&ev.recurrence&&ev.recurrence!=='none'&&ev.recurrence!==''){
+    var next=getNextOccurrences(ev,3);
+    recurInfo.innerHTML='<div style="font-size:11px;color:var(--text3);margin-top:4px">Next occurrences: '+next.map(function(d){return fmtDate(d);}).join(', ')+'</div>';
+  } else if(recurInfo){recurInfo.innerHTML='';}
+  OM('calEventMo');
+}
+function getNextOccurrences(ev,count){
+  var dates=[],d=new Date(ev.date),freq=ev.recurrence,i=0;
+  while(dates.length<count&&i<200){
+    if(i>0)dates.push(d.toISOString().slice(0,10));
+    if(freq==='daily')d.setDate(d.getDate()+1);
+    else if(freq==='weekly')d.setDate(d.getDate()+7);
+    else if(freq==='monthly')d.setMonth(d.getMonth()+1);
+    else if(freq==='yearly')d.setFullYear(d.getFullYear()+1);
+    else break;
+    i++;
+  }
+  return dates;
 }
 
 function saveCalEvent(){
@@ -5864,6 +6396,46 @@ document.addEventListener('click', function(e){
 function openCalProviderPanel(){
   updateCalProviderUI();
   CM('calProviderMo');
+}
+
+function doCalHeaderSync(btn){
+  // Internal task/devtask sync always runs
+  calSyncAll();
+  renderCalendar();
+  var providers = JSON.parse(localStorage.getItem('twwp_cal_providers')||'{}');
+  if(providers.google && providers.google.connected){
+    if(btn){btn.disabled=true;btn.innerHTML='&#8635; Syncing...';}
+    var token = localStorage.getItem('twwp_google_access_token');
+    if(!token){
+      showDbToast('No Google token. Open Connect panel to reconnect.',true);
+      if(btn){btn.disabled=false;btn.innerHTML='&#8635; Sync';}
+      return;
+    }
+    var now=new Date(), tMin=now.toISOString();
+    var tMaxD=new Date(now);tMaxD.setDate(tMaxD.getDate()+90);
+    fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin='+encodeURIComponent(tMin)+'&timeMax='+encodeURIComponent(tMaxD.toISOString())+'&maxResults=250&singleEvents=true&orderBy=startTime',{headers:{Authorization:'Bearer '+token}})
+    .then(function(r){return r.json();}).then(function(data){
+      if(data.error){showDbToast('Google Calendar: '+data.error.message,true);return;}
+      var imported=0;
+      (data.items||[]).forEach(function(ev){
+        if(!ev.start)return;
+        var date=(ev.start.date||ev.start.dateTime||'').slice(0,10);if(!date)return;
+        if(!S.get('calEvents').find(function(e){return e.gcal_id===ev.id;})){
+          S.upsert('calEvents',{id:uid(),gcal_id:ev.id,title:ev.summary||'(no title)',type:'Meeting',date:date,time:ev.start.dateTime?(ev.start.dateTime.slice(11,16)):'',notes:ev.description||'',source:'google'});
+          imported++;
+        }
+      });
+      var ps=JSON.parse(localStorage.getItem('twwp_cal_providers')||'{}');
+      ps.google={connected:true,lastSync:new Date().toISOString()};
+      localStorage.setItem('twwp_cal_providers',JSON.stringify(ps));
+      showDbToast('Synced '+imported+' new events from Google Calendar');
+      renderCalendar();
+    }).catch(function(e){showDbToast('Sync error: '+e.message,true);})
+    .finally(function(){if(btn){btn.disabled=false;btn.innerHTML='&#8635; Sync';}});
+  } else {
+    var autoCount=S.get('calEvents').filter(function(e){return e._auto;}).length;
+    showDbToast(autoCount+' task events synced. Connect Google Calendar for more.');
+  }
 }
 
 function updateCalProviderUI(){
@@ -6121,9 +6693,41 @@ var CAT_COLORS = {
   nav:'#636e72', report:'#fdcb6e', app:'#b2bec3'
 };
 
+function toggleLedgerDropdown(type){
+  var dd=G('ledger-'+type+'-dropdown');if(!dd)return;
+  var isOpen=dd.style.display!=='none';
+  // Close all dropdowns first
+  ['cat','action'].forEach(function(t){var d=G('ledger-'+t+'-dropdown');if(d)d.style.display='none';});
+  if(!isOpen)dd.style.display='block';
+  // Close on outside click
+  if(!isOpen){setTimeout(function(){
+    function outsideClick(e){
+      if(!dd.contains(e.target)&&e.target!==G('ledger-'+type+'-btn')){dd.style.display='none';document.removeEventListener('click',outsideClick);}
+    }
+    document.addEventListener('click',outsideClick);
+  },10);}
+}
+
+function saveLedgerFilterState(){
+  var cats=Array.from(document.querySelectorAll('.ldg-cat-chk:checked')).map(function(c){return c.value;});
+  var acts=Array.from(document.querySelectorAll('.ldg-act-chk:checked')).map(function(c){return c.value;});
+  var search=(G('ledger-filter-search')||{}).value||'';
+  var date=(G('ledger-filter-date')||{}).value||'';
+  localStorage.setItem('twwp_ledger_filter_v1',JSON.stringify({cats:cats,acts:acts,search:search,date:date}));
+}
+
+function loadLedgerFilterState(){
+  var saved=JSON.parse(localStorage.getItem('twwp_ledger_filter_v1')||'{}');
+  if(saved.cats){document.querySelectorAll('.ldg-cat-chk').forEach(function(c){c.checked=saved.cats.includes(c.value);});}
+  if(saved.acts){document.querySelectorAll('.ldg-act-chk').forEach(function(c){c.checked=saved.acts.includes(c.value);});}
+  if(saved.search&&G('ledger-filter-search'))G('ledger-filter-search').value=saved.search;
+  if(saved.date&&G('ledger-filter-date'))G('ledger-filter-date').value=saved.date;
+}
+
 function renderEventLedgerPage(){
   var entries = S.get('eventLedger');
-  var catFilter = (G('ledger-filter-cat')||{}).value||'';
+  var catFilter = Array.from(document.querySelectorAll('.ldg-cat-chk:checked')).map(function(c){return c.value;});
+  var actFilter = Array.from(document.querySelectorAll('.ldg-act-chk:checked')).map(function(c){return c.value;});
   var search = ((G('ledger-filter-search')||{}).value||'').toLowerCase();
   var dateFilter = (G('ledger-filter-date')||{}).value||'';
 
@@ -6159,7 +6763,8 @@ function renderEventLedgerPage(){
 
   // Filter
   var filtered = entries;
-  if(catFilter) filtered = filtered.filter(function(e){return e.category===catFilter;});
+  if(catFilter.length) filtered = filtered.filter(function(e){return catFilter.includes(e.category);});
+  if(actFilter.length) filtered = filtered.filter(function(e){return actFilter.includes(e.action);});
   if(search) filtered = filtered.filter(function(e){return (e.detail||'').toLowerCase().includes(search)||(e.action||'').toLowerCase().includes(search);});
   if(dateFilter) filtered = filtered.filter(function(e){return (e.date||'')===dateFilter;});
 
@@ -6275,9 +6880,10 @@ function clearLedger(){
 }
 
 function clearLedgerFilters(){
-  var cat=G('ledger-filter-cat'); if(cat) cat.value='';
+  document.querySelectorAll('.ldg-cat-chk,.ldg-act-chk').forEach(function(c){c.checked=false;});
   var srch=G('ledger-filter-search'); if(srch) srch.value='';
   var dt=G('ledger-filter-date'); if(dt) dt.value='';
+  localStorage.removeItem('twwp_ledger_filter_v1');
   renderEventLedgerPage();
 }
 
@@ -6297,56 +6903,125 @@ function exportLedger(){
 // ── Resource bar ─────────────────────────────────────────────────────────
 var rbCollapsed = localStorage.getItem('twwp_rb_collapsed')==='1';
 
+var RB_ITEMS_DEF = [
+  {key:'storage',  label:'Storage %'},
+  {key:'sync',     label:'Last Sync'},
+  {key:'session',  label:'Session Duration'},
+  {key:'tasks-today', label:'Tasks Today'},
+  {key:'captures-today', label:'Captures Today'},
+  {key:'ai',       label:'AI Calls'},
+  {key:'ledger',   label:'Ledger Events'},
+  {key:'svc-dots', label:'Service Dots'},
+];
+function getRbCfg(){try{return JSON.parse(localStorage.getItem('twwp_rb_cfg_v1')||'{}');}catch{return{};}}
+function saveRbCfg(c){localStorage.setItem('twwp_rb_cfg_v1',JSON.stringify(c));}
+function rbItemVisible(key){var c=getRbCfg();return c[key]!==false;}
+
 function updateResourceBar(){
   var bar = G('resourceBar'); if(!bar) return;
   if(rbCollapsed){bar.classList.add('collapsed');}else{bar.classList.remove('collapsed');}
 
-  // localStorage usage
-  var used = 0;
-  try{
-    var total = 5 * 1024 * 1024; // ~5MB typical
-    Object.keys(localStorage).forEach(function(k){used += (localStorage.getItem(k)||'').length * 2;});
-    var pct = Math.min(100, Math.round(used / total * 100));
-    var col = pct>80?'var(--red)':pct>60?'var(--amber)':'var(--green)';
-    var el = G('rb-storage');
-    if(el) el.innerHTML = '&#128190; <div class="rb-bar-wrap"><div class="rb-bar-fill" style="width:'+pct+'%;background:'+col+'"></div></div> <span style="color:'+col+'">'+pct+'%</span>';
-  }catch(e){}
+  var today = todayStr();
+  var ledger = S.get('eventLedger');
 
-  // Last sync
-  var syncEl = G('rb-sync');
-  if(syncEl){
-    var lastSync = localStorage.getItem('twwp_last_sync_ts');
-    var syncTxt = '—';
-    if(lastSync){
-      var diff = Math.round((Date.now()-new Date(lastSync).getTime())/60000);
-      syncTxt = diff<2?'just now':diff<60?diff+'m ago':Math.round(diff/60)+'h ago';
-    }
-    syncEl.innerHTML = '&#8635; '+syncTxt;
+  // Helper to show/hide each item
+  function rbShow(id,visible){var el=G('rb-'+id);if(el)el.style.display=visible?'':'none';}
+  RB_ITEMS_DEF.forEach(function(d){rbShow(d.key, rbItemVisible(d.key));});
+
+  // localStorage usage
+  if(rbItemVisible('storage')){
+    try{
+      var used=0, total=5*1024*1024;
+      Object.keys(localStorage).forEach(function(k){used+=(localStorage.getItem(k)||'').length*2;});
+      var pct=Math.min(100,Math.round(used/total*100));
+      var col=pct>80?'var(--red)':pct>60?'var(--amber)':'var(--green)';
+      var el=G('rb-storage');
+      if(el) el.innerHTML='&#128190; <div class="rb-bar-wrap"><div class="rb-bar-fill" style="width:'+pct+'%;background:'+col+'"></div></div> <span style="color:'+col+'">'+pct+'%</span>';
+    }catch(e){}
   }
 
-  // AI calls this session
-  var aiEl = G('rb-ai');
-  if(aiEl){
-    var today = todayStr();
-    var aiCount = S.get('eventLedger').filter(function(e){return e.category==='ai'&&e.date===today;}).length;
-    aiEl.innerHTML = '&#129302; '+aiCount+' AI';
+  // Last sync
+  if(rbItemVisible('sync')){
+    var syncEl=G('rb-sync');
+    if(syncEl){
+      var lastSync=localStorage.getItem('twwp_last_sync_ts');
+      var syncTxt='—';
+      if(lastSync){var diff=Math.round((Date.now()-new Date(lastSync).getTime())/60000);syncTxt=diff<2?'just now':diff<60?diff+'m ago':Math.round(diff/60)+'h ago';}
+      syncEl.innerHTML='&#8635; '+syncTxt;
+    }
+  }
+
+  // Session duration
+  if(rbItemVisible('session')){
+    var sessEl=G('rb-session');
+    if(sessEl){
+      var startTs=parseInt(sessionStorage.getItem('twwp_session_start')||'0',10);
+      var sessTxt='—';
+      if(startTs){
+        var mins=Math.round((Date.now()-startTs)/60000);
+        sessTxt=mins<60?mins+'m':(Math.floor(mins/60)+'h '+(mins%60)+'m');
+      }
+      sessEl.innerHTML='&#9201; '+sessTxt;
+    }
+  }
+
+  // Tasks completed today
+  if(rbItemVisible('tasks-today')){
+    var ttEl=G('rb-tasks-today');
+    if(ttEl){
+      var tasksDone=ledger.filter(function(e){return e.category==='task'&&e.action==='complete'&&e.date===today;}).length;
+      ttEl.innerHTML='&#9989; '+tasksDone+' done';
+    }
+  }
+
+  // Captures today
+  if(rbItemVisible('captures-today')){
+    var capEl=G('rb-captures-today');
+    if(capEl){
+      var capCnt=ledger.filter(function(e){return e.category==='capture'&&e.date===today;}).length;
+      capEl.innerHTML='&#128247; '+capCnt+' cap';
+    }
+  }
+
+  // AI calls today
+  if(rbItemVisible('ai')){
+    var aiEl=G('rb-ai');
+    if(aiEl){
+      var aiCount=ledger.filter(function(e){return e.category==='ai'&&e.date===today;}).length;
+      aiEl.innerHTML='&#129302; '+aiCount+' AI';
+    }
   }
 
   // Ledger events today
-  var ledEl = G('rb-ledger');
-  if(ledEl){
-    var today2 = todayStr();
-    var cnt = S.get('eventLedger').filter(function(e){return e.date===today2;}).length;
-    var ledCol = ledgerEnabled ? 'var(--green)' : 'var(--text3)';
-    ledEl.innerHTML = '<span class="rb-dot" style="background:'+ledCol+'"></span> '+cnt+' events';
+  if(rbItemVisible('ledger')){
+    var ledEl=G('rb-ledger');
+    if(ledEl){
+      var cnt=ledger.filter(function(e){return e.date===today;}).length;
+      var ledCol=ledgerEnabled?'var(--green)':'var(--text3)';
+      ledEl.innerHTML='<span class="rb-dot" style="background:'+ledCol+'"></span> '+cnt+' log';
+    }
   }
 
-  // Drive status
-  var driveEl = G('rb-drive');
-  if(driveEl){
-    var token = localStorage.getItem('twwp_google_access_token');
-    var driveCol = token ? 'var(--green)' : 'var(--text3)';
-    driveEl.innerHTML = '<span class="rb-dot" style="background:'+driveCol+'"></span> Drive';
+  // Service dots (Rails, Drive, AI, HA)
+  if(rbItemVisible('svc-dots')){
+    var svcEl=G('rb-svc-dots');
+    if(svcEl){
+      var railsSess=getRailsSession&&getRailsSession();
+      var oauthTok=getOAuthToken&&getOAuthToken();
+      var aiCfg=getAiCfg();
+      var hasAI=!!(aiCfg.geminiKey||aiCfg.anthropicKey||aiCfg.openaiKey||aiCfg.openRouterKey);
+      var haUrl=getIntegration('ha-url');var haToken=getIntegration('ha-token');
+      var services=[
+        {label:'Rails', ok:!!(railsSess&&railsSess.token), page:'ai-integrations'},
+        {label:'Drive', ok:!!(oauthTok&&oauthTok.access_token), page:'ai-integrations'},
+        {label:'AI',    ok:hasAI, page:'ai-integrations'},
+        {label:'HA',    ok:!!(haUrl&&haToken), page:'ai-integrations'},
+      ];
+      svcEl.innerHTML=services.map(function(sv){
+        var col=sv.ok?'var(--green)':'var(--text3)';
+        return '<span class="rb-svc-dot" data-tip="'+sv.label+': '+(sv.ok?'Connected':'Not configured')+'" onclick="go(\''+sv.page+'\',G(\'ni-'+sv.page+'\'))" style="cursor:pointer;display:inline-flex;align-items:center;gap:2px;font-size:9px;color:var(--text2)"><span class="rb-dot" style="background:'+col+'"></span>'+sv.label+'</span>';
+      }).join('');
+    }
   }
 }
 
@@ -6359,6 +7034,27 @@ function toggleResourceBar(){
     var arrow = bar.querySelector('span');
     if(arrow) arrow.textContent = rbCollapsed ? '▲' : '▼';
   }
+}
+
+function openRbSettings(){
+  var pn=G('rbSettingsPn'); if(!pn) return;
+  var cfg=getRbCfg();
+  var html=RB_ITEMS_DEF.map(function(d){
+    var checked=(cfg[d.key]!==false)?'checked':'';
+    return '<label style="display:flex;align-items:center;gap:6px;margin-bottom:4px;cursor:pointer"><input type="checkbox" '+checked+' onchange="toggleRbItem(\''+d.key+'\',this.checked)"> '+d.label+'</label>';
+  }).join('');
+  G('rbSettingsList').innerHTML=html;
+  pn.style.display='';
+  // close on outside click
+  setTimeout(function(){
+    document.addEventListener('click',function _rbClose(e){
+      if(!pn.contains(e.target)&&!e.target.closest('[onclick*="openRbSettings"]')){pn.style.display='none';document.removeEventListener('click',_rbClose);}
+    });
+  },10);
+}
+function closeRbSettings(){var pn=G('rbSettingsPn');if(pn)pn.style.display='none';}
+function toggleRbItem(key,visible){
+  var cfg=getRbCfg();cfg[key]=visible;saveRbCfg(cfg);updateResourceBar();
 }
 
 // ── Tasks page — view + group toggles ────────────────────────────────────
@@ -6381,41 +7077,27 @@ function setTaskGroup(el){
 
 // ── Additional backlog dev tasks seeded on login ──────────────────────────
 function syncBacklogToDevTasks(){
+  // Seeds ALL BACKLOG_GROUPS into devtasks, without duplicating existing entries
   var existing=new Set(S.get('devtasks').map(function(t){return t.id;}));
-  var toAdd=[
-    // Group D
-    {id:'dtk_D1',title:'Add approval_status to financial entries',group:'Group D',priority:'normal',status:'open',desc:'draft | needs_review | approved | rejected | revised'},
-    {id:'dtk_D3',title:'Wire up Receipt Inbox AI Parse tab',group:'Group D',priority:'normal',status:'open',desc:'Tab exists but no AI call is made.'},
-    // Group E
-    {id:'dtk_E1',title:'Add entities store + entity selector',group:'Group E',priority:'high',status:'open',desc:'entity_id tagging across contacts, financials, projects, calEvents.'},
-    // Group F
-    {id:'dtk_F2',title:'Add Open in HA button per waterhouse',group:'Group F',priority:'normal',status:'open',desc:'ha_url field on location record. Link opens HA dashboard.'},
-    {id:'dtk_F3',title:'Add missing fields to location form',group:'Group F',priority:'normal',status:'open',desc:'installer, commission_date, filter_configuration, device_node_id, ha_url, tap_policy_notes'},
-    // Group G
-    {id:'dtk_G1',title:'HA settings section in AI & Integrations',group:'Group G',priority:'normal',status:'open',desc:'HA base URL + long-lived access token. Test connection button.'},
-    // Group H
-    {id:'dtk_H1',title:'Add campaigns store + Campaigns page',group:'Group H',priority:'high',status:'open',desc:'11-step lifecycle. Funding progress bar. Links to host, facilitator, waterhouse.'},
-    // Group I
-    {id:'dtk_I1',title:'Dashboard page (home page)',group:'Group I',priority:'high',status:'open',desc:'5 panels: Infrastructure, Telemetry, Campaigns, Procurement, Maintenance. First sidebar item.'},
-    // Group T
-    {id:'dtk_T1',title:'Add maintenance_profile to catalogue items',group:'Group T',priority:'normal',status:'open',desc:'Sub-object: maintenance_type, replacement_interval, annual_cost_min/max, consumable_status.'},
-    {id:'dtk_T2',title:'Add inclusion_rule + quantity_type to kit line items',group:'Group T',priority:'normal',status:'open',desc:'Conditional items, formula quantities (e.g. qty=monitoring_zone_count).'},
-    {id:'dtk_T3',title:'Kit Instance layer',group:'Group T',priority:'normal',status:'open',desc:'New store: kit_instances. Site-specific configured kit before procurement.'},
-    // Group K
-    {id:'dtk_K1',title:'Add entity_id + managed_for_entity_id to financials',group:'Group K',priority:'normal',status:'open',desc:'Multi-entity ledger. Managed funds flag.'},
-    {id:'dtk_V1',title:'PPSR registration wizard',group:'Group V',priority:'normal',status:'complete',desc:'5-step wizard on Trustees/Legal → PPSR tab. DONE.'},
-    {id:'dtk_V2',title:'Export PPSR record as printable PDF',group:'Group V',priority:'normal',status:'open',desc:'Formatted summary printable from the registration detail.'},
-    {id:'dtk_V3',title:'PPSR expiry reminders → Calendar',group:'Group V',priority:'low',status:'open',desc:'Auto-create calendar event when registration nears expiry.'},
-    {id:'dtk_K2',title:'Wire maint + monitor reimbursements to financials store',group:'Group K',priority:'normal',status:'open',desc:'Auto-create financial entry when reimbursement is calculated.'},
-  ];
   var added=0;
-  toAdd.forEach(function(t){
-    if(!existing.has(t.id)){
-      t.created=new Date().toISOString();
-      S.upsert('devtasks',t);
-      added++;
-    }
+  BACKLOG_GROUPS.forEach(function(group){
+    group.items.forEach(function(item){
+      var dtId='dtk_'+item.id;
+      if(!existing.has(dtId)){
+        S.upsert('devtasks',{
+          id:dtId,
+          title:item.title,
+          group:'Group '+group.id+' — '+group.title,
+          priority:item.label==='FIX'?'high':'normal',
+          status:'open',
+          desc:item.detail||'',
+          created:new Date().toISOString()
+        });
+        added++;
+      }
+    });
   });
+  return added;
 }
 
 
@@ -6901,18 +7583,36 @@ function updAQBadge(){
 
 function getAQItems(){
   var items=[];
-  // Unreviewed captures
+  // 1. Unreviewed captures
   S.get('captures').filter(function(c){return !c.triage||c.triage==='undecided';}).forEach(function(c){
-    items.push({id:c.id,aqType:'capture',aqLabel:'Capture',title:c.title,subtitle:(c.type||'note').toUpperCase()+' — '+fmtDate(c.created),source:'Developer → Captures',raw:c});
+    items.push({id:c.id,aqType:'capture',aqLabel:'Capture',title:c.title,subtitle:(c.type||'note').toUpperCase()+' — '+fmtDate(c.created),source:'Developer → Captures',raw:c,age:c.created});
   });
-  // Financial entries with no approval_status
+  // 2. Financial entries with no approval_status
   S.get('financials').filter(function(e){return !e.approval_status||e.approval_status==='pending';}).forEach(function(e){
-    items.push({id:e.id,aqType:'financial',aqLabel:e.type==='reimbursement'?'Reimbursement':'Financial',title:(e.desc||e.description||'Financial entry'),subtitle:(e.type||'').toUpperCase()+' — $'+(parseFloat(e.amount)||0).toFixed(2)+' — '+fmtDate(e.date||e.created),source:'Financials',raw:e});
+    items.push({id:e.id,aqType:'financial',aqLabel:e.type==='reimbursement'?'Reimbursement':'Financial',title:(e.desc||e.description||'Financial entry'),subtitle:(e.type||'').toUpperCase()+' — $'+(parseFloat(e.amount)||0).toFixed(2)+' — '+fmtDate(e.date||e.created),source:'Financials',raw:e,age:e.date||e.created});
   });
-  // Maintenance jobs without sign-off
+  // 3. Maintenance jobs without sign-off
   S.get('maintJobs').filter(function(j){return !j.sign_off_date;}).forEach(function(j){
-    items.push({id:j.id,aqType:'maintjob',aqLabel:'Maintenance',title:'Maintenance — '+(j.wh_name||'Unknown WH'),subtitle:'Performed by: '+(j.performed_by||'Unknown')+' — '+fmtDate(j.date),source:'Maintenance',raw:j});
+    items.push({id:j.id,aqType:'maintjob',aqLabel:'Maintenance',title:'Maintenance — '+(j.wh_name||'Unknown WH'),subtitle:'Performed by: '+(j.performed_by||'Unknown')+' — '+fmtDate(j.date),source:'Maintenance',raw:j,age:j.date});
   });
+  // 4. Contacts with status 'unverified' or 'lead'
+  S.get('contacts').filter(function(c){return c.type==='lead'||c.verification_status==='unverified';}).slice(0,10).forEach(function(c){
+    items.push({id:c.id,aqType:'contact',aqLabel:'New Contact',title:(c.name||'Unknown contact'),subtitle:(c.type||'contact').toUpperCase()+' — '+esc(c.email||'')+(c.phone?' &bull; '+c.phone:''),source:'Contacts',raw:c,age:c.created});
+  });
+  // 5. R&D items marked validated (awaiting promotion)
+  S.get('captures').filter(function(c){return c.type==='rd'&&c.status==='validated'&&!c.promoted_to_project;}).forEach(function(c){
+    items.push({id:c.id,aqType:'rdpromote',aqLabel:'R&D → Project',title:c.title,subtitle:'Validated R&D idea awaiting promotion to project',source:'R&D',raw:c,age:c.created});
+  });
+  // 6. Email drafts
+  S.get('emailRegistry').filter(function(e){return e.status==='draft';}).forEach(function(e){
+    items.push({id:e.id,aqType:'emaildraft',aqLabel:'Email Draft',title:e.subject||'(no subject)',subtitle:'To: '+(e.contact_name||e.to||'unknown')+' — '+fmtDate(e.created),source:'Email Registry',raw:e,age:e.created});
+  });
+  // 7. Campaign ideas (status=idea)
+  S.get('campaigns').filter(function(c){return c.status==='idea';}).forEach(function(c){
+    items.push({id:c.id,aqType:'campaignidea',aqLabel:'Campaign Idea',title:c.name,subtitle:'Awaiting planning approval — created '+fmtDate(c.created),source:'Campaigns',raw:c,age:c.created});
+  });
+  // Sort by age (oldest first)
+  items.sort(function(a,b){return (a.age||'').localeCompare(b.age||'');});
   return items;
 }
 
@@ -6923,7 +7623,7 @@ function renderApprovalQueue(){
   if(!items.length){
     el.innerHTML='<div class="cl cl-i"><span>i</span><div>Approval queue is empty. All items have been reviewed.</div></div>';return;
   }
-  var typeColor={capture:'var(--cyan)',financial:'var(--amber)',maintjob:'var(--purple)',Reimbursement:'var(--cyan)'};
+  var typeColor={capture:'var(--cyan)',financial:'var(--amber)',maintjob:'var(--purple)',Reimbursement:'var(--cyan)',contact:'var(--green)',rdpromote:'var(--blue)',emaildraft:'var(--orange)',campaignidea:'var(--pink)'};
   var html='<div style="display:flex;flex-direction:column;gap:10px">';
   items.forEach(function(item){
     var col=typeColor[item.aqType]||'var(--text2)';
@@ -6945,6 +7645,18 @@ function renderApprovalQueue(){
       html+='<button class="btn btn-d btn-sm" data-xid="'+esc(item.id)+'" onclick="rejectFinancialEntry(this.dataset.xid)">Reject</button>';
     }else if(item.aqType==='maintjob'){
       html+='<button class="btn btn-p btn-sm" data-xid="'+esc(item.id)+'" onclick="signOffMaintJob(this.dataset.xid)">Sign Off</button>';
+    }else if(item.aqType==='contact'){
+      html+='<button class="btn btn-p btn-sm" data-xid="'+esc(item.id)+'" onclick="aqVerifyContact(this.dataset.xid)">Verify</button>';
+      html+='<button class="btn btn-g btn-sm" data-xid="'+esc(item.id)+'" onclick="go(\'contacts\')">View</button>';
+    }else if(item.aqType==='rdpromote'){
+      html+='<button class="btn btn-p btn-sm" data-xid="'+esc(item.id)+'" onclick="promoteRDToProject(this.dataset.xid);renderApprovalQueue()">Promote to Project</button>';
+      html+='<button class="btn btn-g btn-sm" data-xid="'+esc(item.id)+'" onclick="go(\'developer\')">View R&D</button>';
+    }else if(item.aqType==='emaildraft'){
+      html+='<button class="btn btn-p btn-sm" data-xid="'+esc(item.id)+'" onclick="sendEmail(this.dataset.xid)">Send</button>';
+      html+='<button class="btn btn-g btn-sm" data-xid="'+esc(item.id)+'" onclick="go(\'emailregistry\')">Edit Draft</button>';
+    }else if(item.aqType==='campaignidea'){
+      html+='<button class="btn btn-p btn-sm" data-xid="'+esc(item.id)+'" onclick="aqMoveCampaignToPlanning(this.dataset.xid)">Approve to Planning</button>';
+      html+='<button class="btn btn-g btn-sm" data-xid="'+esc(item.id)+'" onclick="go(\'campaigns\')">View</button>';
     }
     html+='</div></div></div>';
   });
@@ -6974,6 +7686,16 @@ function rejectFinancialEntry(id){
   renderApprovalQueue();
 }
 
+function aqVerifyContact(id){
+  var c=S.find('contacts',id);if(!c)return;
+  c.verification_status='verified';c.type=c.type==='lead'?'member':c.type;
+  S.upsert('contacts',c);showDbToast('Contact verified ✓');renderApprovalQueue();updAQBadge();
+}
+function aqMoveCampaignToPlanning(id){
+  var c=S.find('campaigns',id);if(!c)return;
+  c.status='planning';S.upsert('campaigns',c);
+  showDbToast('Campaign moved to Planning ✓');renderApprovalQueue();updAQBadge();
+}
 function signOffMaintJob(id){
   var job=S.find('maintJobs',id);if(!job)return;
   job.sign_off_date=todayStr();
@@ -7892,7 +8614,7 @@ function switchFinTab(el){
   var actions=G('finPageActions');
   if(actions){
     if(t==='transactions'){
-      actions.innerHTML='<button class="btn btn-s btn-sm" onclick="expFinCSV()">Export CSV</button><button class="btn btn-p btn-sm" onclick="openFinMo()">+ Log Entry</button>';
+      actions.innerHTML='<button class="btn btn-s btn-sm" onclick="expFinCSV()">Export CSV</button><button class="btn btn-p btn-sm" data-tip="Log a financial entry" onclick="openFinMo()">+ Log Entry</button>';
     } else if(t==='services'){
       actions.innerHTML='<button class="btn btn-p btn-sm" onclick="openSvcMo()">+ Add Service</button>';
     } else if(t==='ledger'){
@@ -11583,8 +12305,177 @@ function initApp(){
     const exportSect=document.querySelector('.sb-nav');
     if(exportSect&&!G('demoClearBtn')){const btn=document.createElement('div');btn.className='sb-item';btn.id='demoClearBtn';btn.innerHTML='<span class="sb-icon">&#128465;</span><span class="sb-lbl" style="color:var(--amber)">Clear Demo Data</span>';btn.onclick=clearDemoData;exportSect.appendChild(btn);}
   },600);
+  initGlobalTooltip();
+  initGlobalSearch();
+}
+
+// ── Global Search (Ctrl+K) ─────────────────────────────────────────────────
+var _gsSearchIndex = null;
+var _gsSelectedIdx = -1;
+
+function initGlobalSearch(){
+  document.addEventListener('keydown', function(e){
+    if((e.ctrlKey||e.metaKey) && e.key==='k'){
+      e.preventDefault();
+      openGlobalSearch();
+    }
+    if(e.key==='Escape' && G('globalSearchMo') && G('globalSearchMo').classList.contains('open')){
+      closeGlobalSearch();
+    }
+  });
+}
+
+function openGlobalSearch(){
+  var inp=G('globalSearchInput'); if(!inp) return;
+  inp.value='';
+  G('globalSearchResults').innerHTML='<div style="padding:24px;text-align:center;color:var(--text3);font-size:12px">Start typing to search across all stores…</div>';
+  _gsSelectedIdx=-1;
+  OM('globalSearchMo');
+  setTimeout(function(){inp.focus();},50);
+}
+
+function closeGlobalSearch(){
+  CM('globalSearchMo');
+}
+
+function globalSearchKey(e){
+  var items=G('globalSearchResults').querySelectorAll('.gs-result-item');
+  if(e.key==='ArrowDown'){e.preventDefault();_gsSelectedIdx=Math.min(_gsSelectedIdx+1,items.length-1);}
+  else if(e.key==='ArrowUp'){e.preventDefault();_gsSelectedIdx=Math.max(_gsSelectedIdx-1,0);}
+  else if(e.key==='Enter'){if(_gsSelectedIdx>=0&&items[_gsSelectedIdx]){items[_gsSelectedIdx].click();return;}}
+  else if(e.key==='Escape'){closeGlobalSearch();return;}
+  items.forEach(function(it,i){it.classList.toggle('gs-selected',i===_gsSelectedIdx);});
+  if(items[_gsSelectedIdx]) items[_gsSelectedIdx].scrollIntoView({block:'nearest'});
+}
+
+var _gsTimer = null;
+function runGlobalSearch(q){
+  clearTimeout(_gsTimer);
+  _gsTimer = setTimeout(function(){_doGlobalSearch(q.trim());}, 150);
+}
+
+function _doGlobalSearch(q){
+  var res=G('globalSearchResults'); if(!res) return;
+  if(!q){res.innerHTML='<div style="padding:24px;text-align:center;color:var(--text3);font-size:12px">Start typing to search across all stores…</div>';return;}
+  if(q.length<2){res.innerHTML='<div style="padding:16px;text-align:center;color:var(--text3);font-size:12px">Type at least 2 characters</div>';return;}
+
+  var ql=q.toLowerCase();
+  function match(str){return str&&str.toLowerCase().indexOf(ql)>=0;}
+
+  var groups=[];
+
+  // Tasks
+  var tasks=S.get('tasks').filter(function(t){return match(t.title)||match(t.notes)||match(t.tags);});
+  if(tasks.length) groups.push({label:'Tasks',icon:'✅',color:'var(--cyan)',items:tasks.slice(0,5).map(function(t){return {title:t.title,sub:(t.status||'')+(t.due?' · '+fmtDate(t.due):''),page:'tasks',action:function(){closeGlobalSearch();go('tasks',G('ni-tasks'));}}; })});
+
+  // Contacts
+  var contacts=S.get('contacts').filter(function(c){return match(c.name)||match(c.email)||match(c.phone)||match(c.org);});
+  if(contacts.length) groups.push({label:'Contacts',icon:'👤',color:'var(--blue)',items:contacts.slice(0,5).map(function(c){return {title:c.name,sub:(c.org||c.email||''),page:'contacts',action:function(){closeGlobalSearch();go('contacts',G('ni-contacts'));}}; })});
+
+  // Financials
+  var fins=S.get('financials').filter(function(f){return match(f.description)||match(f.category)||match(f.contact);});
+  if(fins.length) groups.push({label:'Financials',icon:'💰',color:'var(--green)',items:fins.slice(0,5).map(function(f){return {title:f.description||f.category,sub:(f.type||'')+(f.amount?' · $'+parseFloat(f.amount||0).toFixed(2):''),page:'financials',action:function(){closeGlobalSearch();go('financials',G('ni-financials'));}}; })});
+
+  // Documents
+  var docs=S.get('docs').filter(function(d){return match(d.title)||match(d.notes)||match(d.tags);});
+  if(docs.length) groups.push({label:'Documents',icon:'📄',color:'var(--text2)',items:docs.slice(0,5).map(function(d){return {title:d.title,sub:(d.doc_type||d.category||''),page:'docs',action:function(){closeGlobalSearch();go('docs',G('ni-docs'));}}; })});
+
+  // Captures / R&D / Legal
+  var caps=S.get('captures').filter(function(c){return match(c.title)||match(c.body)||match(c.tags);});
+  if(caps.length) groups.push({label:'Captures',icon:'📦',color:'var(--amber)',items:caps.slice(0,5).map(function(c){return {title:c.title,sub:(c.type||'')+(c.ai_suggested_type?' [AI: '+c.ai_suggested_type+']':''),page:'developer',action:function(){closeGlobalSearch();go('developer',G('ni-developer'));}}; })});
+
+  // Campaigns
+  var cams=S.get('campaigns').filter(function(c){return match(c.name)||match(c.notes)||match(c.type);});
+  if(cams.length) groups.push({label:'Campaigns',icon:'📣',color:'var(--purple)',items:cams.slice(0,5).map(function(c){return {title:c.name,sub:(c.stage||c.status||''),page:'campaigns',action:function(){closeGlobalSearch();go('campaigns',G('ni-campaigns'));}}; })});
+
+  // Inventory
+  var inv=S.get('inventory').filter(function(i){return match(i.name)||match(i.sku)||match(i.category);});
+  if(inv.length) groups.push({label:'Inventory',icon:'📦',color:'var(--text1)',items:inv.slice(0,5).map(function(i){return {title:i.name,sub:(i.category||'')+(i.quantity?' · qty '+i.quantity:''),page:'inventory',action:function(){closeGlobalSearch();go('inventory',G('ni-inventory'));}}; })});
+
+  // Knowledge Base
+  var kb=S.get('knowledgeBase').filter(function(k){return match(k.title)||match(k.content)||match(k.tags);});
+  if(kb.length) groups.push({label:'Knowledge Base',icon:'🧠',color:'var(--cyan)',items:kb.slice(0,5).map(function(k){return {title:k.title,sub:(Array.isArray(k.tags)?k.tags.join(', '):''),page:'developer',action:function(){closeGlobalSearch();go('developer',G('ni-developer'));}}; })});
+
+  // Projects
+  var projs=S.get('projects').filter(function(p){return match(p.title)||match(p.description)||match(p.tags);});
+  if(projs.length) groups.push({label:'Projects',icon:'🎯',color:'var(--purple)',items:projs.slice(0,5).map(function(p){return {title:p.title,sub:(p.status||'')+(p.type?' · '+p.type:''),page:'projects',action:function(){closeGlobalSearch();go('projects',G('ni-projects'));}}; })});
+
+  if(!groups.length){
+    res.innerHTML='<div style="padding:24px;text-align:center;color:var(--text3);font-size:12px">No results for "'+q+'"</div>';
+    return;
+  }
+
+  // Build result HTML
+  var totalItems=0;
+  var html=groups.map(function(g){
+    var itemsHtml=g.items.map(function(item,idx){
+      var i=totalItems++;
+      return '<div class="gs-result-item" data-idx="'+i+'" onclick="_gsRunAction('+i+')" style="padding:8px 16px;cursor:pointer;display:flex;align-items:center;gap:10px;border-radius:4px">'
+        +'<span style="font-size:13px">'+g.icon+'</span>'
+        +'<div style="flex:1;min-width:0"><div style="font-size:12px;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+escH(item.title||'Untitled')+'</div>'
+        +(item.sub?'<div style="font-size:10px;color:var(--text3)">'+escH(item.sub)+'</div>':'')
+        +'</div>'
+        +'<span style="font-size:9px;color:var(--text3);white-space:nowrap">'+g.label+'</span>'
+        +'</div>';
+    }).join('');
+    return '<div style="padding:4px 0"><div style="padding:4px 16px;font-size:10px;color:'+g.color+';font-weight:700;text-transform:uppercase;letter-spacing:.05em">'+g.label+'</div>'+itemsHtml+'</div>';
+  }).join('<div style="height:1px;background:var(--border);margin:4px 0"></div>');
+
+  // Store actions map for onclick
+  _gsActions=[];
+  groups.forEach(function(g){g.items.forEach(function(it){_gsActions.push(it.action);});});
+
+  res.innerHTML=html;
+  _gsSelectedIdx=-1;
+
+  logEvent('nav','search',q,{results:totalItems});
+}
+
+var _gsActions=[];
+function _gsRunAction(idx){if(_gsActions[idx])_gsActions[idx]();}
+
+function escH(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// ── Global Tooltip System ──────────────────────────────────────────────────
+function initGlobalTooltip(){
+  var tip=G('globalTip');if(!tip)return;
+  var _timer=null;
+  document.addEventListener('mouseover',function(e){
+    var el=e.target.closest('[data-tip]');
+    if(!el)return;
+    clearTimeout(_timer);
+    _timer=setTimeout(function(){
+      var txt=el.getAttribute('data-tip');if(!txt)return;
+      tip.textContent=txt;
+      tip.style.display='block';
+      tip.style.opacity='1';
+      var r=el.getBoundingClientRect();
+      var tx=r.left+r.width/2-tip.offsetWidth/2;
+      var ty=r.top-tip.offsetHeight-8;
+      // Prevent overflow right
+      if(tx+tip.offsetWidth>window.innerWidth-8)tx=window.innerWidth-tip.offsetWidth-8;
+      if(tx<8)tx=8;
+      // If no room above, show below
+      if(ty<8)ty=r.bottom+8;
+      tip.style.left=tx+'px';
+      tip.style.top=ty+'px';
+    },800);
+  });
+  document.addEventListener('mouseout',function(e){
+    var el=e.target.closest('[data-tip]');
+    if(!el)return;
+    clearTimeout(_timer);
+    tip.style.display='none';
+  });
+  document.addEventListener('click',function(){
+    clearTimeout(_timer);
+    if(tip)tip.style.display='none';
+  });
 }
 </script>
+
+<!-- GLOBAL TOOLTIP -->
+<div id="globalTip" style="display:none"></div>
 
 <!-- STATUS DOT -->
 <div id="statusDot" onclick="openStatusPanel()" title="Connection status" style="position:fixed;top:14px;right:16px;z-index:8000;width:10px;height:10px;border-radius:50%;background:var(--text3);cursor:pointer;transition:background .3s;box-shadow:0 1px 4px rgba(0,0,0,.5)"></div>
