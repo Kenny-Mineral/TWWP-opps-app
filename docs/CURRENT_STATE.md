@@ -11,6 +11,20 @@ Rails API at `https://twwp-ops-api.fly.dev`.
 
 ---
 
+## AI & Integrations modal restructure (2026-03-23)
+
+Replaced single-scroll modal with 5-tab layout (700px × 92vh):
+- **AI Models** — provider buttons, API keys, per-feature models, feature toggles, dev tools, test, terminology
+- **Google** — OAuth connect (via Rails API), Drive (folder/key/ID/OAuth client ID), Calendar, Gmail scopes, Dropbox/OneDrive
+- **Communications** — email provider status + configure button, SendGrid, Slack, Zapier, Custom webhook
+- **Project Tools** — Trello, Jira, Linear (coming soon), Notion (coming soon), NotebookLM info
+- **Infrastructure** — Rails API URL, Tap-Map URL, Cloudflare proxy, Home Assistant, Stripe, ESP32/Sensors
+- Tab state persists to `twwp_integrations_tab_v1`; Save button flashes "Saved ✓"
+- Added INT_KEYS: `sendgrid`, `trello-key`, `trello-token`, `jira-url`, `jira-token`, `jira-email`, `tapmap-url`, `esp32-ip`, `esp32-ha-prefix`
+- No functionality changes — all existing function names, IDs, and localStorage keys preserved
+
+---
+
 ## Sprint B fixes (2026-03-23)
 
 ### Fix 1 — TapMapTap STI conflict (twwp-ops-api)

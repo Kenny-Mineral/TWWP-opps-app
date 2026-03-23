@@ -35,6 +35,10 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 .provider-tag.paid{background:rgba(255,165,0,.15);color:var(--orange);}
 .ai-feat-row{display:flex;align-items:flex-start;gap:10px;padding:8px 10px;border-radius:7px;background:var(--surface2);cursor:pointer;}
 .ai-feat-row input[type=checkbox]{margin-top:2px;flex-shrink:0;accent-color:var(--cyan);}
+.int-tab{padding:7px 14px;border-radius:6px 6px 0 0;border:1px solid transparent;background:transparent;color:var(--text3);cursor:pointer;font-size:11px;font-weight:600;font-family:var(--sans);transition:all .15s;border-bottom:none;position:relative;bottom:-1px;}
+.int-tab.on{border-color:var(--border);border-bottom-color:var(--surface);background:var(--surface);color:var(--text);}
+.int-tab:hover:not(.on){color:var(--text2);}
+.int-stat-dot{width:6px;height:6px;border-radius:50%;display:inline-block;margin-right:2px;}
 #catCsvTable th{background:var(--surface3,#1a1f2e);padding:6px 10px;text-align:left;font-size:10px;color:var(--text3);font-weight:600;position:sticky;top:0;}
 #catCsvTable td{padding:5px 10px;border-bottom:1px solid var(--border);color:var(--text2);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 #catCsvTable tr:last-child td{border-bottom:none;}
@@ -538,187 +542,298 @@ tbody tr:hover{background:var(--surface2);}
 
 <!-- AI SETTINGS MODAL -->
 <div class="mo" id="apiMo">
-  <div class="md" style="max-width:600px;max-height:90vh;overflow-y:auto">
+  <div class="md" style="max-width:700px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden">
     <div class="md-h"><div class="md-t">// AI &amp; INTEGRATIONS</div><button class="md-x" onclick="CM('apiMo')">x</button></div>
-    <div class="md-b" style="display:flex;flex-direction:column;gap:18px">
-      <div>
-        <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:block">Default AI Provider</label>
-        <div style="display:flex;gap:6px;flex-wrap:wrap" id="aiProviderBtns">
-          <button class="provider-btn on" data-p="gemini" onclick="selectProvider('gemini')"><span>G</span><span>Gemini</span><span class="provider-tag free">FREE</span></button>
-          <button class="provider-btn" data-p="anthropic" onclick="selectProvider('anthropic')"><span>A</span><span>Anthropic</span><span class="provider-tag paid">PAID</span></button>
-          <button class="provider-btn" data-p="openai" onclick="selectProvider('openai')"><span>O</span><span>OpenAI</span><span class="provider-tag paid">PAID</span></button>
-          <button class="provider-btn" data-p="openrouter" onclick="selectProvider('openrouter')"><span>R</span><span>OpenRouter</span><span class="provider-tag free">MULTI</span></button>
-        </div>
-      </div>
-      <div id="apiKeyFields">
-        <div class="ai-key-row" id="akr-gemini">
-          <div class="fg" style="margin:0"><label>Gemini API Key</label><input type="password" id="ak-gemini" placeholder="AIza..." autocomplete="off"></div>
-          <div style="font-size:10px;color:var(--text3);margin-top:4px">Free tier ~1,500 req/day. <a href="https://aistudio.google.com" target="_blank" style="color:var(--cyan)">aistudio.google.com</a></div>
-        </div>
-        <div class="ai-key-row" id="akr-anthropic" style="display:none">
-          <div class="fg" style="margin:0"><label>Anthropic API Key</label><input type="password" id="ak-anthropic" placeholder="sk-ant-..." autocomplete="off"></div>
-          <div style="font-size:10px;color:var(--text3);margin-top:4px"><a href="https://console.anthropic.com" target="_blank" style="color:var(--cyan)">console.anthropic.com</a></div>
-        </div>
-        <div class="ai-key-row" id="akr-openai" style="display:none">
-          <div class="fg" style="margin:0"><label>OpenAI API Key</label><input type="password" id="ak-openai" placeholder="sk-..." autocomplete="off"></div>
-          <div style="font-size:10px;color:var(--text3);margin-top:4px"><a href="https://platform.openai.com/api-keys" target="_blank" style="color:var(--cyan)">platform.openai.com</a></div>
-        </div>
-        <div class="ai-key-row" id="akr-openrouter" style="display:none">
-          <div class="fg" style="margin:0"><label>OpenRouter API Key</label><input type="password" id="ak-openrouter" placeholder="sk-or-..." autocomplete="off"></div>
-          <div style="font-size:10px;color:var(--text3);margin-top:4px"><a href="https://openrouter.ai/keys" target="_blank" style="color:var(--cyan)">openrouter.ai</a> &mdash; 200+ models, many free</div>
-        </div>
-      </div>
-      <div id="akr-openrouter-model" style="display:none">
-        <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;display:block">OpenRouter Default Model</label>
-        <select id="ak-or-default-model" style="width:100%">
-          <option value="anthropic/claude-haiku-4-5">Claude Haiku 4.5 (fast, cheap)</option>
-          <option value="anthropic/claude-sonnet-4-6">Claude Sonnet 4.6 (best quality)</option>
-          <option value="google/gemini-2.5-flash">Gemini 2.5 Flash (fast, free tier)</option>
-          <option value="openai/gpt-4o-mini">GPT-4o Mini (fast, cheap)</option>
-          <option value="meta-llama/llama-3.3-70b-instruct">Llama 3.3 70B (free)</option>
-          <option value="deepseek/deepseek-chat-v3-0324">DeepSeek V3 (free, strong)</option>
-        </select>
-      </div>
-      <div>
-        <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;display:block">Per-Feature Model Override</label>
-        <div class="helper-bubble" style="margin-bottom:10px"><div class="hb-icon">&#129302;</div><div>Choose a specific model for each feature. "Use default" uses whatever provider+model is selected above. Free models marked &#127381;. Fast models marked &#9889;.</div></div>
-        <div style="display:flex;flex-direction:column;gap:10px" id="featureModelRows"></div>
-      </div>
-      <!-- Stripe -->
-      <div>
-        <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:block">Stripe Integration</label>
-        <div class="helper-bubble" style="margin-bottom:10px"><div class="hb-icon">S</div><div><strong>Stripe keys</strong> are used for donation tracking and subscription management in the Financials tab. Publishable key for client-side, secret key for backend only.</div></div>
-        <div class="fr">
-          <div class="fg" style="margin:0"><label>Publishable Key</label><input type="password" id="ak-stripe-pub" placeholder="pk_live_..." autocomplete="off"></div>
-          <div class="fg" style="margin:0"><label>Webhook Secret</label><input type="password" id="ak-stripe-secret" placeholder="whsec_..." autocomplete="off"></div>
-        </div>
-        <div style="font-size:10px;color:var(--text3);margin-top:4px"><a href="https://dashboard.stripe.com/apikeys" target="_blank" style="color:var(--cyan)">dashboard.stripe.com/apikeys</a> &mdash; Backend integration at app.thewholeywaterproject.com</div>
-      </div>
-      <!-- Dev Notes -->
-      <div>
-        <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:block">Developer Tools</label>
-        <label class="ai-feat-row">
-          <input type="checkbox" id="af-devnotes" checked>
-          <div><div style="font-size:12px;font-weight:600;color:var(--text)">[//] Dev Notes Panel</div><div style="font-size:10px;color:var(--text3)">Show floating dev notes tab on every page (admin only)</div></div>
-        </label>
-      </div>
-      <!-- Feature toggles -->
-      <div>
-        <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:block">AI-Powered Features</label>
-        <div style="display:flex;flex-direction:column;gap:6px">
-          <label class="ai-feat-row"><input type="checkbox" id="af-autofill" checked><div><div style="font-size:12px;font-weight:600;color:var(--text)">Catalogue Auto-fill</div><div style="font-size:10px;color:var(--text3)">Extract product details from a supplier URL</div></div></label>
-          <label class="ai-feat-row"><input type="checkbox" id="af-reports" checked><div><div style="font-size:12px;font-weight:600;color:var(--text)">Reports AI Assist</div><div style="font-size:10px;color:var(--text3)">Write narratives, flag issues, suggest improvements</div></div></label>
-          <label class="ai-feat-row"><input type="checkbox" id="af-helper" checked><div><div style="font-size:12px;font-weight:600;color:var(--text)">AI Helper &amp; Notes</div><div style="font-size:10px;color:var(--text3)">Floating AI assistant with feedback capture</div></div></label>
-        </div>
-      </div>
-      <!-- Cloud Storage -->
-      <div>
-        <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:block">Cloud Storage — Google Drive</label>
-        <div class="helper-bubble" style="margin-bottom:10px"><div class="hb-icon">&#9729;</div><div>
-          <strong>Current (dev phase): Read-only via API Key.</strong> You can list and link files from a public or shared folder. No write access.<br><br>
-          <strong>Why not Service Account JSON?</strong> Service Account credentials contain a private key. Storing it in a browser app exposes it to anyone with DevTools — Google explicitly warns against this. Never paste a service account JSON here.<br><br>
-          <strong>For read + write access use OAuth 2.0:</strong><br>
-          1. In <a href="https://console.cloud.google.com" target="_blank" style="color:var(--cyan)">Google Cloud Console</a> → APIs &amp; Services → Credentials → Create OAuth 2.0 Client ID (Web Application type)<br>
-          2. Add your Netlify URL as an Authorised Redirect URI (e.g. https://endearing-empanada-68c8c7.netlify.app)<br>
-          3. Note the Client ID — safe to put in the app (it is public, not secret)<br>
-          4. When you click Connect, the user signs in with their Google account and grants the app permission to their Drive<br>
-          5. No private key is ever in the browser — Google handles the auth<br>
-          6. The folder just needs to be accessible to whoever signs in — no extra sharing required<br><br>
-          <strong>Full automated sync (no user login required)</strong> needs the Rails backend holding the service account key server-side. Prioritise once the backend exists.
-        </div></div>
-        <div style="display:flex;flex-direction:column;gap:10px">
-          <!-- Phase 1: API Key (read-only) -->
-          <div style="background:var(--surface);border-radius:8px;padding:12px;border:1px solid var(--border)">
-            <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Phase 1 — Read Only (API Key)</div>
-            <div class="fg" style="margin:0 0 8px"><label>Drive Folder URL</label><input type="url" id="int-gdrive" placeholder="https://drive.google.com/drive/folders/..." autocomplete="off"><div style="font-size:10px;color:var(--text3);margin-top:3px">Folder must be shared as "Anyone with the link can view"</div></div>
-            <div class="fr">
-              <div class="fg" style="margin:0"><label>API Key</label><input type="password" id="int-gdrive-key" placeholder="AIza..." autocomplete="off"><div style="font-size:10px;color:var(--text3);margin-top:3px"><a href="https://console.cloud.google.com" target="_blank" style="color:var(--cyan)">Cloud Console</a> → Enable Drive API → Credentials → API Key → Restrict to Drive API</div></div>
-              <div class="fg" style="margin:0"><label>Folder ID</label><input type="text" id="int-gdrive-folder" placeholder="1BxiMVs0XRA5nFMd..." autocomplete="off"><div style="font-size:10px;color:var(--text3);margin-top:3px">Last segment of the folder URL</div></div>
+    <div style="display:flex;gap:4px;padding:10px 18px 0;border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap;background:var(--surface)">
+      <button class="int-tab on" data-tab="ai" onclick="switchIntTab('ai')" data-tip="AI provider keys and feature settings">AI Models</button>
+      <button class="int-tab" data-tab="google" onclick="switchIntTab('google')" data-tip="Google OAuth, Drive, Calendar, Gmail">Google</button>
+      <button class="int-tab" data-tab="comms" onclick="switchIntTab('comms')" data-tip="Email, Slack, webhooks, SendGrid">Communications</button>
+      <button class="int-tab" data-tab="projects" onclick="switchIntTab('projects')" data-tip="Trello, Jira, Linear, Notion">Project Tools</button>
+      <button class="int-tab" data-tab="infra" onclick="switchIntTab('infra')" data-tip="Rails API, Tap-Map, Cloudflare, Home Assistant, Stripe, ESP32">Infrastructure</button>
+    </div>
+    <div class="md-b" style="flex:1;overflow-y:auto">
+      <!-- ── Tab: AI Models ─────────────────── -->
+      <div class="int-tab-panel" id="int-panel-ai">
+        <div class="helper-bubble" style="margin-bottom:14px"><div class="hb-icon">&#129302;</div><div>Configure your AI provider and API keys. The selected provider is used for all AI features across the app — autofill, reports, the AI Helper chat, and document extraction.</div></div>
+        <div id="int-status-ai" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;min-height:16px"></div>
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:block" data-tip="Choose which AI service to use for all AI features">Default AI Provider</label>
+            <div style="display:flex;gap:6px;flex-wrap:wrap" id="aiProviderBtns">
+              <button class="provider-btn on" data-p="gemini" onclick="selectProvider('gemini')"><span>G</span><span>Gemini</span><span class="provider-tag free">FREE</span></button>
+              <button class="provider-btn" data-p="anthropic" onclick="selectProvider('anthropic')"><span>A</span><span>Anthropic</span><span class="provider-tag paid">PAID</span></button>
+              <button class="provider-btn" data-p="openai" onclick="selectProvider('openai')"><span>O</span><span>OpenAI</span><span class="provider-tag paid">PAID</span></button>
+              <button class="provider-btn" data-p="openrouter" onclick="selectProvider('openrouter')"><span>R</span><span>OpenRouter</span><span class="provider-tag free">MULTI</span></button>
             </div>
-            <div style="margin-top:10px"><button class="btn btn-g btn-sm" onclick="testDriveConnection()" id="driveTestBtn">Test Connection</button> <span id="driveTestResult" style="font-size:11px;color:var(--text3);margin-left:8px"></span></div>
           </div>
-          <!-- Phase 2: OAuth (read + write) -->
-          <div style="background:var(--surface);border-radius:8px;padding:12px;border:1px solid var(--border);opacity:.7">
-            <div style="font-size:10px;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Phase 2 — Read + Write (OAuth 2.0) — Coming Soon</div>
-            <div class="fg" style="margin:0"><label>OAuth Client ID</label><input type="text" id="int-gdrive-client-id" placeholder="123456789-abc.apps.googleusercontent.com" autocomplete="off"><div style="font-size:10px;color:var(--text3);margin-top:3px">Cloud Console → Credentials → OAuth 2.0 Client ID → Web Application. Client ID is public — safe in browser.</div></div>
-            <div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-              <button class="btn btn-s btn-sm" id="oauthConnectBtn" onclick="startGoogleOAuth()">&#128279; Connect Google Account</button>
-              <button class="btn btn-d btn-xs" id="oauthDisconnectBtn" onclick="disconnectGoogleOAuth()" style="display:none">Disconnect</button>
+          <div id="apiKeyFields">
+            <div class="ai-key-row" id="akr-gemini">
+              <div class="fg" style="margin:0"><label data-tip="Your Gemini API key from Google AI Studio">Gemini API Key</label><input type="password" id="ak-gemini" placeholder="AIza..." autocomplete="off"></div>
+              <div style="font-size:10px;color:var(--text3);margin-top:4px">Free tier ~1,500 req/day. <a href="https://aistudio.google.com" target="_blank" style="color:var(--cyan)">aistudio.google.com</a></div>
+            </div>
+            <div class="ai-key-row" id="akr-anthropic" style="display:none">
+              <div class="fg" style="margin:0"><label data-tip="Your Anthropic Claude API key">Anthropic API Key</label><input type="password" id="ak-anthropic" placeholder="sk-ant-..." autocomplete="off"></div>
+              <div style="font-size:10px;color:var(--text3);margin-top:4px"><a href="https://console.anthropic.com" target="_blank" style="color:var(--cyan)">console.anthropic.com</a></div>
+            </div>
+            <div class="ai-key-row" id="akr-openai" style="display:none">
+              <div class="fg" style="margin:0"><label data-tip="Your OpenAI API key">OpenAI API Key</label><input type="password" id="ak-openai" placeholder="sk-..." autocomplete="off"></div>
+              <div style="font-size:10px;color:var(--text3);margin-top:4px"><a href="https://platform.openai.com/api-keys" target="_blank" style="color:var(--cyan)">platform.openai.com</a></div>
+            </div>
+            <div class="ai-key-row" id="akr-openrouter" style="display:none">
+              <div class="fg" style="margin:0"><label data-tip="Your OpenRouter API key — access 200+ models">OpenRouter API Key</label><input type="password" id="ak-openrouter" placeholder="sk-or-..." autocomplete="off"></div>
+              <div style="font-size:10px;color:var(--text3);margin-top:4px"><a href="https://openrouter.ai/keys" target="_blank" style="color:var(--cyan)">openrouter.ai</a> &mdash; 200+ models, many free</div>
+            </div>
+          </div>
+          <div id="akr-openrouter-model" style="display:none">
+            <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;display:block" data-tip="Default model when using OpenRouter">OpenRouter Default Model</label>
+            <select id="ak-or-default-model" style="width:100%">
+              <option value="anthropic/claude-haiku-4-5">Claude Haiku 4.5 (fast, cheap)</option>
+              <option value="anthropic/claude-sonnet-4-6">Claude Sonnet 4.6 (best quality)</option>
+              <option value="google/gemini-2.5-flash">Gemini 2.5 Flash (fast, free tier)</option>
+              <option value="openai/gpt-4o-mini">GPT-4o Mini (fast, cheap)</option>
+              <option value="meta-llama/llama-3.3-70b-instruct">Llama 3.3 70B (free)</option>
+              <option value="deepseek/deepseek-chat-v3-0324">DeepSeek V3 (free, strong)</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;display:block" data-tip="Override the model per feature — leave as default to use the provider above">Per-Feature Model Override</label>
+            <div class="helper-bubble" style="margin-bottom:10px"><div class="hb-icon">&#129302;</div><div>Choose a specific model for each feature. "Use default" uses whatever provider+model is selected above. Free models marked &#127381;. Fast models marked &#9889;.</div></div>
+            <div style="display:flex;flex-direction:column;gap:10px" id="featureModelRows"></div>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:block" data-tip="Enable or disable individual AI-powered features">AI-Powered Features</label>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <label class="ai-feat-row" data-tip="Extract product details from a supplier URL automatically"><input type="checkbox" id="af-autofill" checked><div><div style="font-size:12px;font-weight:600;color:var(--text)">Catalogue Auto-fill</div><div style="font-size:10px;color:var(--text3)">Extract product details from a supplier URL</div></div></label>
+              <label class="ai-feat-row" data-tip="Use AI to write report narratives and flag issues"><input type="checkbox" id="af-reports" checked><div><div style="font-size:12px;font-weight:600;color:var(--text)">Reports AI Assist</div><div style="font-size:10px;color:var(--text3)">Write narratives, flag issues, suggest improvements</div></div></label>
+              <label class="ai-feat-row" data-tip="Show floating AI assistant panel with feedback capture"><input type="checkbox" id="af-helper" checked><div><div style="font-size:12px;font-weight:600;color:var(--text)">AI Helper &amp; Notes</div><div style="font-size:10px;color:var(--text3)">Floating AI assistant with feedback capture</div></div></label>
+            </div>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:block" data-tip="Admin and developer tools">Developer Tools</label>
+            <label class="ai-feat-row" data-tip="Show floating dev notes tab on every page (admin only)">
+              <input type="checkbox" id="af-devnotes" checked>
+              <div><div style="font-size:12px;font-weight:600;color:var(--text)">[//] Dev Notes Panel</div><div style="font-size:10px;color:var(--text3)">Show floating dev notes tab on every page (admin only)</div></div>
+            </label>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:block" data-tip="Verify your API key works before using AI features">Test AI Connection</label>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <button class="btn btn-g btn-sm" id="testAiBtn" onclick="testAiKey()" data-tip="Test the currently selected provider with your saved key">Test AI Key</button>
+              <span id="testAiResult" style="font-size:11px;color:var(--text3)"></span>
+            </div>
+            <div style="font-size:10px;color:var(--text3);margin-top:6px">Tests the currently selected provider with your saved key. Save settings first before testing.</div>
+          </div>
+          <div style="border-top:1px solid var(--border);padding-top:16px">
+            <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:block" data-tip="Customise terminology used throughout the app (e.g. rename Waterhouse)">Terminology &amp; Org Config</label>
+            <div id="terminologyEditor"></div>
+            <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn btn-g btn-sm" onclick="openOnboarding()" data-tip="Run the 7-step setup wizard">&#9881; Run Setup Wizard</button>
+              <button class="btn btn-g btn-sm" onclick="localStorage.removeItem('twwp_setup_complete');localStorage.removeItem('twwp_onboarding_skip');openOnboarding()" data-tip="Reset and re-run the setup wizard from scratch">Redo Setup</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Tab: Google ─────────────────────────── -->
+      <div class="int-tab-panel" id="int-panel-google" style="display:none">
+        <div id="int-status-google" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;min-height:16px"></div>
+        <div style="display:flex;flex-direction:column;gap:20px">
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:block" data-tip="Connect Google services (Drive, Calendar, Gmail) via a single OAuth flow">TWWP Rails API — Google OAuth</label>
+            <div class="helper-bubble" style="margin-bottom:10px"><div class="hb-icon">&#128279;</div><div>Google services (Drive, Calendar, Gmail) connect via a single OAuth flow through the TWWP Rails API. One connection covers Drive, Calendar and Gmail — no separate logins needed.</div></div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <button class="btn btn-s btn-sm" id="oauthConnectBtn" onclick="connectViaRailsAPI()" data-tip="Start Google OAuth via the Rails API — covers Drive, Calendar and Gmail">&#128640; Connect via Rails API</button>
+              <button class="btn btn-d btn-xs" id="oauthDisconnectBtn" onclick="disconnectGoogleOAuth()" style="display:none" data-tip="Disconnect Google OAuth">Disconnect</button>
               <span id="oauthStatus" style="font-size:11px;color:var(--text3)">Not connected</span>
+              <span id="railsApiStatus" style="font-size:11px;color:var(--text3)"></span>
             </div>
-            <div style="font-size:10px;color:var(--text3);margin-top:6px">Once connected, Drive write access is enabled — upload files, auto-save backups, sync between devices.</div>
           </div>
-          <div class="fr">
-            <div class="fg" style="margin:0"><label>Dropbox Folder URL</label><input type="url" id="int-dropbox" placeholder="https://www.dropbox.com/sh/..." autocomplete="off"></div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:block" data-tip="Link the app to your TWWP Google Drive folder">Google Drive</label>
+            <div class="helper-bubble" style="margin-bottom:10px"><div class="hb-icon">&#9729;</div><div>Once connected via OAuth above, Drive read/write is enabled. Set your root folder ID to link the app to your TWWP Drive folder.</div></div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div class="fg" style="margin:0"><label data-tip="Full URL of your TWWP Google Drive folder">Drive Folder URL</label><input type="url" id="int-gdrive" placeholder="https://drive.google.com/drive/folders/..." autocomplete="off"><div style="font-size:10px;color:var(--text3);margin-top:3px">Folder must be shared as "Anyone with the link can view"</div></div>
+              <div class="fr">
+                <div class="fg" style="margin:0"><label data-tip="Google Drive API key from Cloud Console — for read-only file listing">API Key</label><input type="password" id="int-gdrive-key" placeholder="AIza..." autocomplete="off"><div style="font-size:10px;color:var(--text3);margin-top:3px"><a href="https://console.cloud.google.com" target="_blank" style="color:var(--cyan)">Cloud Console</a> → Enable Drive API → API Key</div></div>
+                <div class="fg" style="margin:0"><label data-tip="Folder ID — last segment of the Drive folder URL">Folder ID</label><input type="text" id="int-gdrive-folder" placeholder="1BxiMVs0XRA5nFMd..." autocomplete="off"><div style="font-size:10px;color:var(--text3);margin-top:3px">Last segment of the folder URL</div></div>
+              </div>
+              <div class="fg" style="margin:0"><label data-tip="OAuth Client ID from Google Cloud Console — safe to store, not a secret">OAuth Client ID</label><input type="text" id="int-gdrive-client-id" placeholder="123456789-abc.apps.googleusercontent.com" autocomplete="off"><div style="font-size:10px;color:var(--text3);margin-top:3px">Cloud Console → Credentials → OAuth 2.0 Client ID → Web Application</div></div>
+              <div><button class="btn btn-g btn-sm" onclick="testDriveConnection()" id="driveTestBtn" data-tip="Test Drive API key and folder ID">Test Connection</button> <span id="driveTestResult" style="font-size:11px;color:var(--text3);margin-left:8px"></span></div>
+            </div>
           </div>
-          <div class="fr">
-            <div class="fg" style="margin:0"><label>OneDrive Folder URL</label><input type="url" id="int-onedrive" placeholder="https://1drv.ms/..." autocomplete="off"></div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:block" data-tip="Sync app events to your Google Calendar">Google Calendar</label>
+            <div class="helper-bubble" style="margin-bottom:10px"><div class="hb-icon">&#128197;</div><div>Events created in the app can sync to your Google Calendar. Enter your Calendar ID (found in Google Calendar settings).</div></div>
+            <div class="fg" style="margin:0"><label data-tip="Your Google Calendar ID — usually your Gmail address or the calendar's unique ID">Calendar ID</label><input type="text" id="int-gcal" placeholder="yourname@gmail.com or calendar ID" autocomplete="off"><div style="font-size:10px;color:var(--text3);margin-top:3px">Found in Google Calendar → Settings → your calendar → Calendar ID</div></div>
+            <div id="aiMoGCalSection" style="margin-top:10px"></div>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:block" data-tip="Gmail inbox polling settings and OAuth scope status">Gmail Inbox</label>
+            <div style="display:flex;align-items:flex-start;gap:20px;flex-wrap:wrap">
+              <div>
+                <label style="font-size:11px;color:var(--text2)" data-tip="How often the app checks for new Gmail messages">Poll Interval</label>
+                <div style="margin-top:6px"><button class="btn btn-g btn-xs" onclick="OM('emailProviderMo')" data-tip="Open Email Provider settings to adjust poll interval">&#9881; Email Provider Settings</button></div>
+              </div>
+              <div>
+                <label style="font-size:11px;color:var(--text2)" data-tip="Google OAuth scopes granted for Gmail access">Connected Scopes</label>
+                <div id="gmailScopeBadges" style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap">
+                  <span class="b b-gy" style="font-size:9px" data-tip="Read inbox messages scope">gmail.readonly</span>
+                  <span class="b b-gy" style="font-size:9px" data-tip="Send emails scope">gmail.send</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:block" data-tip="Other cloud storage integrations">Other Cloud Storage</label>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div class="fg" style="margin:0"><label data-tip="Dropbox shared folder URL">Dropbox Folder URL</label><input type="url" id="int-dropbox" placeholder="https://www.dropbox.com/sh/..." autocomplete="off"></div>
+              <div class="fg" style="margin:0"><label data-tip="OneDrive shared folder URL">OneDrive Folder URL</label><input type="url" id="int-onedrive" placeholder="https://1drv.ms/..." autocomplete="off"></div>
+            </div>
           </div>
         </div>
       </div>
-      <!-- Notifications & Webhooks -->
-      <div>
-        <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:block">Notifications &amp; Webhooks</label>
-        <div style="display:flex;flex-direction:column;gap:10px">
-          <div class="fg" style="margin:0"><label>Slack Webhook URL</label><input type="url" id="int-slack" placeholder="https://hooks.slack.com/services/..." autocomplete="off"><div style="font-size:10px;color:var(--text3);margin-top:3px">Send alerts (maintenance due, new member, deployment) to a Slack channel</div></div>
-          <div class="fg" style="margin:0"><label>Zapier Webhook URL</label><input type="url" id="int-zapier" placeholder="https://hooks.zapier.com/hooks/catch/..." autocomplete="off"><div style="font-size:10px;color:var(--text3);margin-top:3px">Connect to 5,000+ apps via Zapier</div></div>
-          <div class="fg" style="margin:0"><label>Custom Webhook URL</label><input type="url" id="int-webhook" placeholder="https://your-server.com/webhook" autocomplete="off"></div>
+
+      <!-- ── Tab: Communications ─────────────────────────── -->
+      <div class="int-tab-panel" id="int-panel-comms" style="display:none">
+        <div id="int-status-comms" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;min-height:16px"></div>
+        <div style="display:flex;flex-direction:column;gap:20px">
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:block" data-tip="Configure your email provider for inbox, sending, and AI-assisted replies">Email Provider</label>
+            <div id="intEmailStatusRow" style="margin-bottom:10px;font-size:12px;color:var(--text3)">Not configured — click Configure to set up email.</div>
+            <button class="btn btn-s btn-sm" onclick="OM('emailProviderMo')" data-tip="Open the email provider configuration modal">Configure Email&hellip;</button>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:block" data-tip="SendGrid for transactional emails from your custom domain">SendGrid</label>
+            <div class="helper-bubble" style="margin-bottom:8px"><div class="hb-icon">&#9993;</div><div>Used for sending transactional emails (password resets, notifications) from your custom domain. Get a free API key at <a href="https://sendgrid.com" target="_blank" style="color:var(--cyan)">sendgrid.com</a>.</div></div>
+            <div class="fg" style="margin:0"><label data-tip="Your SendGrid API key starting with SG.">API Key</label><input type="password" id="int-sendgrid" placeholder="SG...." autocomplete="off"></div>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:block" data-tip="Send alerts to a Slack channel via incoming webhook">Slack Webhook</label>
+            <div class="helper-bubble" style="margin-bottom:8px"><div class="hb-icon">&#128242;</div><div>Send alerts (maintenance due, new member, deployment triggered) to a Slack channel.</div></div>
+            <div class="fg" style="margin:0"><label data-tip="Slack incoming webhook URL from api.slack.com">Webhook URL</label><input type="url" id="int-slack" placeholder="https://hooks.slack.com/services/..." autocomplete="off"></div>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:block" data-tip="Connect to 5,000+ apps via Zapier">Zapier Webhook</label>
+            <div class="fg" style="margin:0"><label data-tip="Your Zapier catch hook URL">Webhook URL</label><input type="url" id="int-zapier" placeholder="https://hooks.zapier.com/hooks/catch/..." autocomplete="off"></div>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:block" data-tip="Send events to any custom HTTP endpoint">Custom Webhook</label>
+            <div class="fg" style="margin:0"><label data-tip="Your custom webhook endpoint URL">Webhook URL</label><input type="url" id="int-webhook" placeholder="https://your-server.com/webhook" autocomplete="off"></div>
+          </div>
         </div>
       </div>
-      <!-- Google Calendar -->
-      <div>
-        <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:block">Google Calendar</label>
-        <div class="fg" style="margin:0"><label>Calendar ID</label><input type="text" id="int-gcal" placeholder="yourname@gmail.com or calendar ID" autocomplete="off"><div style="font-size:10px;color:var(--text3);margin-top:3px">Used to generate Google Calendar event links. Full sync via OAuth on the roadmap.</div></div>
-      </div>
-      <!-- Home Assistant -->
-      <div>
-        <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:block">Home Assistant</label>
-        <div class="fr">
-          <div class="fg" style="margin:0"><label>HA Base URL</label><input type="url" id="int-ha-url" placeholder="http://homeassistant.local:8123" autocomplete="off"></div>
-          <div class="fg" style="margin:0"><label>Long-Lived Token</label><input type="password" id="int-ha-token" placeholder="eyJ0eXAi..." autocomplete="off"></div>
+
+      <!-- ── Tab: Project Tools ─────────────────────────── -->
+      <div class="int-tab-panel" id="int-panel-projects" style="display:none">
+        <div id="int-status-projects" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;min-height:16px"></div>
+        <div style="display:flex;flex-direction:column;gap:20px">
+          <div style="background:var(--surface2);border-radius:10px;padding:16px;border-left:4px solid #0079BF">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+              <span style="font-size:18px">&#128203;</span>
+              <div style="flex:1"><div style="font-weight:700;color:var(--text)" data-tip="Trello board integration">Trello</div><div style="font-size:11px;color:var(--text3)">Mirror cards in the Project Management board</div></div>
+              <span class="b b-gy" id="intTrelloStatusBadge" style="font-size:9px">Not connected</span>
+            </div>
+            <div class="helper-bubble" style="margin-bottom:10px"><div class="hb-icon">&#128203;</div><div>Connect Trello to mirror cards in the Project Management board and push internal tasks to Trello. <a href="https://trello.com/app-key" target="_blank" style="color:var(--cyan)">Get API key</a></div></div>
+            <div class="fr">
+              <div class="fg" style="margin:0"><label data-tip="Your Trello API key from trello.com/app-key">API Key</label><input type="text" id="int-trello-key" placeholder="Trello API key" autocomplete="off"></div>
+              <div class="fg" style="margin:0"><label data-tip="Your Trello token — generate on the same app-key page">Token</label><input type="text" id="int-trello-token" placeholder="Trello token" autocomplete="off"></div>
+            </div>
+            <div style="font-size:10px;color:var(--text3);margin-top:8px">Full board management (pull cards, push tasks) available in the <a href="#" onclick="event.preventDefault();document.querySelector('[data-page=page-projects]')?.click();CM('apiMo')" style="color:var(--cyan)">Project Management → Integrations tab</a></div>
+          </div>
+          <div style="background:var(--surface2);border-radius:10px;padding:16px;border-left:4px solid #0052CC">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+              <span style="font-size:18px">J</span>
+              <div style="flex:1"><div style="font-weight:700;color:var(--text)" data-tip="Jira integration">Jira</div><div style="font-size:11px;color:var(--text3)">Sync issues with the Project Management board</div></div>
+              <span class="b b-gy" id="intJiraStatusBadge" style="font-size:9px">Not connected</span>
+            </div>
+            <div class="helper-bubble" style="margin-bottom:10px"><div class="hb-icon">J</div><div>Connect Jira to sync issues with the Project Management board. <a href="https://id.atlassian.com/manage-profile/security/api-tokens" target="_blank" style="color:var(--cyan)">Get API token</a></div></div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div class="fg" style="margin:0"><label data-tip="Your Atlassian site URL, e.g. yoursite.atlassian.net">Atlassian Site URL</label><input type="text" id="int-jira-url" placeholder="yoursite.atlassian.net" autocomplete="off"></div>
+              <div class="fr">
+                <div class="fg" style="margin:0"><label data-tip="Your Atlassian account email">Email</label><input type="email" id="int-jira-email" placeholder="you@example.com" autocomplete="off"></div>
+                <div class="fg" style="margin:0"><label data-tip="Jira API token from id.atlassian.com">API Token</label><input type="password" id="int-jira-token" placeholder="ATATT3x..." autocomplete="off"></div>
+              </div>
+            </div>
+          </div>
+          <div style="background:var(--surface2);border-radius:10px;padding:16px;border-left:4px solid #5E6AD2;opacity:.65">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="font-size:18px">&#9670;</span>
+              <div style="flex:1"><div style="font-weight:700;color:var(--text)">Linear</div><div style="font-size:11px;color:var(--text3)">Issue tracker integration</div></div>
+              <span class="b b-am" style="font-size:9px">Coming soon</span>
+            </div>
+            <div class="fg" style="margin:12px 0 0"><label data-tip="Your Linear API key">API Key</label><input type="password" id="int-linear-key" placeholder="lin_api_..." autocomplete="off" disabled></div>
+          </div>
+          <div style="background:var(--surface2);border-radius:10px;padding:16px;border-left:4px solid var(--border);opacity:.65">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="font-size:18px">N</span>
+              <div style="flex:1"><div style="font-weight:700;color:var(--text)">Notion</div><div style="font-size:11px;color:var(--text3)">Integration token</div></div>
+              <span class="b b-am" style="font-size:9px">Coming soon</span>
+            </div>
+            <div class="fg" style="margin:12px 0 0"><label data-tip="Your Notion integration token">Integration Token</label><input type="password" id="int-notion-token" placeholder="secret_..." autocomplete="off" disabled></div>
+          </div>
+          <div style="background:var(--surface2);border-radius:10px;padding:16px;border-left:4px solid var(--border)">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="font-size:18px">&#128216;</span>
+              <div style="flex:1"><div style="font-weight:700;color:var(--text)">NotebookLM</div></div>
+              <span class="b b-cy" style="font-size:9px">Info</span>
+            </div>
+            <div style="font-size:11px;color:var(--text3);margin-top:8px">No public API yet — export your KB entries to Google Drive to use with NotebookLM.</div>
+          </div>
         </div>
       </div>
-      <!-- Rails API -->
-      <div>
-        <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:block">TWWP Ops API (Rails)</label>
-        <div class="helper-bubble" style="margin-bottom:8px"><div class="hb-icon">&#128640;</div><div>The Rails API on Fly.io handles Google OAuth and Drive access server-side. More reliable than the browser-only approach. See the developer handoff package for setup instructions.</div></div>
-        <div class="fg" style="margin:0"><label>API Base URL</label><input type="url" id="int-rails-api" placeholder="https://twwp-ops-api.fly.dev" autocomplete="off"><div style="font-size:10px;color:var(--text3);margin-top:3px">Once deployed, enter the Fly.io URL here</div></div>
-        <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
-          <button class="btn btn-s btn-sm" onclick="connectViaRailsAPI()">&#128640; Connect via Rails API</button>
-          <span id="railsApiStatus" style="font-size:11px;color:var(--text3)">Not configured</span>
+
+      <!-- ── Tab: Infrastructure ─────────────────────────── -->
+      <div class="int-tab-panel" id="int-panel-infra" style="display:none">
+        <div id="int-status-infra" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;min-height:16px"></div>
+        <div style="display:flex;flex-direction:column;gap:20px">
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:block" data-tip="TWWP Ops API on Fly.io — handles OAuth, Drive, email and multi-device sync">TWWP Rails API</label>
+            <div class="helper-bubble" style="margin-bottom:8px"><div class="hb-icon">&#128640;</div><div>The Rails API handles OAuth, data sync between devices, Drive access and email sending. Required for multi-device sync.</div></div>
+            <div class="fg" style="margin:0"><label data-tip="Fly.io URL for the TWWP Ops API">API Base URL</label><input type="url" id="int-rails-api" placeholder="https://twwp-ops-api.fly.dev" autocomplete="off"><div style="font-size:10px;color:var(--text3);margin-top:3px">Default: https://twwp-ops-api.fly.dev</div></div>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:block" data-tip="The public-facing Tap-Map app — source of member and waterhouse data">Tap-Map App</label>
+            <div class="helper-bubble" style="margin-bottom:8px"><div class="hb-icon">&#128205;</div><div>The public-facing Tap-Map app is the source of member and waterhouse data. The Ops API reads from it directly via the Neon database connection.</div></div>
+            <div class="fg" style="margin:0"><label data-tip="URL of the public Tap-Map app">App URL</label><input type="url" id="int-tapmap-url" placeholder="https://app.thewholeywaterproject.com" autocomplete="off"></div>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:block" data-tip="Cloudflare Worker for proxying product page scraping — needed for AI autofill">Cloudflare Worker</label>
+            <div class="helper-bubble" style="margin-bottom:8px"><div class="hb-icon">&#9729;</div><div>The Cloudflare Worker proxies product page scraping for AI Fill. Optional — only needed if using the catalogue AI autofill feature.</div></div>
+            <div class="fg" style="margin:0"><label data-tip="Your Cloudflare Worker URL — no trailing slash">Worker URL</label><input type="url" id="int-proxy-url" placeholder="https://twwp-proxy.yourname.workers.dev" autocomplete="off"><div style="font-size:10px;color:var(--text3);margin-top:3px">No trailing slash</div></div>
+            <div style="margin-top:10px"><button class="btn btn-g btn-sm" id="testProxyBtn" onclick="testProxyUrl()" data-tip="Test that the Cloudflare Worker is responding">Test Proxy</button> <span id="testProxyResult" style="font-size:11px;color:var(--text3);margin-left:8px"></span></div>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:block" data-tip="Connect Home Assistant to pull sensor data and automate maintenance alerts">Home Assistant</label>
+            <div class="helper-bubble" style="margin-bottom:8px"><div class="hb-icon">&#127968;</div><div>Connect Home Assistant to pull live sensor data, control valves, and automate maintenance alerts.</div></div>
+            <div class="fr">
+              <div class="fg" style="margin:0"><label data-tip="Base URL of your Home Assistant instance (e.g. http://homeassistant.local:8123)">HA Base URL</label><input type="url" id="int-ha-url" placeholder="http://homeassistant.local:8123" autocomplete="off"></div>
+              <div class="fg" style="margin:0"><label data-tip="Long-lived access token from Home Assistant → Profile → Security">Long-Lived Token</label><input type="password" id="int-ha-token" placeholder="eyJ0eXAi..." autocomplete="off"></div>
+            </div>
+            <div id="aiMoHaSection" style="margin-top:10px"></div>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:block" data-tip="Stripe keys for payments and subscriptions">Stripe</label>
+            <div class="helper-bubble" style="margin-bottom:10px"><div class="hb-icon">S</div><div>Stripe handles payments and subscriptions. Publishable key is safe to store here. Keep the secret key private.</div></div>
+            <div class="fr">
+              <div class="fg" style="margin:0"><label data-tip="Stripe publishable key — safe client-side">Publishable Key</label><input type="password" id="ak-stripe-pub" placeholder="pk_live_..." autocomplete="off"></div>
+              <div class="fg" style="margin:0"><label data-tip="Stripe webhook secret — for verifying webhook events">Webhook Secret</label><input type="password" id="ak-stripe-secret" placeholder="whsec_..." autocomplete="off"></div>
+            </div>
+            <div style="font-size:10px;color:var(--text3);margin-top:4px"><a href="https://dashboard.stripe.com/apikeys" target="_blank" style="color:var(--cyan)">dashboard.stripe.com/apikeys</a></div>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:block" data-tip="Configure your ESP32 water quality sensor module">ESP32 / Sensors</label>
+            <div class="helper-bubble" style="margin-bottom:8px"><div class="hb-icon">&#128268;</div><div>Configure your ESP32 water quality sensor module. Readings flow through Home Assistant into the WH Monitor.</div></div>
+            <div class="fr">
+              <div class="fg" style="margin:0"><label data-tip="IP address of the ESP32 device on the local network">Device IP</label><input type="text" id="int-esp32-ip" placeholder="192.168.1.x" autocomplete="off"></div>
+              <div class="fg" style="margin:0"><label data-tip="Home Assistant entity prefix for this sensor module, e.g. sensor.wh1">HA Entity Prefix</label><input type="text" id="int-esp32-ha-prefix" placeholder="sensor.wh1" autocomplete="off"></div>
+            </div>
+          </div>
         </div>
       </div>
-      <!-- Cloudflare Proxy -->
-      <div>
-        <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:block">Cloudflare Proxy Worker</label>
-        <div class="helper-bubble" style="margin-bottom:8px"><div class="hb-icon">&#9729;</div><div>Used by AI Fill to fetch real product pages before sending to AI. Without this, AI Fill can only guess from the URL text. Set up a Cloudflare Worker at <a href="https://workers.cloudflare.com" target="_blank" style="color:var(--cyan)">workers.cloudflare.com</a>.</div></div>
-        <div class="fg" style="margin:0"><label>Worker URL</label><input type="url" id="int-proxy-url" placeholder="https://twwp-proxy.yourname.workers.dev" autocomplete="off"><div style="font-size:10px;color:var(--text3);margin-top:3px">Your Cloudflare Worker URL — no trailing slash</div></div>
-        <div style="margin-top:10px"><button class="btn btn-g btn-sm" id="testProxyBtn" onclick="testProxyUrl()">Test Proxy</button> <span id="testProxyResult" style="font-size:11px;color:var(--text3);margin-left:8px"></span></div>
-      </div>
-      <!-- Test AI Key -->
-      <div>
-        <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:block">Test AI Connection</label>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <button class="btn btn-g btn-sm" id="testAiBtn" onclick="testAiKey()">Test AI Key</button>
-          <span id="testAiResult" style="font-size:11px;color:var(--text3)"></span>
-        </div>
-        <div style="font-size:10px;color:var(--text3);margin-top:6px">Tests the currently selected provider with your saved key. Save settings first before testing.</div>
-      </div>
-      <div id="aiMoGCalSection"></div>
-      <div id="aiMoHaSection"></div>
-      <!-- Terminology / Org Config -->
-      <div style="border-top:1px solid var(--border);padding-top:16px">
-        <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:block">Terminology &amp; Org Config</label>
-        <div id="terminologyEditor"></div>
-        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn btn-g btn-sm" onclick="openOnboarding()">&#9881; Run Setup Wizard</button>
-          <button class="btn btn-g btn-sm" onclick="localStorage.removeItem('twwp_setup_complete');localStorage.removeItem('twwp_onboarding_skip');openOnboarding()">Redo Setup</button>
-        </div>
-      </div>
-      <div style="display:flex;gap:8px;justify-content:flex-end">
-        <button class="btn btn-g btn-sm" onclick="CM('apiMo')">Cancel</button>
-        <button class="btn btn-p btn-sm" onclick="saveApiKey()">Save Settings</button>
-      </div>
+    </div><!-- end md-b -->
+    <div class="md-f">
+      <button class="btn btn-g btn-sm" onclick="CM('apiMo')" data-tip="Close without saving">Cancel</button>
+      <button class="btn btn-p btn-sm" id="intSaveBtn" onclick="saveApiKey()" data-tip="Save all settings across all tabs">Save Settings</button>
     </div>
   </div>
 </div>
@@ -4989,8 +5104,33 @@ function renderAIFeedback(){
 function clearAIFeedback(){if(!confirm('Clear all captured feedback?'))return;S.set('captures',S.get('captures').filter(c=>c.type!=='feedback'));renderAIFeedback();}
 
 // AI SETTINGS
-function openApiMo(){const cfg=getAiCfg();const provider=cfg.provider||'gemini';const keys=cfg.keys||{};selectProvider(provider,true);['gemini','anthropic','openai','openrouter'].forEach(p=>{const el=G('ak-'+p);if(el)el.value=keys[p]||'';});if(G('ak-stripe-pub'))G('ak-stripe-pub').value=keys['stripe-pub']||'';if(G('ak-stripe-secret'))G('ak-stripe-secret').value=keys['stripe-secret']||'';if(G('af-autofill'))G('af-autofill').checked=cfg.features?cfg.features.autofill!==false:true;if(G('af-reports'))G('af-reports').checked=cfg.features?cfg.features.reports!==false:true;if(G('af-helper'))G('af-helper').checked=cfg.features?cfg.features.helper!==false:true;if(G('af-devnotes'))G('af-devnotes').checked=cfg.devNotes!==false;loadIntegrations();renderFeatureModelRows();updateOAuthUI();renderTerminologyEditor();OM('apiMo');}
-function saveApiKey(){const cfg=getAiCfg();const selectedBtn=document.querySelector('.provider-btn.on');cfg.provider=selectedBtn?selectedBtn.dataset.p:'gemini';cfg.keys=cfg.keys||{};['gemini','anthropic','openai','openrouter'].forEach(p=>{const el=G('ak-'+p);if(!el)return;const v=el.value.trim();if(v)cfg.keys[p]=v;else delete cfg.keys[p];});if(G('ak-stripe-pub')?.value)cfg.keys['stripe-pub']=G('ak-stripe-pub').value;if(G('ak-stripe-secret')?.value)cfg.keys['stripe-secret']=G('ak-stripe-secret').value;cfg.features={autofill:G('af-autofill')?G('af-autofill').checked!==false:true,reports:G('af-reports')?G('af-reports').checked!==false:true,helper:G('af-helper')?G('af-helper').checked!==false:true};cfg.devNotes=G('af-devnotes')?G('af-devnotes').checked:true;saveFeatureModels();saveAiCfgToStore(cfg);saveIntegrations();CM('apiMo');}
+function switchIntTab(tab){
+  localStorage.setItem('twwp_integrations_tab_v1',tab);
+  document.querySelectorAll('.int-tab').forEach(function(b){b.classList.toggle('on',b.dataset.tab===tab);});
+  document.querySelectorAll('.int-tab-panel').forEach(function(p){p.style.display='none';});
+  var panel=G('int-panel-'+tab);if(panel)panel.style.display='block';
+}
+function initIntegrationsTabs(){
+  var saved=localStorage.getItem('twwp_integrations_tab_v1')||'ai';
+  switchIntTab(saved);
+  // Email status row
+  try{
+    var ec=JSON.parse(localStorage.getItem('twwp_email_config_v1')||'{}');
+    var row=G('intEmailStatusRow');
+    if(row){
+      if(ec.connected&&ec.provider){row.style.color='var(--green)';row.innerHTML='&#10003; Connected via '+ec.provider.charAt(0).toUpperCase()+ec.provider.slice(1)+(ec.email?' ('+ec.email+')':'');}
+      else{row.style.color='var(--text3)';row.innerHTML='Not configured — click Configure to set up email.';}
+    }
+  }catch(e){}
+  // Trello status badge (from twwp_trello_v1)
+  try{
+    var tc=JSON.parse(localStorage.getItem('twwp_trello_v1')||'{}');
+    var tb=G('intTrelloStatusBadge');
+    if(tb){if(tc.api_key&&tc.token){tb.textContent='Connected';tb.className='b b-gr';}else{tb.textContent='Not connected';tb.className='b b-gy';}}
+  }catch(e){}
+}
+function openApiMo(){const cfg=getAiCfg();const provider=cfg.provider||'gemini';const keys=cfg.keys||{};selectProvider(provider,true);['gemini','anthropic','openai','openrouter'].forEach(p=>{const el=G('ak-'+p);if(el)el.value=keys[p]||'';});if(G('ak-stripe-pub'))G('ak-stripe-pub').value=keys['stripe-pub']||'';if(G('ak-stripe-secret'))G('ak-stripe-secret').value=keys['stripe-secret']||'';if(G('af-autofill'))G('af-autofill').checked=cfg.features?cfg.features.autofill!==false:true;if(G('af-reports'))G('af-reports').checked=cfg.features?cfg.features.reports!==false:true;if(G('af-helper'))G('af-helper').checked=cfg.features?cfg.features.helper!==false:true;if(G('af-devnotes'))G('af-devnotes').checked=cfg.devNotes!==false;loadIntegrations();renderFeatureModelRows();updateOAuthUI();renderTerminologyEditor();initIntegrationsTabs();OM('apiMo');}
+function saveApiKey(){const cfg=getAiCfg();const selectedBtn=document.querySelector('.provider-btn.on');cfg.provider=selectedBtn?selectedBtn.dataset.p:'gemini';cfg.keys=cfg.keys||{};['gemini','anthropic','openai','openrouter'].forEach(p=>{const el=G('ak-'+p);if(!el)return;const v=el.value.trim();if(v)cfg.keys[p]=v;else delete cfg.keys[p];});if(G('ak-stripe-pub')?.value)cfg.keys['stripe-pub']=G('ak-stripe-pub').value;if(G('ak-stripe-secret')?.value)cfg.keys['stripe-secret']=G('ak-stripe-secret').value;cfg.features={autofill:G('af-autofill')?G('af-autofill').checked!==false:true,reports:G('af-reports')?G('af-reports').checked!==false:true,helper:G('af-helper')?G('af-helper').checked!==false:true};cfg.devNotes=G('af-devnotes')?G('af-devnotes').checked:true;saveFeatureModels();saveAiCfgToStore(cfg);saveIntegrations();var sb=G('intSaveBtn');if(sb){var orig=sb.textContent;sb.textContent='Saved \u2713';sb.style.background='var(--green)';sb.style.color='#000';setTimeout(function(){sb.textContent=orig;sb.style.background='';sb.style.color='';CM('apiMo');},900);}else{CM('apiMo');}}
 function selectProvider(p,silent){document.querySelectorAll('.provider-btn').forEach(b=>{b.classList.toggle('on',b.dataset.p===p);});['gemini','anthropic','openai','openrouter'].forEach(id=>{const row=G('akr-'+id);if(row)row.style.display=id===p?'block':'none';});const orModel=G('akr-openrouter-model');if(orModel)orModel.style.display=p==='openrouter'?'block':'none';}
 
 // ADDRESS AUTOCOMPLETE
@@ -11277,7 +11417,7 @@ function triggerDeploymentWorkflows(dep, kit, loc, ownerEntity){
 // ============================================================
 // INTEGRATIONS — save/load cloud storage + webhook fields
 // ============================================================
-var INT_KEYS=['gdrive','dropbox','onedrive','slack','zapier','webhook','gcal','ha-url','ha-token','gdrive-key','gdrive-folder','gdrive-client-id','proxy-url','rails-api'];
+var INT_KEYS=['gdrive','dropbox','onedrive','slack','zapier','webhook','gcal','ha-url','ha-token','gdrive-key','gdrive-folder','gdrive-client-id','proxy-url','rails-api','sendgrid','trello-key','trello-token','jira-url','jira-token','jira-email','tapmap-url','esp32-ip','esp32-ha-prefix'];
 var OAUTH_TOKEN_KEY='twwp_oauth_v1';
 
 function loadIntegrations(){
