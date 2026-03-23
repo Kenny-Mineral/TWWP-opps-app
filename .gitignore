@@ -34,3 +34,7 @@ private-local-only/
 # Private AI context — never commit
 CLAUDE_CONTEXT.md
 
+
+# Sprint sync JWT token — never commit
+scripts/.ops_token
+docs/pending_sync.json

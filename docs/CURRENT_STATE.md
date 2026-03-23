@@ -632,3 +632,76 @@ Rails API at `https://twwp-ops-api.fly.dev`.
 8. **Activate Drive auto-backup on logout** — unblocked by OAuth scope fix.
 
 See `docs/handoff/session-handoff-march23i.md` for Sprint A full summary.
+
+---
+
+## Sprint B changes (2026-03-23) — SPEC_VERSION 4.7
+
+### B1 — Ops API: read-only Tap-Map DB connection
+- Added `tap_map` database entry to `config/database.yml` using `TAP_MAP_DATABASE_URL` (set as Fly.io secret)
+- Neon Postgres confirmed as Tap-Map DB backend; connection string uses `replica: true`
+- `app/models/tap_map_record.rb` — base class using `connects_to database: { writing: :tap_map, reading: :tap_map }`, `readonly? true`
+- `TapMapUser` (table: users — id, email, created_at, terms_and_conditions_accepted, pma_accepted)
+- `TapMapTap` (table: taps — id, name, lat, lng, address, type)
+- `TapMapReading` (table: readings — id, tap_id, TDS, EC, pH, ORP, flow_type, created_at)
+
+### B2 — Ops API: Tap-Map read endpoints
+- `GET /api/tap_map/members` — paginated (`?page=&per_page=`, default 100, max 500)
+- `GET /api/tap_map/taps` — all taps ordered by name
+- `GET /api/tap_map/readings` — ordered by created_at desc, `?tap_id=` filter, `?limit=` (default 100, max 500)
+- All require Bearer JWT; controller at `app/controllers/api/tap_map_controller.rb`
+- Deployed to Fly.io ✅
+
+### B3 — Ops App: Pull from Tap-Map buttons
+- Contacts page header: **↓ Tap-Map** button — calls `pullTapMapContacts()`, deduplicates by email, adds "Tap-Map" tag to new/existing contacts
+- Locations page header: **↓ Tap-Map Taps** button — calls `pullTapMapTaps()`, deduplicates by name, sets `tap_id` on matched/created Waterhouse locations
+- WH Monitor header: **↓ Live Readings** button — calls `pullTapMapReadings()`, stores 500 readings in `twwp_tap_readings_v1`, triggers `renderMonitor()` refresh
+- All three show loading state + success/fail toast + ledger event
+
+### B4 — WH Monitor: live sensor gauges
+- `renderSensorGauges(whId)` — checks location for `tap_id`, matches to `twwp_tap_readings_v1`, renders TDS/EC/pH/ORP cards
+- Sparkline SVG for last 20 readings per parameter (via `<polyline>`)
+- Colour thresholds: pH 6.5-7.5 green / 6.0-8.0 amber / outside red; TDS <50 green / <150 amber / over red; EC <100 green / <300 amber / over red
+- Gauge section prepended to monitor dash when tap_id is set; "Last reading: X mins/hrs ago" timestamp
+- Real sensor data replaces demo data when available
+
+### B5 — Project Management: rename and restructure
+- "Projects" sidebar label → **"Project Management"**
+- Projects page header → **"Project Management"**
+- Added 4-tab structure: **Overview** (existing projects list — no changes), **Board** (kanban), **Timeline** (Gantt), **Integrations** (PM tools)
+- `switchPMTab(el)` — tab switcher with dynamic page header actions
+- All existing project stores, CRUD, and renderProjects() completely intact
+
+### B6 — PM Board view + Trello integration
+- **Board tab**: kanban of tasks from `tasks` store + Trello cards (`twwp_trello_cards_v1`)
+- 4 columns: To Do / In Progress / Blocked / Done — status inferred from `task.status`
+- HTML5 drag-and-drop (`ondragstart`/`ondrop`/`onKbDrop`) updates `task.status` in store
+- Cards show title, assignee/owner, due date, priority badge, project name badge
+- "↑ Trello" button per internal task card — calls `pushTaskToTrello(taskId)`
+- **Integrations tab → Trello panel**: API Key + Token fields (user gets from trello.com/app-key)
+- `saveTrelloCredentials()` — fetches boards list from Trello API, saves to `twwp_trello_v1` + `org_config.integrations.trello`
+- `pullTrelloCards()` — fetches all cards from selected board, stores in `twwp_trello_cards_v1` as read-only Trello-tagged items
+- `pushTaskToTrello(taskId)` — creates card on first list of selected Trello board
+- `disconnectTrello()` — clears stored credentials and cards
+- **Timeline tab**: basic Gantt using SVG-free `<div>` bar chart; projects with start+due dates rendered as proportional width bars
+
+### B7 — Sprint docs + sync scripts
+- `scripts/post_sprint_to_ops.rb` — Ruby script that GETs /api/sync, merges Sprint B completions (devtasks, spec_growth_user, calEvents, eventLedger), PUTs back; falls back to `docs/pending_sync.json`
+- `scripts/sprint_template.rb` — reusable template for future sprint wrap scripts with comments
+- JWT read from `scripts/.ops_token` file, `OPS_JWT` env var, or interactive prompt
+- SPEC_VERSION → 4.7, ADR-016 (TapMapRecord read-only secondary DB) and ADR-017 (Trello API key+token vs OAuth) added
+- BACKLOG_GROUPS SprintB group added (B1-B6 complete, BX1-BX3 remaining)
+
+## Integration status (updated Sprint B)
+
+| Service | Status |
+|---------|--------|
+| TAP_MAP_DATABASE_URL | ✅ Fly secret set, Neon Postgres confirmed |
+| Tap-Map read endpoints | ✅ B1-B2 deployed |
+| Contacts ↓ Tap-Map | ✅ B3 deployed |
+| Locations ↓ Tap-Map Taps | ✅ B3 deployed |
+| WH Monitor live sensor gauges | ✅ B4 — real TDS/EC/pH/ORP data when tap_id set |
+| Trello (API key+token) | ✅ B6 implemented (user must configure credentials) |
+| Google Drive | ✅ Working |
+| Rails API (Fly.io) | ✅ Deployed |
+| AI (Gemini/Anthropic/OpenAI/OpenRouter) | ✅ Working |

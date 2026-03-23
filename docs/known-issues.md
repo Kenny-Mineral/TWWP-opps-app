@@ -1,6 +1,21 @@
 # Known Issues, Bugs, and Stubs
 
-Last updated: 2026-03-23 (Sprint A — 8 tasks)
+Last updated: 2026-03-23 (Sprint B — 6 tasks)
+
+---
+
+## Fixed this sprint (Sprint B)
+
+- ✅ No bugs fixed this sprint — Sprint B was additive only
+
+## Added this sprint (Sprint B)
+
+- ✅ Tap-Map read-only DB connection (TapMapRecord base class, Neon Postgres via TAP_MAP_DATABASE_URL)
+- ✅ Three Tap-Map endpoints deployed to Fly.io
+- ✅ Pull buttons in Contacts / Locations / WH Monitor
+- ✅ Live sensor gauges in WH Monitor (TDS/EC/pH/ORP with sparklines)
+- ✅ Project Management tabbed restructure (Overview/Board/Timeline/Integrations)
+- ✅ Kanban Board + Trello API key/token integration
 
 ---
 

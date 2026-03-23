@@ -1262,7 +1262,7 @@ tbody tr:hover{background:var(--surface2);}
     <div class="sb-item" id="ni-emailinbox" data-tip="Email Inbox — live inbox from configured provider, AI reply suggestions, contact matching" onclick="go('emailinbox',this)"><span class="sb-icon">&#128140;</span><span class="sb-lbl">Email Inbox</span><span class="sb-badge hid" id="inboxBadge">0</span></div>
     <div class="sb-item" id="ni-emailregistry" data-tip="Email Registry — track outgoing emails, use templates, send via Rails API" onclick="go('emailregistry',this)"><span class="sb-icon">&#9993;</span><span class="sb-lbl">Email Registry</span></div>
     <div class="sb-sect">Projects</div>
-    <div class="sb-item" id="ni-projects" data-tip="Projects — track initiatives across WH upgrades, fundraising, outreach, R&D" onclick="go('projects',this)"><span class="sb-icon">&#127919;</span><span class="sb-lbl">Projects</span><span class="sb-badge hid" id="projBadge">0</span></div>
+    <div class="sb-item" id="ni-projects" data-tip="Project Management — track initiatives, board view, timeline, and PM integrations" onclick="go('projects',this)"><span class="sb-icon">&#127919;</span><span class="sb-lbl">Project Management</span><span class="sb-badge hid" id="projBadge">0</span></div>
     <div class="sb-item" id="ni-tasks" data-tip="Tasks — operational and dev tasks with priorities, due dates, calendar sync" onclick="go('tasks',this)"><span class="sb-icon">&#9989;</span><span class="sb-lbl">Tasks</span></div>
     <div class="sb-item" id="ni-rd" data-tip="R&D — capture and track research ideas through idea→testing→validated→promoted" onclick="go('rd',this)"><span class="sb-icon">&#128300;</span><span class="sb-lbl">R&amp;D</span></div>
     <div class="sb-item" id="ni-trustees" data-tip="Trustees / Legal — governance items, PPSR registrations, document library" onclick="go('trustees',this)"><span class="sb-icon">&#9878;</span><span class="sb-lbl">Trustees / Legal</span><span class="sb-badge hid" id="trusteeBadge">0</span></div>
@@ -1480,7 +1480,7 @@ tbody tr:hover{background:var(--surface2);}
 
 <!-- ====== LOCATIONS PAGE ====== -->
 <div class="page" id="page-locations">
-  <div class="ph"><div><div class="ph-ey">Locations</div><div class="ph-title">Waterhouses &amp; Sites</div></div><div class="ph-right"><button class="btn btn-s btn-sm" onclick="expLocJSON()">Export JSON</button><button class="btn btn-p btn-sm" data-tip="Add a new waterhouse or site location" onclick="openLocMo()">+ Add Location</button></div></div>
+  <div class="ph"><div><div class="ph-ey">Locations</div><div class="ph-title">Waterhouses &amp; Sites</div></div><div class="ph-right"><button class="btn btn-s btn-sm" onclick="expLocJSON()">Export JSON</button><button class="btn btn-s btn-sm" id="tapMapTapsBtn" data-tip="Sync Tap-Map taps into Locations as Waterhouses — deduplicates by name" onclick="pullTapMapTaps(this)">&#8595; Tap-Map Taps</button><button class="btn btn-p btn-sm" data-tip="Add a new waterhouse or site location" onclick="openLocMo()">+ Add Location</button></div></div>
   <div class="pb">
     <div class="helper-bubble"><div class="hb-icon">&#127968;</div><div><strong>Locations</strong> includes all Waterhouses, stock rooms, and test benches. Each Waterhouse can have a Guardian assigned, water rate, and VIP member target. Location data feeds into Monitor, Reports and Member Display.</div></div>
     <div class="pills" id="locTypePills" style="margin-bottom:20px"><div class="pill on" data-t="" onclick="setPill(this,'locTypePills','locTF');renderLocs()">All</div><div class="pill" data-t="Waterhouse" onclick="setPill(this,'locTypePills','locTF');renderLocs()">Waterhouse</div><div class="pill" data-t="Stock" onclick="setPill(this,'locTypePills','locTF');renderLocs()">Stock</div><div class="pill" data-t="Test Bench" onclick="setPill(this,'locTypePills','locTF');renderLocs()">Test Bench</div><div class="pill" data-t="Sold" onclick="setPill(this,'locTypePills','locTF');renderLocs()">Sold</div></div>
@@ -1669,7 +1669,7 @@ tbody tr:hover{background:var(--surface2);}
 <!-- ====== MONITOR PAGE ====== -->
 <div class="page" id="page-monitor">
   <div class="ph"><div><div class="ph-ey">Operations</div><div class="ph-title">WH Monitor</div></div>
-    <div class="ph-right"><select id="monWhSel" onchange="renderMonitor()" style="min-width:180px"><option value="">Select Waterhouse...</option></select><button class="btn btn-s btn-sm" onclick="openMonLogMo()">+ Log Period</button><button class="btn btn-g btn-sm" onclick="genMonReceipt()">Receipt</button></div>
+    <div class="ph-right"><select id="monWhSel" onchange="renderMonitor()" style="min-width:180px"><option value="">Select Waterhouse...</option></select><button class="btn btn-s btn-sm" id="tapMapReadingsBtn" data-tip="Pull latest sensor readings from Tap-Map — matches by tap_id on each Waterhouse" onclick="pullTapMapReadings(this)">&#8595; Live Readings</button><button class="btn btn-s btn-sm" onclick="openMonLogMo()">+ Log Period</button><button class="btn btn-g btn-sm" onclick="genMonReceipt()">Receipt</button></div>
   </div>
   <div class="pb"><div id="monitorDash"></div></div>
 </div>
@@ -1703,6 +1703,7 @@ tbody tr:hover{background:var(--surface2);}
       <div class="sw"><span class="si">&#128269;</span><input type="text" id="crmSearch" placeholder="Search contacts..." oninput="renderContacts()"></div>
       <select id="crmTypeFil" onchange="renderContacts()" style="min-width:130px"><option value="">All Types</option><option value="guardian">Guardians</option><option value="member">Members</option><option value="supplier">Suppliers</option><option value="trustee">Trustees</option><option value="sponsor">Sponsors</option><option value="contractor">Contractors</option><option value="other">Other</option></select>
       <button class="btn btn-s btn-sm" onclick="impContactsCSV()">Import CSV</button>
+      <button class="btn btn-s btn-sm" id="tapMapContactsBtn" data-tip="Sync members from Tap-Map into Contacts — deduplicates by email" onclick="pullTapMapContacts(this)">&#8595; Tap-Map</button>
       <button class="btn btn-p btn-sm" data-tip="Add a new contact to the CRM" onclick="openContactMo()">+ Add Contact</button>
     </div>
   </div>
@@ -1724,22 +1725,95 @@ tbody tr:hover{background:var(--surface2);}
 
 <!-- ====== PROJECTS PAGE ====== -->
 <div class="page" id="page-projects">
-  <div class="ph"><div><div class="ph-ey">Projects</div><div class="ph-title">Projects</div></div>
-    <div class="ph-right">
+  <div class="ph"><div><div class="ph-ey">Projects</div><div class="ph-title">Project Management</div></div>
+    <div class="ph-right" id="pmPageActions">
       <select id="projTypeFil" onchange="renderProjects()" style="min-width:150px"><option value="">All Types</option><option value="wh_upgrade">WH Upgrade</option><option value="fundraising">Fundraising</option><option value="outreach">Outreach</option><option value="competition">Competition/Event</option><option value="legal">Legal/Governance</option><option value="app_dev">App Dev</option><option value="iot">IoT/Hardware</option><option value="research">Research</option><option value="admin">Admin/Ops</option></select>
       <button class="btn btn-p btn-sm" data-tip="Create a new project" onclick="openProjectMo()">+ New Project</button>
     </div>
   </div>
   <div class="pb">
-    <div class="helper-bubble"><div class="hb-icon">&#127919;</div><div><strong>Projects</strong> tracks initiatives across all 9 project types. Each project has milestones, an owner, budget, and timeline. Linked to Waterhouses, contacts and financials. Use the capture button to quickly log project ideas from anywhere in the app.</div></div>
-    <div class="pills" id="projStatusPills" style="margin-bottom:16px">
-      <div class="pill on" data-s="" onclick="setPill(this,'projStatusPills','projSF');renderProjects()">All</div>
-      <div class="pill" data-s="active" onclick="setPill(this,'projStatusPills','projSF');renderProjects()">Active</div>
-      <div class="pill" data-s="planning" onclick="setPill(this,'projStatusPills','projSF');renderProjects()">Planning</div>
-      <div class="pill" data-s="complete" onclick="setPill(this,'projStatusPills','projSF');renderProjects()">Complete</div>
-      <div class="pill" data-s="paused" onclick="setPill(this,'projStatusPills','projSF');renderProjects()">Paused</div>
+    <div class="tabs" id="pmTabs" style="margin-bottom:20px">
+      <div class="tb on" data-t="overview" data-tip="Overview — all projects list" onclick="switchPMTab(this)">Overview</div>
+      <div class="tb" data-t="board" data-tip="Board — kanban view of tasks by project" onclick="switchPMTab(this)">Board</div>
+      <div class="tb" data-t="timeline" data-tip="Timeline — basic Gantt chart of projects" onclick="switchPMTab(this)">Timeline</div>
+      <div class="tb" data-t="integrations" data-tip="Integrations — connect Trello and other PM tools" onclick="switchPMTab(this)">Integrations</div>
     </div>
-    <div id="projectsGrid" class="grid"></div>
+
+    <!-- Overview Tab -->
+    <div id="pm-tab-overview">
+      <div class="helper-bubble"><div class="hb-icon">&#127919;</div><div><strong>Projects</strong> tracks initiatives across all 9 project types. Each project has milestones, an owner, budget, and timeline. Linked to Waterhouses, contacts and financials. Use the capture button to quickly log project ideas from anywhere in the app.</div></div>
+      <div class="pills" id="projStatusPills" style="margin-bottom:16px">
+        <div class="pill on" data-s="" onclick="setPill(this,'projStatusPills','projSF');renderProjects()">All</div>
+        <div class="pill" data-s="active" onclick="setPill(this,'projStatusPills','projSF');renderProjects()">Active</div>
+        <div class="pill" data-s="planning" onclick="setPill(this,'projStatusPills','projSF');renderProjects()">Planning</div>
+        <div class="pill" data-s="complete" onclick="setPill(this,'projStatusPills','projSF');renderProjects()">Complete</div>
+        <div class="pill" data-s="paused" onclick="setPill(this,'projStatusPills','projSF');renderProjects()">Paused</div>
+      </div>
+      <div id="projectsGrid" class="grid"></div>
+    </div>
+
+    <!-- Board Tab -->
+    <div id="pm-tab-board" style="display:none">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+        <select id="boardProjFil" onchange="renderPMBoard()" style="min-width:180px" data-tip="Filter board by project">
+          <option value="">All Projects</option>
+        </select>
+        <span style="font-size:11px;color:var(--text3)">Drag cards between columns to update status</span>
+      </div>
+      <div id="pmBoardKanban" style="display:flex;gap:16px;overflow-x:auto;padding-bottom:16px"></div>
+    </div>
+
+    <!-- Timeline Tab -->
+    <div id="pm-tab-timeline" style="display:none">
+      <div class="helper-bubble"><div class="hb-icon">&#128197;</div><div><strong>Timeline</strong> shows projects on a basic Gantt chart. Each bar represents start → due date. Click a bar to open the project.</div></div>
+      <div id="pmTimeline"></div>
+    </div>
+
+    <!-- Integrations Tab -->
+    <div id="pm-tab-integrations" style="display:none">
+      <div class="helper-bubble"><div class="hb-icon">&#128279;</div><div><strong>Integrations</strong> lets you connect external PM tools. Trello cards can be pulled into the Board view as read-only items, or internal tasks pushed to Trello lists.</div></div>
+      <div style="display:flex;flex-direction:column;gap:20px;max-width:600px">
+        <!-- Trello Panel -->
+        <div style="background:var(--surface2);border-radius:12px;padding:20px;border-left:4px solid #0079BF">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+            <span style="font-size:24px">&#128203;</span>
+            <div>
+              <div style="font-weight:700;color:var(--text)">Trello</div>
+              <div style="font-size:11px;color:var(--text3)">API Key + Token auth — get yours at trello.com/app-key</div>
+            </div>
+            <span id="trelloStatusBadge" class="b b-gy" style="margin-left:auto">Not connected</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+            <div>
+              <label style="font-size:11px;color:var(--text2)">API Key</label>
+              <input type="text" id="trelloApiKey" placeholder="Your Trello API key" style="width:100%;margin-top:4px" data-tip="Get from trello.com/app-key">
+            </div>
+            <div>
+              <label style="font-size:11px;color:var(--text2)">Token</label>
+              <input type="text" id="trelloToken" placeholder="Your Trello token" style="width:100%;margin-top:4px" data-tip="Generate token on the same Trello app-key page">
+            </div>
+          </div>
+          <div style="margin-bottom:12px">
+            <label style="font-size:11px;color:var(--text2)">Board</label>
+            <select id="trelloBoardSel" style="width:100%;margin-top:4px" data-tip="Select board after saving credentials">
+              <option value="">Save credentials first...</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-p btn-sm" data-tip="Save Trello credentials and load boards" onclick="saveTrelloCredentials()">Save &amp; Connect</button>
+            <button class="btn btn-s btn-sm" data-tip="Pull cards from selected Trello board into Board view" onclick="pullTrelloCards()">&#8595; Pull Cards</button>
+            <button class="btn btn-g btn-sm" data-tip="Disconnect Trello" onclick="disconnectTrello()">Disconnect</button>
+          </div>
+          <div id="trelloMsg" style="margin-top:10px;font-size:11px;color:var(--text3)"></div>
+        </div>
+
+        <!-- Future integrations placeholder -->
+        <div style="background:var(--surface2);border-radius:12px;padding:16px;opacity:.5">
+          <div style="font-size:13px;font-weight:700;color:var(--text2)">Jira, Asana, Linear</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:4px">Coming soon — add to backlog if needed.</div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -3834,6 +3908,9 @@ function renderMonitor(){
   (allPeriods.length?'<div class="tw" style="margin-bottom:24px"><table><thead><tr><th>Period End</th><th>Days</th><th>Quenched</th><th>Filtered</th><th>Efficiency</th><th>VIP</th><th style="text-align:right">Reimb</th></tr></thead><tbody>'+allPeriods.map(p=>{const eff=parseFloat(p.efficiency)||0;const ec=eff<=5?'var(--green)':eff<=8?'var(--amber)':'var(--red)';return '<tr><td style="font-family:monospace;font-size:11px">'+fmtDate(p.end_date)+'</td><td>'+( p.days||'--')+'</td><td>'+(p.quenched||'--')+'</td><td>'+(p.filtered||'--')+'</td><td style="color:'+ec+';font-weight:700">1:'+eff.toFixed(1)+'</td><td>'+(p.vips||'--')+'</td><td style="text-align:right;font-family:monospace;color:var(--green)">'+fmtNZD(p.total_reimb)+'</td></tr>';}).join('')+'</tbody></table></div>':'<div class="cl cl-i" style="margin-bottom:24px"><span>i</span><div>No period history yet.</div></div>')+
   '<div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.08em">Recent Maintenance</div>'+
   (maintJobs.length?'<div style="display:flex;flex-direction:column;gap:8px">'+maintJobs.slice(0,5).map(j=>'<div style="background:var(--surface2);border-radius:8px;padding:10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px"><div><div style="font-size:12px;font-weight:700;color:var(--text)">'+fmtDate(j.date)+'</div><div style="font-size:10px;color:var(--text3)">'+(j.performed_by||'--')+'</div></div><div style="display:flex;gap:4px;flex-wrap:wrap">'+j.cats.map(c=>{const cat=MW_CATS.find(x=>x.id===c);return cat?'<span class="b b-gy" style="font-size:9px">'+cat.icon+' '+cat.title+'</span>':'';}).join('')+'</div><div style="font-family:monospace;font-size:12px;color:var(--green)">'+fmtNZD(j.reimb?.total)+'</div></div>').join('')+'</div>':'<div style="font-size:11px;color:var(--text3)">No maintenance jobs for this waterhouse.</div>');
+  // Append sensor gauges if live readings are available (B4)
+  var sensorHtml=renderSensorGauges(whId);
+  if(sensorHtml)el.innerHTML=sensorHtml+el.innerHTML;
 }
 function openMonLogMo(){
   const whs=S.get('locations').filter(l=>l.type==='Waterhouse');
@@ -4203,6 +4280,399 @@ function openProjectMo(type){
 function editProject(id){const p=S.find('projects',id);if(!p)return;editProjectId=id;G('projectMoT').textContent='// EDIT PROJECT';const whs=S.get('locations').filter(l=>l.type==='Waterhouse');G('pr-wh').innerHTML='<option value="">-- None --</option>'+whs.map(w=>'<option value="'+w.id+'">'+esc(w.name)+'</option>').join('');G('pr-name').value=p.name||'';G('pr-type').value=p.type||'admin';G('pr-status').value=p.status||'planning';G('pr-priority').value=p.priority||'normal';G('pr-wh').value=p.wh_id||'';G('pr-start').value=p.start||'';G('pr-due').value=p.due||'';G('pr-owner').value=p.owner||'';G('pr-budget').value=p.budget||'';G('pr-desc').value=p.desc||'';G('pr-milestones').value=p.milestones||'';G('pr-notes').value=p.notes||'';OM('projectMo');}
 function saveProject(){const name=G('pr-name').value.trim();if(!name){alert('Project name required.');return;}S.upsert('projects',{id:editProjectId||uid(),name,type:G('pr-type').value,status:G('pr-status').value,priority:G('pr-priority').value,wh_id:G('pr-wh').value,start:G('pr-start').value,due:G('pr-due').value,owner:G('pr-owner').value.trim(),budget:G('pr-budget').value||'',desc:G('pr-desc').value.trim(),milestones:G('pr-milestones').value.trim(),notes:G('pr-notes').value.trim(),created:editProjectId?(S.find('projects',editProjectId)?.created||new Date().toISOString()):new Date().toISOString()});CM('projectMo');renderProjects();updStats();}
 function delProject(id){if(!confirm('Delete this project?'))return;S.rm('projects',id);renderProjects();updStats();}
+
+// ============================================================
+// PROJECT MANAGEMENT — B5: Tab switching
+// ============================================================
+function switchPMTab(el){
+  document.querySelectorAll('#pmTabs .tb').forEach(function(t){t.classList.remove('on');});
+  el.classList.add('on');
+  var tabs=['overview','board','timeline','integrations'];
+  tabs.forEach(function(t){
+    var e=G('pm-tab-'+t);if(e)e.style.display=t===el.dataset.t?'block':'none';
+  });
+  var actions=G('pmPageActions');
+  if(actions){
+    if(el.dataset.t==='overview'){
+      actions.innerHTML='<select id="projTypeFil" onchange="renderProjects()" style="min-width:150px"><option value="">All Types</option><option value="wh_upgrade">WH Upgrade</option><option value="fundraising">Fundraising</option><option value="outreach">Outreach</option><option value="competition">Competition/Event</option><option value="legal">Legal/Governance</option><option value="app_dev">App Dev</option><option value="iot">IoT/Hardware</option><option value="research">Research</option><option value="admin">Admin/Ops</option></select><button class="btn btn-p btn-sm" data-tip="Create a new project" onclick="openProjectMo()">+ New Project</button>';
+    } else if(el.dataset.t==='board'){
+      actions.innerHTML='<button class="btn btn-s btn-sm" data-tip="Refresh board" onclick="renderPMBoard()">&#8635; Refresh</button>';
+    } else {
+      actions.innerHTML='';
+    }
+  }
+  if(el.dataset.t==='board'){
+    var boardFil=G('boardProjFil');
+    if(boardFil){var projects=S.get('projects');boardFil.innerHTML='<option value="">All Projects</option>'+projects.map(function(p){return '<option value="'+esc(p.id)+'">'+esc(p.name)+'</option>';}).join('');}
+    renderPMBoard();
+  }
+  if(el.dataset.t==='timeline') renderPMTimeline();
+  if(el.dataset.t==='integrations') renderTrelloStatus();
+}
+
+// ============================================================
+// PROJECT MANAGEMENT — B6: Board (Kanban)
+// ============================================================
+var _dragTaskId = null;
+
+function renderPMBoard(){
+  var el=G('pmBoardKanban');if(!el)return;
+  var projFil=G('boardProjFil')?.value||'';
+  var allTasks=S.get('tasks');
+  var trelloItems=JSON.parse(localStorage.getItem('twwp_trello_cards_v1')||'[]');
+  var tasks=allTasks.concat(trelloItems);
+  if(projFil)tasks=tasks.filter(function(t){return t.project_id===projFil||t.project_name===projFil;});
+
+  var COLS=[
+    {id:'todo',label:'To Do',cls:'b-gy'},
+    {id:'in_progress',label:'In Progress',cls:'b-cy'},
+    {id:'blocked',label:'Blocked',cls:'b-am'},
+    {id:'done',label:'Done',cls:'b-gr'}
+  ];
+  var STATUS_MAP={'':'todo','todo':'todo','To Do':'todo','in_progress':'in_progress','In Progress':'in_progress','blocked':'blocked','Blocked':'blocked','done':'done','Done':'done','complete':'done','Complete':'done'};
+
+  var html='';
+  COLS.forEach(function(col){
+    var colTasks=tasks.filter(function(t){return (STATUS_MAP[t.status]||'todo')===col.id;});
+    html+='<div class="kanban-col" id="kb-col-'+col.id+'" ondragover="event.preventDefault()" ondrop="onKbDrop(event,\''+col.id+'\')" style="min-width:220px;flex:1;background:var(--surface2);border-radius:12px;padding:12px">';
+    html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><span style="font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--text2)">'+col.label+'</span><span class="b '+col.cls+'">'+colTasks.length+'</span></div>';
+    colTasks.forEach(function(t){
+      var isTrello=t._source==='trello';
+      var priColor={low:'var(--text3)',normal:'var(--cyan)',high:'var(--amber)',urgent:'var(--red)'}[t.priority||'normal']||'var(--cyan)';
+      html+='<div class="kanban-card" draggable="'+(!isTrello)+'" data-task-id="'+esc(t.id)+'" onmousedown="if(!\''+isTrello+'\')_dragTaskId=\''+esc(t.id)+'\'" ondragstart="onKbDragStart(event,\''+esc(t.id)+'\')" style="background:var(--surface);border-radius:8px;padding:10px;margin-bottom:8px;cursor:'+(isTrello?'default':'grab')+';border-left:3px solid '+priColor+'">';
+      html+='<div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px">'+esc(t.title||t.name||'Untitled')+'</div>';
+      if(isTrello)html+='<span class="b" style="background:rgba(0,121,191,.15);color:#0079BF;border:1px solid #0079BF44;font-size:9px">Trello</span> ';
+      if(t.assignee||t.owner)html+='<div style="font-size:10px;color:var(--text3)">'+esc(t.assignee||t.owner)+'</div>';
+      if(t.due_date||t.due)html+='<div style="font-size:10px;color:var(--amber)">Due: '+esc(t.due_date||t.due)+'</div>';
+      if(!isTrello){
+        html+='<div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap">';
+        html+='<span style="font-size:9px;font-weight:700;color:'+priColor+'">'+((t.priority||'normal').toUpperCase())+'</span>';
+        if(t.project_id){var proj=S.find('projects',t.project_id);if(proj)html+='<span class="b b-gy" style="font-size:9px">'+esc(proj.name)+'</span>';}
+        html+='<button class="btn btn-p btn-xs" data-tip="Push this task to Trello" onclick="pushTaskToTrello(\''+esc(t.id)+'\')" style="margin-left:auto;font-size:9px">&#8593; Trello</button>';
+        html+='</div>';
+      }
+      html+='</div>';
+    });
+    html+='</div>';
+  });
+  el.innerHTML=html;
+}
+
+function onKbDragStart(ev,taskId){
+  ev.dataTransfer.setData('text/plain',taskId);
+  _dragTaskId=taskId;
+}
+
+function onKbDrop(ev,newStatus){
+  ev.preventDefault();
+  var taskId=ev.dataTransfer.getData('text/plain')||_dragTaskId;
+  if(!taskId)return;
+  var task=S.find('tasks',taskId);
+  if(!task)return;
+  var statusMap={todo:'todo',in_progress:'in_progress',blocked:'blocked',done:'done'};
+  task.status=statusMap[newStatus]||newStatus;
+  S.upsert('tasks',task);
+  logEvent('task','update','Board: moved task "'+task.title+'" to '+newStatus);
+  renderPMBoard();
+  _dragTaskId=null;
+}
+
+function renderPMTimeline(){
+  var el=G('pmTimeline');if(!el)return;
+  var projects=S.get('projects').filter(function(p){return p.start&&p.due;});
+  if(!projects.length){el.innerHTML='<div class="cl cl-i"><span>i</span><div>No projects with start + due dates. Add dates to projects in the Overview tab.</div></div>';return;}
+  var now=todayStr();
+  var minDate=projects.reduce(function(m,p){return p.start<m?p.start:m;},projects[0].start);
+  var maxDate=projects.reduce(function(m,p){return p.due>m?p.due:m;},projects[0].due);
+  var totalDays=daysBetween(minDate,maxDate)||1;
+  var PRIORITY_COLOR={low:'var(--text3)',normal:'var(--cyan)',high:'var(--amber)',urgent:'var(--red)'};
+  var html='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:600px"><thead><tr><th style="width:180px;text-align:left;font-size:11px;padding:6px;color:var(--text3)">Project</th><th style="font-size:11px;padding:6px;color:var(--text3)">Timeline</th></tr></thead><tbody>';
+  projects.forEach(function(p){
+    var startPct=Math.max(0,daysBetween(minDate,p.start)/totalDays*100);
+    var widthPct=Math.max(1,daysBetween(p.start,p.due)/totalDays*100);
+    var color=PRIORITY_COLOR[p.priority]||'var(--cyan)';
+    var isActive=p.status==='active';
+    html+='<tr><td style="padding:6px;font-size:11px;color:var(--text);font-weight:600;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+esc(p.name)+'">'+esc(p.name)+'</td>';
+    html+='<td style="padding:6px;position:relative"><div style="background:var(--surface2);border-radius:4px;height:20px;position:relative">';
+    html+='<div style="position:absolute;left:'+startPct+'%;width:'+widthPct+'%;height:100%;background:'+color+';border-radius:4px;opacity:'+(isActive?1:.5)+';cursor:pointer" data-tip="'+esc(p.name)+': '+p.start+' → '+p.due+'" onclick="editProject(\''+esc(p.id)+'\')"></div>';
+    html+='</div></td></tr>';
+  });
+  html+='</tbody></table></div>';
+  el.innerHTML=html;
+}
+
+// ============================================================
+// PROJECT MANAGEMENT — B6: Trello integration
+// ============================================================
+function renderTrelloStatus(){
+  var cfg=getTrelloConfig();
+  var badge=G('trelloStatusBadge');
+  var keyEl=G('trelloApiKey');var tokEl=G('trelloToken');var boardSel=G('trelloBoardSel');
+  if(cfg.api_key){if(keyEl)keyEl.value=cfg.api_key;if(tokEl)tokEl.value=cfg.token||'';}
+  if(badge){
+    if(cfg.connected){badge.textContent='Connected';badge.className='b b-gr';}
+    else{badge.textContent='Not connected';badge.className='b b-gy';}
+  }
+  if(cfg.connected&&cfg.boards){
+    var sel=G('trelloBoardSel');
+    if(sel){
+      sel.innerHTML='<option value="">Select a board...</option>'+cfg.boards.map(function(b){return '<option value="'+esc(b.id)+'">'+esc(b.name)+'</option>';}).join('');
+      if(cfg.board_id)sel.value=cfg.board_id;
+    }
+  }
+}
+
+function getTrelloConfig(){
+  var cfg=JSON.parse(localStorage.getItem('twwp_trello_v1')||'{}');
+  var orgCfg=S.get('org_config')[0]||{};
+  return Object.assign({},orgCfg.integrations?.trello||{},cfg);
+}
+
+function saveTrelloConfig(cfg){
+  localStorage.setItem('twwp_trello_v1',JSON.stringify(cfg));
+  var orgCfg=S.get('org_config');
+  if(orgCfg.length){
+    orgCfg[0].integrations=orgCfg[0].integrations||{};
+    orgCfg[0].integrations.trello=cfg;
+    S.set('org_config',orgCfg);
+  }
+}
+
+async function saveTrelloCredentials(){
+  var key=(G('trelloApiKey')?.value||'').trim();
+  var token=(G('trelloToken')?.value||'').trim();
+  var msg=G('trelloMsg');
+  if(!key||!token){if(msg)msg.textContent='API Key and Token are required.';return;}
+  if(msg)msg.textContent='Loading boards...';
+  try{
+    var r=await fetch('https://api.trello.com/1/members/me/boards?key='+encodeURIComponent(key)+'&token='+encodeURIComponent(token)+'&fields=id,name');
+    if(!r.ok)throw new Error('Invalid credentials ('+r.status+')');
+    var boards=await r.json();
+    var cfg={api_key:key,token:token,connected:true,boards:boards.map(function(b){return {id:b.id,name:b.name};})};
+    saveTrelloConfig(cfg);
+    var sel=G('trelloBoardSel');
+    if(sel){sel.innerHTML='<option value="">Select a board...</option>'+cfg.boards.map(function(b){return '<option value="'+esc(b.id)+'">'+esc(b.name)+'</option>';}).join('');}
+    var badge=G('trelloStatusBadge');if(badge){badge.textContent='Connected';badge.className='b b-gr';}
+    if(msg)msg.textContent='Connected — '+boards.length+' boards loaded.';
+    logEvent('integration','connect','Trello connected');
+  }catch(e){
+    if(msg)msg.textContent='Error: '+e.message;
+  }
+}
+
+G('trelloBoardSel')?.addEventListener('change',function(){
+  var cfg=getTrelloConfig();cfg.board_id=this.value;saveTrelloConfig(cfg);
+});
+
+async function pullTrelloCards(){
+  var cfg=getTrelloConfig();
+  var msg=G('trelloMsg');
+  if(!cfg.connected||!cfg.api_key){if(msg)msg.textContent='Connect Trello first.';return;}
+  if(!cfg.board_id){if(msg)msg.textContent='Select a board first.';return;}
+  if(msg)msg.textContent='Fetching cards...';
+  try{
+    var r=await fetch('https://api.trello.com/1/boards/'+encodeURIComponent(cfg.board_id)+'/cards?key='+encodeURIComponent(cfg.api_key)+'&token='+encodeURIComponent(cfg.token)+'&fields=id,name,idList,due,desc');
+    if(!r.ok)throw new Error('Fetch failed ('+r.status+')');
+    var cards=await r.json();
+    var trelloItems=cards.map(function(c){return {id:'trello_'+c.id,title:c.name,status:'todo',_source:'trello',due:c.due?c.due.slice(0,10):'',notes:c.desc||''};});
+    localStorage.setItem('twwp_trello_cards_v1',JSON.stringify(trelloItems));
+    if(msg)msg.textContent='Pulled '+trelloItems.length+' cards from Trello.';
+    logEvent('integration','sync','Pulled '+trelloItems.length+' cards from Trello');
+    renderPMBoard();
+    showDbToast('Pulled '+trelloItems.length+' Trello cards');
+  }catch(e){
+    if(msg)msg.textContent='Error: '+e.message;
+    showDbToast('Trello pull failed: '+e.message,true);
+  }
+}
+
+async function pushTaskToTrello(taskId){
+  var task=S.find('tasks',taskId);if(!task){showDbToast('Task not found',true);return;}
+  var cfg=getTrelloConfig();
+  if(!cfg.connected||!cfg.api_key){showDbToast('Connect Trello first',true);return;}
+  if(!cfg.board_id){showDbToast('Select a Trello board in Integrations tab first',true);return;}
+  try{
+    // Get first list on board
+    var lr=await fetch('https://api.trello.com/1/boards/'+encodeURIComponent(cfg.board_id)+'/lists?key='+encodeURIComponent(cfg.api_key)+'&token='+encodeURIComponent(cfg.token)+'&fields=id,name');
+    if(!lr.ok)throw new Error('Could not load Trello lists');
+    var lists=await lr.json();
+    if(!lists.length)throw new Error('No lists on selected board');
+    var listId=lists[0].id;
+    var body={idList:listId,name:task.title||task.name||'Task',desc:task.notes||task.desc||''};
+    if(task.due_date||task.due)body.due=(task.due_date||task.due)+'T00:00:00Z';
+    var cr=await fetch('https://api.trello.com/1/cards?key='+encodeURIComponent(cfg.api_key)+'&token='+encodeURIComponent(cfg.token),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(!cr.ok)throw new Error('Failed to create Trello card');
+    showDbToast('Task pushed to Trello: '+lists[0].name);
+    logEvent('task','push','Pushed task "'+task.title+'" to Trello');
+  }catch(e){showDbToast('Trello push failed: '+e.message,true);}
+}
+
+function disconnectTrello(){
+  localStorage.removeItem('twwp_trello_v1');
+  localStorage.removeItem('twwp_trello_cards_v1');
+  var orgCfg=S.get('org_config');
+  if(orgCfg.length&&orgCfg[0].integrations){delete orgCfg[0].integrations.trello;S.set('org_config',orgCfg);}
+  renderTrelloStatus();
+  showDbToast('Trello disconnected');
+  logEvent('integration','disconnect','Trello disconnected');
+}
+
+// ============================================================
+// TAP-MAP SYNC — B3: Pull from Tap-Map buttons
+// ============================================================
+async function pullTapMapContacts(btn){
+  if(!isRailsConnected()){showDbToast('Rails API not connected',true);return;}
+  if(btn)btn.textContent='Loading...';
+  try{
+    var res=await railsAPIRequest('GET','/api/tap_map/members?per_page=500');
+    if(!res.ok){var e=await res.json();throw new Error(e.error||res.status);}
+    var data=await res.json();
+    var members=data.members||[];
+    var existing=S.get('contacts');
+    var emailIndex={};existing.forEach(function(c){if(c.email)emailIndex[c.email.toLowerCase()]=c;});
+    var added=0;
+    members.forEach(function(m){
+      if(!m.email)return;
+      var key=m.email.toLowerCase();
+      if(emailIndex[key]){
+        // Update existing — add Tap-Map source tag if missing
+        var c=emailIndex[key];
+        if(!(c.tags||'').includes('Tap-Map')){c.tags=(c.tags?c.tags+',Tap-Map':'Tap-Map');S.upsert('contacts',c);}
+      } else {
+        S.upsert('contacts',{
+          id:uid(),name:m.email.split('@')[0],email:m.email,type:'member',
+          status:'Active',tags:'Tap-Map',source:'tap_map',
+          pma_accepted:m.pma_accepted,terms_accepted:m.terms_and_conditions_accepted,
+          created:m.created_at||new Date().toISOString(),updated:new Date().toISOString()
+        });
+        added++;
+      }
+    });
+    logEvent('contact','sync','Tap-Map sync: '+added+' new contacts from '+members.length+' members');
+    renderContacts();updStats();
+    showDbToast(added+' new contacts synced from Tap-Map ('+members.length+' total members)');
+  }catch(e){showDbToast('Tap-Map sync failed: '+e.message,true);}
+  finally{if(btn)btn.textContent='↓ Tap-Map';}
+}
+
+async function pullTapMapTaps(btn){
+  if(!isRailsConnected()){showDbToast('Rails API not connected',true);return;}
+  if(btn)btn.textContent='Loading...';
+  try{
+    var res=await railsAPIRequest('GET','/api/tap_map/taps');
+    if(!res.ok){var e=await res.json();throw new Error(e.error||res.status);}
+    var data=await res.json();
+    var taps=data.taps||[];
+    var existing=S.get('locations');
+    var nameIndex={};existing.forEach(function(l){if(l.name)nameIndex[l.name.toLowerCase()]=l;});
+    var added=0;
+    taps.forEach(function(t){
+      var key=(t.name||'').toLowerCase();
+      if(nameIndex[key]){
+        // Update tap_id if not set
+        var loc=nameIndex[key];
+        if(!loc.tap_id){loc.tap_id=t.id;S.upsert('locations',loc);}
+      } else {
+        S.upsert('locations',{
+          id:uid(),name:t.name||'Tap '+t.id,type:'Waterhouse',
+          address:t.address||'',tap_id:t.id,
+          lat:t.lat,lng:t.lng,source:'tap_map',
+          created:new Date().toISOString()
+        });
+        added++;
+      }
+    });
+    logEvent('location','sync','Tap-Map taps sync: '+added+' new locations');
+    renderLocs();
+    showDbToast(added+' new waterhouses synced from Tap-Map Taps ('+taps.length+' total taps)');
+  }catch(e){showDbToast('Tap-Map taps sync failed: '+e.message,true);}
+  finally{if(btn)btn.textContent='↓ Tap-Map Taps';}
+}
+
+async function pullTapMapReadings(btn){
+  if(!isRailsConnected()){showDbToast('Rails API not connected',true);return;}
+  if(btn)btn.textContent='Loading...';
+  try{
+    var res=await railsAPIRequest('GET','/api/tap_map/readings?limit=500');
+    if(!res.ok){var e=await res.json();throw new Error(e.error||res.status);}
+    var data=await res.json();
+    var readings=data.readings||[];
+    // Store all readings in localStorage for gauge display
+    localStorage.setItem('twwp_tap_readings_v1',JSON.stringify(readings));
+    // Map tap_ids to locations for quick display
+    var locations=S.get('locations');
+    var tapToLoc={};
+    locations.forEach(function(l){if(l.tap_id)tapToLoc[String(l.tap_id)]=l;});
+    var matched=Object.keys(tapToLoc).filter(function(tid){return readings.some(function(r){return String(r.tap_id)===tid;});}).length;
+    logEvent('monitor','sync','Tap-Map readings sync: '+readings.length+' readings, '+matched+' waterhouses matched');
+    renderMonitor();
+    showDbToast('Pulled '+readings.length+' readings — '+matched+' waterhouses have live data');
+  }catch(e){showDbToast('Live readings pull failed: '+e.message,true);}
+  finally{if(btn)btn.textContent='↓ Live Readings';}
+}
+
+// ============================================================
+// WH Monitor — B4: Sensor gauges (appended to renderMonitor)
+// ============================================================
+function renderSensorGauges(whId){
+  var readings=JSON.parse(localStorage.getItem('twwp_tap_readings_v1')||'[]');
+  var loc=S.find('locations',whId);
+  if(!loc||!loc.tap_id)return '';
+  var tidStr=String(loc.tap_id);
+  var whReadings=readings.filter(function(r){return String(r.tap_id)===tidStr;}).slice(0,20);
+  if(!whReadings.length)return '';
+  var latest=whReadings[0];
+  var minsAgo=Math.round((Date.now()-new Date(latest.created_at).getTime())/60000);
+  var timeLabel=minsAgo<60?minsAgo+' mins ago':Math.round(minsAgo/60)+' hrs ago';
+
+  function sensorColor(val,type){
+    if(type==='ph'){return(val>=6.5&&val<=7.5)?'#2ecc71':(val>=6.0&&val<=8.0)?'#f5a623':'#e74c3c';}
+    if(type==='tds'){return val<50?'#2ecc71':val<150?'#f5a623':'#e74c3c';}
+    if(type==='ec'){return val<100?'#2ecc71':val<300?'#f5a623':'#e74c3c';}
+    return 'var(--cyan)';
+  }
+  function sparkline(vals,color){
+    if(!vals||!vals.length)return '';
+    var w=120,h=32,pad=2;
+    var min=Math.min.apply(null,vals),max=Math.max.apply(null,vals);
+    var range=max-min||1;
+    var pts=vals.map(function(v,i){var x=pad+(i/(vals.length-1||1))*(w-2*pad);var y=h-pad-(v-min)/range*(h-2*pad);return x+','+y;}).join(' ');
+    return '<svg width="'+w+'" height="'+h+'" style="display:block"><polyline points="'+pts+'" fill="none" stroke="'+color+'" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  }
+  var tdsVals=whReadings.map(function(r){return parseFloat(r.total_dissolved_solids)||0;}).reverse();
+  var ecVals=whReadings.map(function(r){return parseFloat(r.electronic_conductance)||0;}).reverse();
+  var phVals=whReadings.map(function(r){return parseFloat(r.potential_of_hydrogen)||0;}).reverse();
+  var orpVals=whReadings.map(function(r){return parseFloat(r.oxidation_reduction_potential)||0;}).reverse();
+
+  var tds=parseFloat(latest.total_dissolved_solids)||0;
+  var ec=parseFloat(latest.electronic_conductance)||0;
+  var ph=parseFloat(latest.potential_of_hydrogen)||0;
+  var orp=parseFloat(latest.oxidation_reduction_potential)||0;
+
+  function sensorCard(label,val,unit,color,spark,hint){
+    return '<div style="background:var(--surface);border-radius:10px;padding:12px;border-left:3px solid '+color+'">'+
+      '<div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">'+label+'</div>'+
+      '<div style="font-size:22px;font-weight:700;color:'+color+'">'+val.toFixed(1)+'<span style="font-size:11px;color:var(--text3);margin-left:4px">'+unit+'</span></div>'+
+      (hint?'<div style="font-size:9px;color:'+color+';margin-top:2px">'+hint+'</div>':'')+
+      '<div style="margin-top:8px">'+spark+'</div>'+
+      '</div>';
+  }
+  function phHint(v){return v>=6.5&&v<=7.5?'Optimal':v>=6.0&&v<=8.0?'Acceptable':'Out of range';}
+  function tdsHint(v){return v<50?'Excellent':v<150?'Acceptable':'High';}
+  function ecHint(v){return v<100?'Good':v<300?'Elevated':'High';}
+
+  return '<div style="background:var(--surface2);border-radius:12px;padding:16px;margin-bottom:24px">'+
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">'+
+    '<div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em">&#128200; Live Sensor Readings</div>'+
+    '<span style="font-size:11px;color:var(--text3)">Last reading: '+timeLabel+'</span>'+
+    '</div>'+
+    '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px">'+
+    sensorCard('TDS',tds,'ppm',sensorColor(tds,'tds'),sparkline(tdsVals,sensorColor(tds,'tds')),tdsHint(tds))+
+    sensorCard('EC',ec,'µS/cm',sensorColor(ec,'ec'),sparkline(ecVals,sensorColor(ec,'ec')),ecHint(ec))+
+    sensorCard('pH',ph,'',sensorColor(ph,'ph'),sparkline(phVals,sensorColor(ph,'ph')),phHint(ph))+
+    sensorCard('ORP',orp,'mV','var(--purple)',sparkline(orpVals,'var(--purple)'),''+latest.flow_type||'')+
+    '</div></div>';
+}
 
 // R&D
 rdSF='';
@@ -4602,7 +5072,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 // Format: update the constant, save the file, deploy.
 // localStorage stores user-added entries that supplement these.
 
-const SPEC_VERSION = '4.6';
+const SPEC_VERSION = '4.7';
 const SPEC_LAST_UPDATED = '2026-03-23';
 
 // ── Block Index ────────────────────────────────────────────────────────────
@@ -4763,6 +5233,20 @@ const SPEC_ADRS = [
    decision:'org_config store (twwp_org_config_v1) added with: org_id (default twwp), org_name, logo, brand_colour, terminology object, modules feature flags, created/updated. DEFAULT_TERMINOLOGY map defines all overridable strings. getTerm(key) reads from org_config.terminology with fallback to DEFAULT_TERMINOLOGY. Sidebar labels for Locations and WH Monitor read from getTerm().',
    reasoning:'This is a cheap v1 stub that lets us test the pattern without the full multi-org schema (see ADR-010 for why full multi-org is deferred). The terminology editor in AI & Integrations lets non-technical admins rebrand without code changes.',
    pages:['page-devspec'],refs:['ADR-010','ADR-012']},
+  {id:'ADR-016',date:'2026-03-23',status:'Accepted',
+   title:'Read-only secondary DB connection via TapMapRecord base class',
+   problem:'Ops API needs to read data from the Tap-Map Neon Postgres database (separate from the primary Ops DB) without risking writes to Tap-Map data.',
+   options:['Tap-Map exposes a REST API for Ops to call','Direct DB connection with ActiveRecord','Separate Rails app for Tap-Map reads','Graphql federation'],
+   decision:'Secondary database connection added to database.yml as `tap_map` using TAP_MAP_DATABASE_URL env var. TapMapRecord base class connects via connects_to, overrides readonly? to return true. Three models inherit: TapMapUser, TapMapTap, TapMapReading.',
+   reasoning:'Direct DB connection is fastest for bulk reads (no API round-trip). readonly? guard prevents accidental writes at the Rails model layer. The tap_map DB entry in database.yml is environment-agnostic — works in dev (with TAP_MAP_DATABASE_URL set) and production (Fly secret). Neon Postgres supports read replicas natively which aligns with this pattern.',
+   pages:['page-whmonitor','page-contacts','page-locations'],refs:['ADR-002']},
+  {id:'ADR-017',date:'2026-03-23',status:'Accepted',
+   title:'Trello integration via API key + token (not OAuth)',
+   problem:'Trello supports both OAuth and API key+token authentication. OAuth requires a server-side callback URL and registered app credentials.',
+   options:['Trello OAuth 1.0a (requires callback URL + server)','API key + token (user generates token on trello.com/app-key)','Webhooks only (push-based, no pull)','Trello Power-Up (requires Trello approval)'],
+   decision:'API key + token auth. User gets API key from trello.com/app-key and generates a token on the same page. Both stored in org_config.integrations.trello + localStorage twwp_trello_v1.',
+   reasoning:'API key + token is simpler for an internal tool — no OAuth callback infrastructure needed, no server-side credential exchange. The token is long-lived (can be set to never expire). For a single-org internal tool, the security trade-off (token in localStorage) is acceptable and consistent with existing JWT storage pattern. OAuth would require a new Rails endpoint and Azure/Trello app registration.',
+   pages:['page-projects'],refs:['ADR-001','ADR-006']},
   {id:'ADR-015',date:'2026-03-23',status:'Accepted',
    title:'Multi-provider email architecture: single EmailService routing to Gmail / Outlook / IMAP',
    problem:'Email sending and receiving is needed across multiple provider types. Different organisations use Gmail, Outlook, Fastmail, or custom IMAP servers. Hardcoding one provider would block others.',
@@ -4777,6 +5261,8 @@ const SPEC_ADRS = [
 // NOTE TO CLAUDE: Add a new entry here at the END of every session where features were added,
 // decisions changed, or bugs were fixed. Newest entries first. Keep entries concise but complete.
 const SPEC_GROWTH = [
+  {date:'2026-03-23',by:'Claude Code / Kenny',
+   summary:'Sprint B (6 tasks — Tap-Map integration + Project Management restructure): B1: TapMapRecord base class (connects_to tap_map DB, readonly? true) + 3 read-only models (TapMapUser/TapMapTap/TapMapReading) connecting to Neon Postgres via TAP_MAP_DATABASE_URL Fly secret. B2: 3 read-only Rails endpoints (GET /api/tap_map/members|taps|readings) with JWT auth, pagination, tap_id filter. B3: ↓ Tap-Map button on Contacts (deduplicates by email, adds source badge + Tap-Map tag), ↓ Tap-Map Taps on Locations (deduplicates by name, sets tap_id), ↓ Live Readings on WH Monitor (pulls 500 readings, stores in twwp_tap_readings_v1). B4: Live sensor gauges in WH Monitor — TDS/EC/pH/ORP cards with sparklines and colour-coded thresholds (pH 6.5-7.5 green/amber/red, TDS <50/<150 green/amber/red, EC <100/<300 green/amber/red); gauges prepended to monitor dash when tap_id is set. B5: Projects sidebar renamed "Project Management"; page restructured with 4 tabs: Overview (existing), Board (new), Timeline (Gantt, new), Integrations (new). All existing project CRUD unchanged. B6: Kanban Board tab — tasks store + Trello cards by status (To Do/In Progress/Blocked/Done), HTML5 drag-and-drop updates task status, project filter dropdown, "↑ Trello" button per card. Trello integration via API key+token (no OAuth); save+connect loads board list, pull cards into twwp_trello_cards_v1, push internal tasks to first Trello list. ADR-016 (read-only secondary DB pattern) and ADR-017 (Trello API key+token vs OAuth). SPEC_VERSION→4.7.'},
   {date:'2026-03-23',by:'Claude / Kenny',
    summary:'Sprint A (8 tasks — quality fixes + email foundation): Fixed tooltip event delegation (mouseout relatedTarget check + _current guard, prevents flicker on child-element hover). Added backfillDevTasksToCalendar() deferred 1.5s on startup via setTimeout. Email Provider Picker modal (Gmail OAuth / Outlook OAuth / IMAP+SMTP manual form / Proton coming-soon) stores config in org_config.email_config + twwp_email_config_v1. Polling interval selector (2min–24hr) saved to email_config.poll_interval. Email Inbox page (page-emailinbox) under People sidebar — fetches from GET /api/email/inbox, matches senders to contacts store, Add to Contacts for unknowns, auto-polls, manual refresh. Email thread view modal with full body, contact card, AI Reply panel. AI Suggested Replies — generateAiReply() sends last message + contact record + KB context to configured AI provider; configurable tone (professional/friendly/brief) saved to org_config.ai_reply_tone; sendAiReply() sends via Rails + logs to Email Registry. Rails EmailService: email_service.rb routes to Gmail REST API, Microsoft Graph API, or Net::IMAP/SMTP; new endpoints GET /api/email/inbox + POST /api/email/connect/imap. SPEC_VERSION→4.6.'},
   {date:'2026-03-23',by:'Claude / Kenny',
@@ -5199,6 +5685,17 @@ const BACKLOG_GROUPS = [
     {id:'W8',title:'Onboarding analytics',detail:'Log each step completion to event ledger. Track time-to-complete wizard. Show in Events Ledger filtered by category=onboarding.',label:'IMPLIED'},
     {id:'W9',title:'ESP32 / IoT config step in onboarding',detail:'Add a step for configuring the ESP32 sensor node: device ID, wifi SSID, HA URL. Generates firmware config JSON. Completes esp32_config setup status key.',label:'EXPLICIT'},
     {id:'W10',title:'Stripe config step in onboarding',detail:'Add Stripe public key + payment link URL. Completes stripe_config setup status key. Links to Financials page Stripe section.',label:'EXPLICIT'},
+  ]},
+  {id:'SprintB',title:'Sprint B — Tap-Map + PM',desc:'Read-only Tap-Map integration, live sensor gauges, Project Management restructure with Board/Timeline/Integrations tabs, Trello API key/token integration.',items:[
+    {id:'B1',title:'Ops API: read-only Tap-Map connection',detail:'TapMapRecord base class + 3 read-only models (TapMapUser/TapMapTap/TapMapReading) connecting to Neon DB via TAP_MAP_DATABASE_URL. DONE Sprint B.',label:'EXPLICIT',done:true},
+    {id:'B2',title:'Ops API: Tap-Map read endpoints',detail:'GET /api/tap_map/members|taps|readings — all deployed to Fly.io with JWT auth. DONE Sprint B.',label:'EXPLICIT',done:true},
+    {id:'B3',title:'Ops App: Pull from Tap-Map buttons',detail:'↓ buttons in Contacts, Locations, WH Monitor — deduplicating sync with source badges + ledger events. DONE Sprint B.',label:'EXPLICIT',done:true},
+    {id:'B4',title:'WH Monitor: live sensor gauges',detail:'TDS, EC, pH, ORP gauges with sparklines and colour-coded thresholds from real Tap-Map readings. DONE Sprint B.',label:'EXPLICIT',done:true},
+    {id:'B5',title:'Project Management: rename and restructure',detail:'4-tab structure: Overview/Board/Timeline/Integrations — all existing functionality intact. DONE Sprint B.',label:'EXPLICIT',done:true},
+    {id:'B6',title:'PM Board view + Trello integration',detail:'Kanban board + Trello API key/token auth + card sync (pull + push). DONE Sprint B.',label:'EXPLICIT',done:true},
+    {id:'BX1',title:'Tap-Map webhook on code accessible',detail:'When Tap-Map source code is available, add webhook to auto-push new readings to Ops API.',label:'IMPLIED'},
+    {id:'BX2',title:'Bidirectional Tap-Map sync',detail:'Currently read-only. Future: write approved contacts back to Tap-Map users table.',label:'IMPLIED'},
+    {id:'BX3',title:'Tap-Map user management UI',detail:'Full CRUD for Tap-Map users from within Ops App (requires write access to Tap-Map DB).',label:'EXPLICIT'},
   ]},
   {id:'X',title:'Email Foundation',desc:'Multi-provider email inbox, AI-assisted replies, and contact-linked communication layer. Sprint A baseline.',items:[
     {id:'X1',title:'Email Provider Picker — Gmail OAuth connect',detail:'Gmail connected via existing Google OAuth token. Requires Google OAuth in AI & Integrations. Marks email_config.connected=true. DONE Sprint A.',label:'EXPLICIT'},

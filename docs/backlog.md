@@ -1,6 +1,6 @@
 # TWWP Ops App — Build Backlog
 
-**Last updated:** 2026-03-23 (Sprint A)
+**Last updated:** 2026-03-23 (Sprint B)
 
 **Labels:** `[EXPLICIT]` `[IMPLIED]` `[FIX]` `[OPEN]` ✅ done
 
@@ -274,6 +274,18 @@ branding, users and config — without touching the code.
 13. Tap-Map sync (GROUP P)
 
 ---
+
+## Sprint B — Tap-Map + Project Management
+
+- ✅ `[EXPLICIT]` B1: Ops API read-only Tap-Map DB connection (TapMapRecord + 3 models, Neon Postgres, TAP_MAP_DATABASE_URL) — DONE Sprint B
+- ✅ `[EXPLICIT]` B2: Tap-Map read endpoints (GET /api/tap_map/members|taps|readings with JWT) — DONE Sprint B
+- ✅ `[EXPLICIT]` B3: Pull from Tap-Map buttons in Contacts, Locations, WH Monitor — DONE Sprint B
+- ✅ `[EXPLICIT]` B4: WH Monitor live sensor gauges (TDS/EC/pH/ORP, sparklines, colour-coded thresholds) — DONE Sprint B
+- ✅ `[EXPLICIT]` B5: Project Management rename + 4-tab restructure (Overview/Board/Timeline/Integrations) — DONE Sprint B
+- ✅ `[EXPLICIT]` B6: PM Board kanban + Trello API key/token integration (pull cards, push tasks) — DONE Sprint B
+- `[IMPLIED]` BX1: Tap-Map webhook (auto-push new readings) — when source code accessible
+- `[IMPLIED]` BX2: Bidirectional Tap-Map sync (write contacts back)
+- `[EXPLICIT]` BX3: Tap-Map user management UI (requires write access)
 
 ## GROUP X — Email Foundation (Sprint A)
 
