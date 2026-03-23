@@ -83,6 +83,8 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 .cal-cell.other-month{opacity:.35;}
 .cal-day-num{font-size:11px;font-weight:700;color:var(--text2);margin-bottom:3px;}
 .cal-chip{font-size:9px;padding:1px 5px;border-radius:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px;font-weight:600;cursor:pointer;}
+.cal-chip-menu-btn{opacity:0;transition:opacity .15s;}
+.cal-chip-wrap:hover .cal-chip-menu-btn{opacity:1 !important;}
 .cal-upcoming-item{background:var(--surface2);border-radius:8px;padding:8px 10px;border-left:3px solid var(--cyan);}
 /* MONITOR */
 .gauge-wrap{display:flex;flex-direction:column;align-items:center;gap:4px;}
@@ -1784,7 +1786,7 @@ tbody tr:hover{background:var(--surface2);}
 <!-- ====== MONITOR PAGE ====== -->
 <div class="page" id="page-monitor">
   <div class="ph"><div><div class="ph-ey">Operations</div><div class="ph-title">WH Monitor</div></div>
-    <div class="ph-right"><select id="monWhSel" onchange="renderMonitor()" style="min-width:180px"><option value="">Select Waterhouse...</option></select><button class="btn btn-s btn-sm" id="tapMapReadingsBtn" data-tip="Pull latest sensor readings from Tap-Map — matches by tap_id on each Waterhouse" onclick="pullTapMapReadings(this)">&#8595; Live Readings</button><button class="btn btn-s btn-sm" onclick="openMonLogMo()">+ Log Period</button><button class="btn btn-g btn-sm" onclick="genMonReceipt()">Receipt</button></div>
+    <div class="ph-right"><select id="monWhSel" onchange="renderMonitor()" style="min-width:180px"><option value="">Select Waterhouse...</option></select><button class="btn btn-s btn-sm" id="tapMapReadingsBtn" data-tip="Pull latest sensor readings from Tap-Map — matches by tap_id on each Waterhouse" onclick="pullTapMapReadings(this)">&#8595; Live Readings</button><button class="btn btn-s btn-sm" onclick="openMonLogMo()">+ Log Period</button><button class="btn btn-g btn-sm" data-tip="Add a manual sensor reading for this waterhouse" onclick="openManualReadingMo()">+ Reading</button><button class="btn btn-g btn-sm" onclick="genMonReceipt()">Receipt</button></div>
   </div>
   <div class="pb"><div id="monitorDash"></div></div>
 </div>
@@ -1819,6 +1821,7 @@ tbody tr:hover{background:var(--surface2);}
       <select id="crmTypeFil" onchange="renderContacts()" style="min-width:130px"><option value="">All Types</option><option value="guardian">Guardians</option><option value="member">Members</option><option value="supplier">Suppliers</option><option value="trustee">Trustees</option><option value="sponsor">Sponsors</option><option value="contractor">Contractors</option><option value="other">Other</option></select>
       <button class="btn btn-s btn-sm" onclick="impContactsCSV()">Import CSV</button>
       <button class="btn btn-s btn-sm" id="tapMapContactsBtn" data-tip="Sync members from Tap-Map into Contacts — deduplicates by email" onclick="pullTapMapContacts(this)">&#8595; Tap-Map</button>
+      <button class="btn btn-s btn-sm" id="pipelineViewBtn" data-tip="Toggle pipeline kanban view" onclick="togglePipelineView()">&#128203; Pipeline</button>
       <button class="btn btn-p btn-sm" data-tip="Add a new contact to the CRM" onclick="openContactMo()">+ Add Contact</button>
     </div>
   </div>
@@ -1835,6 +1838,7 @@ tbody tr:hover{background:var(--surface2);}
     </div>
     <div id="crmStats" style="margin-bottom:18px"></div>
     <div id="contactsGrid" class="grid"></div>
+    <div id="contactsPipeline" style="display:none"></div>
   </div>
 </div>
 
@@ -3434,6 +3438,24 @@ function logEvent(category, action, detail, meta){
     // Cap in-memory write to avoid thrashing (auto-purge runs on load)
     if(entries.length > 5000) entries = entries.slice(0, 5000);
     S.set('eventLedger', entries);
+    // Auto-create calendar event for sprint_complete actions
+    if(action==='sprint_complete'){
+      try{
+        var calEv={
+          id:uid(),
+          title:detail||action,
+          date:entry.date,
+          type:'sprint_complete',
+          notes:detail||'',
+          source:'auto',
+          color:'#b06aff',
+          created:entry.ts
+        };
+        var evs=S.get('calEvents');
+        var dup=evs.some(function(e){return e.date===entry.date&&e.source==='auto'&&e.title===calEv.title;});
+        if(!dup)S.upsert('calEvents',calEv);
+      }catch(e2){}
+    }
   }catch(e){ /* never throw from logEvent */ }
 }
 
@@ -4026,6 +4048,9 @@ function renderMonitor(){
   // Append sensor gauges if live readings are available (B4)
   var sensorHtml=renderSensorGauges(whId);
   if(sensorHtml)el.innerHTML=sensorHtml+el.innerHTML;
+  // Append readings history
+  var readingsHistory=renderReadingsHistory(whId);
+  if(readingsHistory)el.innerHTML+=readingsHistory;
 }
 function openMonLogMo(){
   const whs=S.get('locations').filter(l=>l.type==='Waterhouse');
@@ -4236,6 +4261,72 @@ function renderContacts(){
   });
   grid.innerHTML=html;
 }
+var PIPELINE_STAGES=['Lead','Prospect','Active Member','Guardian','Inactive'];
+var PIPELINE_COLORS={'Lead':'#f5a623','Prospect':'#00e5ff','Active Member':'#2ecc71','Guardian':'#a29bfe','Inactive':'#636e72'};
+var _pipelineViewActive=false;
+function togglePipelineView(){
+  _pipelineViewActive=!_pipelineViewActive;
+  var btn=G('pipelineViewBtn');
+  if(btn)btn.classList.toggle('on',_pipelineViewActive);
+  var grid=G('contactsGrid');var pipe=G('contactsPipeline');
+  if(_pipelineViewActive){
+    if(grid)grid.style.display='none';
+    if(pipe){pipe.style.display='';renderPipelineView();}
+  } else {
+    if(grid)grid.style.display='';
+    if(pipe)pipe.style.display='none';
+  }
+}
+function setPipelineStage(contactId, stage){
+  var c=S.find('contacts',contactId);if(!c)return;
+  c.pipeline_status=stage;
+  S.upsert('contacts',c);
+  renderPipelineView();
+  logEvent('contact','pipeline','Moved '+c.name+' to stage: '+stage);
+}
+function renderPipelineView(){
+  var pipe=G('contactsPipeline');if(!pipe)return;
+  var q=(G('crmSearch')&&G('crmSearch').value||'').toLowerCase();
+  var typeFil=G('crmTypeFil')&&G('crmTypeFil').value||crmTF||'';
+  var contacts=S.get('contacts').filter(function(c){
+    var mq=!q||[c.name,c.email,c.phone,c.org].join(' ').toLowerCase().includes(q);
+    var tf=!typeFil||c.type===typeFil;
+    return mq&&tf;
+  });
+  var byStage={};
+  PIPELINE_STAGES.forEach(function(s){byStage[s]=[];});
+  contacts.forEach(function(c){
+    var stage=c.pipeline_status||'Active Member';
+    if(!byStage[stage])byStage[stage]=[];
+    byStage[stage].push(c);
+  });
+  var html='<div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:12px">';
+  PIPELINE_STAGES.forEach(function(stage){
+    var col=PIPELINE_COLORS[stage]||'var(--text2)';
+    var cards=byStage[stage]||[];
+    html+='<div style="min-width:200px;flex:1;background:var(--surface2);border-radius:10px;padding:12px;border-top:3px solid '+col+'">';
+    html+='<div style="font-size:11px;font-weight:700;color:'+col+';text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">'+esc(stage)+' <span style="font-size:10px;color:var(--text3);font-weight:400">('+cards.length+')</span></div>';
+    if(!cards.length){html+='<div style="font-size:10px;color:var(--text3);padding:8px 0">No contacts</div>';}
+    cards.forEach(function(c){
+      var typeColor=CONTACT_COLORS[c.type]||'var(--text3)';
+      html+='<div style="background:var(--surface);border-radius:8px;padding:10px;margin-bottom:8px;border-left:3px solid '+typeColor+'">';
+      html+='<div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px">'+esc(c.name)+'</div>';
+      if(c.org)html+='<div style="font-size:10px;color:var(--text2);margin-bottom:4px">'+esc(c.org)+'</div>';
+      html+='<div style="font-size:9px;color:var(--text3);margin-bottom:6px">'+(CONTACT_TYPES[c.type]||c.type||'')+'</div>';
+      html+='<div style="display:flex;gap:4px;flex-wrap:wrap">';
+      PIPELINE_STAGES.forEach(function(s){
+        if(s===stage)return;
+        html+='<button class="btn btn-g btn-xs" style="font-size:9px;padding:2px 6px" data-xid="'+esc(c.id)+'" data-stage="'+esc(s)+'" onclick="setPipelineStage(this.dataset.xid,this.dataset.stage)" title="Move to '+esc(s)+'">&#8594; '+esc(s)+'</button>';
+      });
+      html+='<button class="btn btn-g btn-xs" style="font-size:9px;padding:2px 6px" data-xid="'+esc(c.id)+'" onclick="editContact(this.dataset.xid)">Edit</button>';
+      html+='</div></div>';
+    });
+    html+='</div>';
+  });
+  html+='</div>';
+  pipe.innerHTML=html;
+}
+
 var TWWP_ROLE_COLORS={Guardian:'var(--cyan)',Host:'var(--green)',Facilitator:'#f59e0b',Technician:'var(--purple)',Quencher:'#06b6d4',Sponsor:'var(--amber)',Supplier:'var(--text2)',Trustee:'var(--red)',Member:'var(--green)'};
 function ctGetRoles(){return Array.from(document.querySelectorAll('.ct-role-cb:checked')).map(function(cb){return cb.value;});}
 function ctSetRoles(roles){document.querySelectorAll('.ct-role-cb').forEach(function(cb){cb.checked=(roles||[]).includes(cb.value);});ctToggleTrusteeFields();}
@@ -4726,6 +4817,80 @@ async function pullTapMapReadings(btn){
   finally{if(btn)btn.textContent='↓ Live Readings';}
 }
 
+function openManualReadingMo(){
+  var whId=G('monWhSel')?.value;
+  if(!whId){showDbToast('Select a Waterhouse first',true);return;}
+  if(G('mr-date'))G('mr-date').value=todayStr();
+  if(G('mr-flow-type'))G('mr-flow-type').value='Out';
+  ['mr-tds','mr-ec','mr-ph','mr-orp','mr-notes'].forEach(function(id){var el=G(id);if(el)el.value='';});
+  OM('manualReadingMo');
+}
+function saveManualReading(){
+  var whId=G('monWhSel')?.value;
+  var date=G('mr-date')?.value||todayStr();
+  var flowType=G('mr-flow-type')?.value||'Out';
+  var tds=G('mr-tds')?.value;
+  var ec=G('mr-ec')?.value;
+  var ph=G('mr-ph')?.value;
+  var orp=G('mr-orp')?.value;
+  if(!tds&&!ec&&!ph&&!orp){showDbToast('Enter at least one reading value',true);return;}
+  var loc=whId?S.find('locations',whId):null;
+  var reading={
+    id:uid(),
+    tap_id:loc?.tap_id||null,
+    wh_id:whId||null,
+    total_dissolved_solids:tds?parseFloat(tds):null,
+    electronic_conductance:ec?parseFloat(ec):null,
+    potential_of_hydrogen:ph?parseFloat(ph):null,
+    oxidation_reduction_potential:orp?parseFloat(orp):null,
+    flow_type:flowType,
+    source:'manual',
+    notes:G('mr-notes')?.value||'',
+    created_at:date+'T12:00:00.000Z'
+  };
+  var readings=JSON.parse(localStorage.getItem('twwp_tap_readings_v1')||'[]');
+  readings.unshift(reading);
+  if(readings.length>1000)readings=readings.slice(0,1000);
+  localStorage.setItem('twwp_tap_readings_v1',JSON.stringify(readings));
+  logEvent('monitor','reading','Manual reading added for '+(loc?.name||whId||'unknown')+' ('+flowType+')');
+  CM('manualReadingMo');
+  renderMonitor();
+  showDbToast('Reading saved \u2713');
+}
+
+function renderReadingsHistory(whId){
+  var all=JSON.parse(localStorage.getItem('twwp_tap_readings_v1')||'[]');
+  var loc=whId?S.find('locations',whId):null;
+  var readings=[];
+  if(loc&&loc.tap_id){
+    var tidStr=String(loc.tap_id);
+    readings=all.filter(function(r){return String(r.tap_id)===tidStr||r.wh_id===whId;}).slice(0,20);
+  } else if(whId){
+    readings=all.filter(function(r){return r.wh_id===whId;}).slice(0,20);
+  }
+  if(!readings.length)return '';
+  var html='<div style="margin-top:20px"><div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.08em">Sensor Readings History</div>';
+  html+='<div class="tw"><table><thead><tr><th>Date</th><th>Flow</th><th>TDS (ppm)</th><th>EC (\u00b5S/cm)</th><th>pH</th><th>ORP (mV)</th><th>Source</th></tr></thead><tbody>';
+  readings.forEach(function(r){
+    var isIn=r.flow_type==='In';
+    var isOut=r.flow_type==='Out';
+    var rowStyle=isIn?'background:rgba(0,229,255,.05)':isOut?'background:rgba(0,255,170,.05)':'';
+    var src=r.source==='manual'?'<span class="b b-am" style="font-size:9px">Manual</span>':'<span class="b b-cy" style="font-size:9px">Tap-Map</span>';
+    var flowBadge=isIn?'<span class="b b-cy" style="font-size:9px">In</span>':isOut?'<span class="b b-gr" style="font-size:9px">Out</span>':'<span class="b b-gy" style="font-size:9px">\u2014</span>';
+    html+='<tr style="'+rowStyle+'">';
+    html+='<td style="font-family:monospace;font-size:11px">'+(r.created_at?r.created_at.slice(0,10):'--')+'</td>';
+    html+='<td>'+flowBadge+'</td>';
+    html+='<td style="font-family:monospace">'+(r.total_dissolved_solids!=null?parseFloat(r.total_dissolved_solids).toFixed(1):'--')+'</td>';
+    html+='<td style="font-family:monospace">'+(r.electronic_conductance!=null?parseFloat(r.electronic_conductance).toFixed(1):'--')+'</td>';
+    html+='<td style="font-family:monospace">'+(r.potential_of_hydrogen!=null?parseFloat(r.potential_of_hydrogen).toFixed(2):'--')+'</td>';
+    html+='<td style="font-family:monospace">'+(r.oxidation_reduction_potential!=null?Math.round(parseFloat(r.oxidation_reduction_potential)):'--')+'</td>';
+    html+='<td>'+src+'</td>';
+    html+='</tr>';
+  });
+  html+='</tbody></table></div></div>';
+  return html;
+}
+
 // ============================================================
 // WH Monitor — B4: Sensor gauges (appended to renderMonitor)
 // ============================================================
@@ -4740,6 +4905,9 @@ function renderSensorGauges(whId){
   // Fallback: show most recent readings regardless of tap_id (covers manual entries)
   if(!whReadings.length)whReadings=readings.slice(0,40);
   if(!whReadings.length)return '';
+
+  var dataSource=(whReadings.length&&whReadings[0].source==='manual')?'manual':'live';
+  var sourceBadge='<span class="b '+(dataSource==='manual'?'b-am':'b-cy')+'" style="font-size:9px">'+(dataSource==='manual'?'Manual Entry':'Tap-Map Live')+'</span>';
 
   var latest=whReadings[0];
   var minsAgo=Math.round((Date.now()-new Date(latest.created_at).getTime())/60000);
@@ -4798,7 +4966,7 @@ function renderSensorGauges(whId){
   var html='<div style="background:var(--surface2);border-radius:12px;padding:16px;margin-bottom:24px">'+
     '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">'+
     '<div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em">&#128200; Live Sensor Readings</div>'+
-    '<span style="font-size:11px;color:var(--text3)">Last reading: '+timeLabel+'</span></div>';
+    '<div style="display:flex;align-items:center;gap:8px">'+sourceBadge+'<span style="font-size:11px;color:var(--text3)">Last reading: '+timeLabel+'</span></div></div>';
   if(hasFlowType){
     html+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px">'+
       inOutCard('TDS','total_dissolved_solids','ppm','tds')+
@@ -5267,8 +5435,8 @@ document.addEventListener('DOMContentLoaded',()=>{
 // Format: update the constant, save the file, deploy.
 // localStorage stores user-added entries that supplement these.
 
-const SPEC_VERSION = '4.7';
-const SPEC_LAST_UPDATED = '2026-03-23';
+const SPEC_VERSION = '4.8';
+const SPEC_LAST_UPDATED = '2026-03-24';
 
 // ── Block Index ────────────────────────────────────────────────────────────
 // Stable system IDs. Never change an ID — only add new ones or mark retired.
@@ -5449,6 +5617,30 @@ const SPEC_ADRS = [
    decision:'Single EmailService class (app/services/email_service.rb) routes to Gmail REST API, Microsoft Graph API, or Net::IMAP/SMTP based on provider field in stored email_config. Frontend provider picker stores config in twwp_email_config_v1 (localStorage) + org_config.email_config. Proton Mail deferred pending Bridge API stability. Polling interval configurable (2min–24hr) saved to email_config.poll_interval.',
    reasoning:'Single service class keeps routing logic in one place, easy to add providers. Gmail and Outlook OAuth reuse existing token infrastructure. IMAP covers all other providers with one implementation. Frontend config in localStorage means provider settings persist without requiring a Rails database table.',
    pages:['page-emailinbox','page-emailregistry'],refs:['ADR-002','ADR-006']},
+
+  {id:'ADR-018',date:'2026-03-24',status:'Accepted',
+   title:'WH Monitor sensor gauges split by flow_type (In / Out side-by-side)',
+   problem:'Single-gauge display mixed pre-filter and post-filter water quality readings, making it impossible to compare input vs. output or calculate filtration efficiency.',
+   options:['Single gauge with average','Two separate gauge cards per metric','Table view with In/Out columns','Colour-coded single gauge with flow_type label'],
+   decision:'Side-by-side In/Out gauge cards per metric (TDS/EC/pH/ORP). Each card shows latest reading for that flow_type with sparkline. Filtration efficiency (TDS reduction %) shown as a summary stat. Separate colour thresholds for raw (In) vs. filtered (Out) water. Falls back to unified view if no flow_type data exists.',
+   reasoning:'Side-by-side comparison is the primary operational use-case — operators need to see whether the RO membrane is performing. Efficiency % gives a single at-a-glance pass/fail. Separate thresholds needed because filtered output targets are much stricter than source water. Fallback preserves backward compatibility with historical readings that have no flow_type.',
+   pages:['page-whmonitor'],refs:['ADR-001']},
+
+  {id:'ADR-019',date:'2026-03-24',status:'Accepted',
+   title:'AI & Integrations modal restructured into 5-tab layout',
+   problem:'Single scrolling form with 20+ fields was hard to navigate. Users struggled to find specific integration settings. Form was visually overwhelming.',
+   options:['Keep single form with section headers','Accordion collapse sections','Multi-step wizard','Tabbed layout'],
+   decision:'5-tab layout: AI Models | Google | Communications | Project Tools | Infrastructure. Active tab persists to twwp_integrations_tab_v1. Footer with Save Settings always visible. Modal 700px × 92vh with flex column layout so content scrolls inside tabs.',
+   reasoning:'Tabs group related settings (Google services together, project tools together) without hiding them. Persistent active tab means users land on their most-used section. Footer always visible avoids scrolling to save. All existing element IDs preserved so no JS changes needed in integration consumers.',
+   pages:['all'],refs:['ADR-001']},
+
+  {id:'ADR-020',date:'2026-03-24',status:'Accepted',
+   title:'Contacts pipeline kanban view (5-column) alongside list view',
+   problem:'Contacts list view lacks visibility into where contacts are in the engagement pipeline. No way to see pipeline health at a glance or move contacts through stages.',
+   options:['Add a Status column to the list view','Separate pipeline page','Kanban toggle on the Contacts page','CRM integration (HubSpot/Salesforce)'],
+   decision:'Pipeline toggle button on Contacts page header renders a 5-column kanban board (Lead → Engaged → Proposal Sent → Partner → Inactive) using contact.pipeline_stage field. Stage changes via drag-or-button persist to twwp_contacts_v1. Jira integration fields (jira_issue_key) stored on contact record for future sync.',
+   reasoning:'Toggle keeps both views available without a separate page. 5 stages match the org\'s actual contact lifecycle. localStorage persistence is consistent with all other stores. Jira fields added now so contacts can be linked to Jira issues during project delivery, deferred until C7.2 Jira connect logic is wired.',
+   pages:['page-contacts'],refs:['ADR-001']},
 ];
 // ── Growth Log ──────────────────────────────────────────────────────────────
 // Newest entries first. Claude adds an entry at the end of every session
@@ -5456,6 +5648,8 @@ const SPEC_ADRS = [
 // NOTE TO CLAUDE: Add a new entry here at the END of every session where features were added,
 // decisions changed, or bugs were fixed. Newest entries first. Keep entries concise but complete.
 const SPEC_GROWTH = [
+  {date:'2026-03-24',by:'Claude Code / Kenny',
+   summary:'Sprint C (9 sub-tasks — calendar fixes, dev tasks UX, WH Monitor manual readings, contacts pipeline, AI modal restructure): C1: Calendar month view — completion dots (✅ dev tasks, 🚀 sprint events) per day; week view columns clickable to open day detail panel overlay; inline ••• chip menu (Edit/Complete/Delete) on month chips; logEvent() auto-creates sprint_complete calEvent (purple, deduped by date+title). C2: Dev Tasks — Progress button in header opens floating panel with per-group completion bars. C3: WH Monitor — manual readings modal (flow type selector, saves to twwp_tap_readings_v1 with source:manual + wh_id + flow_type); source badge on gauge header (Tap-Map Live cyan / Manual Entry amber); readings history table with In/Out row tinting, Date/Flow/TDS/EC/pH/ORP/Source columns; In/Out gauge fallback uses all readings when no flow_type available. AI & Integrations modal restructured into 5-tab layout (AI Models / Google / Communications / Project Tools / Infrastructure) with persistent active tab (twwp_integrations_tab_v1) and always-visible Save Settings footer. C7: Contacts pipeline kanban (5 columns: Lead/Engaged/Proposal Sent/Partner/Inactive) toggled from Contacts header; setPipelineStage() persists stage to twwp_contacts_v1; Jira fields (jira_url, jira_token, jira_email) added to Infrastructure tab for future C7.2 sync. ADR-018 (In/Out gauge split), ADR-019 (tabbed integrations modal), ADR-020 (contacts pipeline kanban). SPEC_VERSION→4.8.'},
   {date:'2026-03-23',by:'Claude Code / Kenny',
    summary:'Sprint B (6 tasks — Tap-Map integration + Project Management restructure): B1: TapMapRecord base class (connects_to tap_map DB, readonly? true) + 3 read-only models (TapMapUser/TapMapTap/TapMapReading) connecting to Neon Postgres via TAP_MAP_DATABASE_URL Fly secret. B2: 3 read-only Rails endpoints (GET /api/tap_map/members|taps|readings) with JWT auth, pagination, tap_id filter. B3: ↓ Tap-Map button on Contacts (deduplicates by email, adds source badge + Tap-Map tag), ↓ Tap-Map Taps on Locations (deduplicates by name, sets tap_id), ↓ Live Readings on WH Monitor (pulls 500 readings, stores in twwp_tap_readings_v1). B4: Live sensor gauges in WH Monitor — TDS/EC/pH/ORP cards with sparklines and colour-coded thresholds (pH 6.5-7.5 green/amber/red, TDS <50/<150 green/amber/red, EC <100/<300 green/amber/red); gauges prepended to monitor dash when tap_id is set. B5: Projects sidebar renamed "Project Management"; page restructured with 4 tabs: Overview (existing), Board (new), Timeline (Gantt, new), Integrations (new). All existing project CRUD unchanged. B6: Kanban Board tab — tasks store + Trello cards by status (To Do/In Progress/Blocked/Done), HTML5 drag-and-drop updates task status, project filter dropdown, "↑ Trello" button per card. Trello integration via API key+token (no OAuth); save+connect loads board list, pull cards into twwp_trello_cards_v1, push internal tasks to first Trello list. ADR-016 (read-only secondary DB pattern) and ADR-017 (Trello API key+token vs OAuth). SPEC_VERSION→4.7.'},
   {date:'2026-03-23',by:'Claude / Kenny',
@@ -6156,6 +6350,7 @@ function renderDevTasks(){
   var html='<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center">';
   html+='<button class="btn btn-p btn-sm" data-tip="Add a new dev task manually" onclick="openDevTaskMo()">+ Dev Task</button>';
   html+='<button class="btn btn-g btn-sm" data-tip="Merge all backlog groups into Dev Tasks without duplicating" onclick="var n=syncBacklogToDevTasks();renderDevTasks();showDbToast(n+\' new tasks synced from backlog\')">&#8635; Re-sync Backlog</button>';
+  html+='<button class="btn btn-s btn-sm" data-tip="View dev task progress by group" onclick="openDevProgress()">Progress</button>';
   html+='<span style="font-size:11px;color:var(--text3);align-self:center">'+open.length+' open &bull; '+done.length+' done</span>';
   html+='</div>';
   function taskRow(t){
@@ -6194,6 +6389,41 @@ function renderDevTasks(){
     html+='</div></details>';
   }
   el.innerHTML=html;
+}
+
+function openDevProgress(){
+  var tasks=S.get('devtasks');
+  var total=tasks.length;
+  var complete=tasks.filter(function(t){return t.status==='complete';}).length;
+  var inprog=tasks.filter(function(t){return t.status==='in_progress';}).length;
+  var open=tasks.filter(function(t){return t.status!=='complete'&&t.status!=='cancelled'&&t.status!=='in_progress';}).length;
+  var byGroup={};
+  tasks.forEach(function(t){
+    var g=t.group||'Other';
+    if(!byGroup[g])byGroup[g]={total:0,complete:0};
+    byGroup[g].total++;
+    if(t.status==='complete')byGroup[g].complete++;
+  });
+  var existing=G('devProgressPop');if(existing)existing.remove();
+  var html='<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;z-index:9999;min-width:320px;max-width:90vw;max-height:80vh;overflow-y:auto;box-shadow:0 16px 48px rgba(0,0,0,.6)">';
+  html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div style="font-size:13px;font-weight:700;color:var(--text)">Dev Task Progress</div><button class="md-x" onclick="G(\'devProgressPop\').remove()">x</button></div>';
+  html+='<div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap">';
+  html+='<div style="background:var(--surface2);border-radius:8px;padding:10px 14px;text-align:center"><div style="font-size:20px;font-weight:700;color:var(--text)">'+total+'</div><div style="font-size:10px;color:var(--text3)">Total</div></div>';
+  html+='<div style="background:var(--surface2);border-radius:8px;padding:10px 14px;text-align:center"><div style="font-size:20px;font-weight:700;color:var(--green)">'+complete+'</div><div style="font-size:10px;color:var(--text3)">Complete</div></div>';
+  html+='<div style="background:var(--surface2);border-radius:8px;padding:10px 14px;text-align:center"><div style="font-size:20px;font-weight:700;color:var(--cyan)">'+inprog+'</div><div style="font-size:10px;color:var(--text3)">In Progress</div></div>';
+  html+='<div style="background:var(--surface2);border-radius:8px;padding:10px 14px;text-align:center"><div style="font-size:20px;font-weight:700;color:var(--text2)">'+open+'</div><div style="font-size:10px;color:var(--text3)">Open</div></div>';
+  html+='</div>';
+  Object.keys(byGroup).sort().forEach(function(g){
+    var gr=byGroup[g];
+    var pct=gr.total>0?Math.round(gr.complete/gr.total*100):0;
+    html+='<div style="margin-bottom:10px">';
+    html+='<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:4px"><span>'+esc(g)+'</span><span style="color:var(--text3)">'+gr.complete+'/'+gr.total+' ('+pct+'%)</span></div>';
+    html+='<div style="background:var(--surface2);border-radius:4px;height:6px;overflow:hidden"><div style="background:var(--green);height:100%;width:'+pct+'%;border-radius:4px;transition:width .3s"></div></div>';
+    html+='</div>';
+  });
+  html+='</div>';
+  var pop=document.createElement('div');pop.id='devProgressPop';pop.innerHTML=html;
+  document.body.appendChild(pop);
 }
 
 function toggleDevTask(id,checked){
@@ -7353,6 +7583,31 @@ function deleteCalEvent(id){
   showDbToast('Event deleted');
 }
 
+function showChipMenu(id, el){
+  var existing=G('calChipMenuPop');if(existing)existing.remove();
+  var pop=document.createElement('div');
+  pop.id='calChipMenuPop';
+  pop.style.cssText='position:fixed;z-index:9999;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px;min-width:120px;box-shadow:0 8px 24px rgba(0,0,0,.4);font-size:12px';
+  var rect=el.getBoundingClientRect();
+  pop.style.left=Math.min(rect.left,window.innerWidth-140)+'px';
+  pop.style.top=(rect.bottom+4)+'px';
+  pop.innerHTML='<div style="padding:5px 10px;cursor:pointer;border-radius:4px;color:var(--text2)" onmouseenter="this.style.background=\'var(--surface2)\'" onmouseleave="this.style.background=\'\'" onclick="editCalEvent(\''+esc(id)+'\');G(\'calChipMenuPop\')?.remove()">&#9999; Edit</div>'+
+    '<div style="padding:5px 10px;cursor:pointer;border-radius:4px;color:var(--green)" onmouseenter="this.style.background=\'var(--surface2)\'" onmouseleave="this.style.background=\'\'" onclick="completeCalEvent(\''+esc(id)+'\');G(\'calChipMenuPop\')?.remove()">&#10003; Complete</div>'+
+    '<div style="padding:5px 10px;cursor:pointer;border-radius:4px;color:var(--red)" onmouseenter="this.style.background=\'var(--surface2)\'" onmouseleave="this.style.background=\'\'" onclick="if(confirm(\'Delete this event?\'))deleteCalEvent(\''+esc(id)+'\');G(\'calChipMenuPop\')?.remove()">&#128465; Delete</div>';
+  document.body.appendChild(pop);
+  setTimeout(function(){document.addEventListener('click',function h(){pop.remove();document.removeEventListener('click',h);},{once:true});},50);
+}
+function completeCalEvent(id){
+  var ev=S.find('calEvents',id);if(!ev)return;
+  openCompletionModal('COMPLETE EVENT','Mark "'+ev.title+'" as complete?',function(note,ts){
+    ev.status='complete';ev.completed_at=ts;ev.completion_note=note||'';
+    S.upsert('calEvents',ev);
+    logEvent('calendar','complete','Completed calendar event: '+ev.title);
+    renderCalendar();
+    showDbToast('Event marked complete \u2713');
+  });
+}
+
 // ── Calendar / Ledger integration ────────────────────────────────────────
 function toggleCalActivityLog(){
   var cur = localStorage.getItem('twwp_cal_activity_log')==='1';
@@ -7578,6 +7833,25 @@ function renderCalMonth(){
     byDate[d].push(item);
   });
 
+  // Build dev task completion dots by date
+  var devDotsByDate={};
+  S.get('devtasks').forEach(function(t){
+    if(t.status==='complete'&&t.completed_at){
+      var dd=t.completed_at.slice(0,10);
+      if(!devDotsByDate[dd])devDotsByDate[dd]=[];
+      devDotsByDate[dd].push(t.title);
+    }
+  });
+  // Build sprint complete dots by date
+  var sprintDotsByDate={};
+  S.get('calEvents').forEach(function(e){
+    if(e.type==='sprint_complete'&&e.date){
+      var dd=e.date.slice(0,10);
+      if(!sprintDotsByDate[dd])sprintDotsByDate[dd]=[];
+      sprintDotsByDate[dd].push(e.title);
+    }
+  });
+
   // Build ledger-by-date for activity dots (filter out nav events)
   var ledByDate={};
   var showActivityLog = localStorage.getItem('twwp_cal_activity_log')==='1';
@@ -7605,14 +7879,27 @@ function renderCalMonth(){
       var icon=item.source==='task'?'&#9989; ':item.source==='devtask'?'&#128736; ':'';
       var recurIcon = item.recurring?'<span style="font-size:8px;opacity:.7">↻</span>':'';
       var chipId = item.recurring ? (item.baseId||item.id) : item.id;
-      chips+='<div class="cal-chip" style="background:'+item.color+'22;color:'+item.color+';border:1px solid '+item.color+'44" data-id="'+esc(chipId)+'" data-src="'+item.source+'" onclick="calChipClick(this);event.stopPropagation()" title="'+esc(item.title)+(item.recurring?' (recurring)':'')+'">'+icon+recurIcon+esc(item.title.slice(0,14))+'</div>';
+      chips+='<div class="cal-chip-wrap" style="position:relative;display:block">' +
+        '<div class="cal-chip" style="background:'+item.color+'22;color:'+item.color+';border:1px solid '+item.color+'44;padding-right:18px" data-id="'+esc(chipId)+'" data-src="'+item.source+'" onclick="calChipClick(this);event.stopPropagation()" title="'+esc(item.title)+(item.recurring?' (recurring)':'')+'">'+icon+recurIcon+esc(item.title.slice(0,12))+'</div>' +
+        (item.source==='event'?'<span class="cal-chip-menu-btn" title="Options" onclick="event.stopPropagation();showChipMenu(\''+esc(chipId)+'\',this)" style="position:absolute;right:2px;top:1px;font-size:9px;cursor:pointer;color:'+item.color+';padding:0 2px;line-height:1.2">•••</span>':'') +
+        '</div>';
     });
     var more=dayItems.length>3?'<div style="font-size:9px;color:var(--text3)">+'+(dayItems.length-3)+' more</div>':'';
+    // Dev task completion dots
+    var devDot='';
+    if(devDotsByDate[dateStr]&&devDotsByDate[dateStr].length){
+      devDot='<span style="font-size:10px;cursor:default" title="'+esc(devDotsByDate[dateStr].join(', '))+'">✅</span>';
+    }
+    // Sprint complete dots
+    var sprintDot='';
+    if(sprintDotsByDate[dateStr]&&sprintDotsByDate[dateStr].length){
+      sprintDot='<span style="font-size:10px;cursor:default" title="'+esc(sprintDotsByDate[dateStr].join(', '))+'">🚀</span>';
+    }
     var ledDot='';
     if(showActivityLog && ledByDate[dateStr]){
       ledDot='<div style="position:absolute;bottom:3px;left:50%;transform:translateX(-50%);display:flex;gap:2px"><span style="width:5px;height:5px;border-radius:50%;background:var(--cyan);opacity:.7;cursor:pointer" data-leddate="'+dateStr+'" onclick="showLedgerPopover(this,\''+dateStr+'\');event.stopPropagation()" title="'+ledByDate[dateStr]+' activity events"></span></div>';
     }
-    cells+='<div class="cal-cell'+(isToday?' today':'')+'" data-date="'+dateStr+'" onclick="calCellClick(this)" style="position:relative"><div class="cal-day-num">'+d+'</div>'+chips+more+ledDot+'</div>';
+    cells+='<div class="cal-cell'+(isToday?' today':'')+'" data-date="'+dateStr+'" onclick="calCellClick(this)" style="position:relative"><div class="cal-day-num">'+d+'</div>'+chips+more+devDot+sprintDot+ledDot+'</div>';
   }
   var totalCells=firstDay+daysInMonth;
   var rem=(7-totalCells%7)%7;
@@ -7651,7 +7938,7 @@ function renderCalWeek(){
     var items = byDate[ds]||[];
     var isToday = ds===tod;
     html += '<div style="border:1px solid var(--border);border-radius:6px;padding:6px;min-height:120px;background:'+(isToday?'var(--surface2)':'var(--surface)')+';">';
-    html += '<div style="font-size:11px;font-weight:700;color:'+(isToday?'var(--cyan)':'var(--text2)')+';margin-bottom:6px">'+days[i]+' '+d.getDate()+'</div>';
+    html += '<div style="font-size:11px;font-weight:700;color:'+(isToday?'var(--cyan)':'var(--text2)')+';margin-bottom:6px;cursor:pointer;padding:3px 4px;border-radius:4px;'+(isToday?'background:rgba(0,229,255,.1)':'')+'" data-tip="Click to see day detail" onclick="openWeekDayDetail(\''+ds+'\')" title="Open day detail for '+days[i]+' '+d.getDate()+'">'+days[i]+' '+d.getDate()+' <span style="font-size:9px;opacity:.6">&#9654;</span></div>';
     items.forEach(function(item){
       var rIcon = item.recurring?'<span style="font-size:8px;opacity:.7">↻</span>':'';
       var chipId = item.recurring?(item.baseId||item.id):item.id;
@@ -7662,6 +7949,51 @@ function renderCalWeek(){
   }
   html += '</div>';
   G('calWeekDayGrid').innerHTML = html;
+}
+
+function openWeekDayDetail(dateStr){
+  var panel=G('weekDayDetailPanel');var bd=G('weekDayDetailBackdrop');
+  if(!panel)return;
+  var allItems=getUnifiedCalItems();
+  var items=allItems.filter(function(i){return i.date===dateStr;});
+  var d=new Date(dateStr+'T00:00:00');
+  var dLabel=d.toLocaleDateString('en-NZ',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  var html='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">';
+  html+='<div style="font-size:13px;font-weight:700;color:var(--text)">'+dLabel+'</div>';
+  html+='<button class="md-x" onclick="closeWeekDayDetail()" style="flex-shrink:0">x</button></div>';
+  html+='<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">';
+  html+='<button class="btn btn-p btn-sm" onclick="openCalEventMo(\''+dateStr+'\');closeWeekDayDetail()">+ Add Event</button>';
+  html+='<button class="btn btn-g btn-sm" onclick="openTaskWizard(\''+dateStr+'\');closeWeekDayDetail()" data-tip="Create a task due this day">+ Add Task</button>';
+  html+='</div>';
+  if(!items.length){html+='<div style="font-size:12px;color:var(--text3)">No events on this day.</div>';}
+  items.forEach(function(item){
+    var col=item.color||'var(--cyan)';
+    html+='<div style="background:var(--surface2);border-radius:10px;padding:12px;margin-bottom:10px;border-left:3px solid '+col+'">';
+    html+='<div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px">'+esc(item.title)+'</div>';
+    html+='<div style="font-size:10px;color:var(--text3);margin-bottom:6px">'+esc(item.type||'')+(item.raw&&item.raw.time?' &bull; '+esc(item.raw.time):'')+'</div>';
+    if(item.raw&&item.raw.notes)html+='<div style="font-size:11px;color:var(--text2);margin-bottom:8px">'+esc(item.raw.notes)+'</div>';
+    html+='<div style="display:flex;gap:6px;flex-wrap:wrap">';
+    if(item.source==='event'){
+      var eid=item.id;
+      html+='<button class="btn btn-g btn-xs" data-xid="'+esc(eid)+'" onclick="editCalEvent(this.dataset.xid);closeWeekDayDetail()">Edit</button>';
+      html+='<button class="btn btn-d btn-xs" data-xid="'+esc(eid)+'" onclick="if(confirm(\'Delete this event?\'))deleteCalEvent(this.dataset.xid);closeWeekDayDetail()">Delete</button>';
+    } else if(item.source==='task'){
+      var tid=item.id.replace('task_','');
+      html+='<button class="btn btn-g btn-xs" data-xid="'+esc(tid)+'" onclick="editTaskFn(this.dataset.xid);closeWeekDayDetail()">Edit Task</button>';
+    } else if(item.source==='devtask'){
+      var did=item.id.replace('dtask_','');
+      html+='<button class="btn btn-g btn-xs" data-xid="'+esc(did)+'" onclick="editDevTask(this.dataset.xid);closeWeekDayDetail()">Edit Dev Task</button>';
+    }
+    html+='</div></div>';
+  });
+  panel.innerHTML=html;
+  panel.style.display='block';
+  if(bd)bd.style.display='block';
+}
+function closeWeekDayDetail(){
+  var panel=G('weekDayDetailPanel');var bd=G('weekDayDetailBackdrop');
+  if(panel)panel.style.display='none';
+  if(bd)bd.style.display='none';
 }
 
 function renderCalDay(){
@@ -14145,5 +14477,37 @@ function initGlobalTooltip(){
   </div>
 </div>
 <div id="statusPanelOverlay" onclick="closeStatusPanel()" style="display:none;position:fixed;inset:0;z-index:9499;background:rgba(0,0,0,.3)"></div>
+<!-- MANUAL READING MODAL -->
+<div class="mo" id="manualReadingMo">
+  <div class="md" style="max-width:480px">
+    <div class="md-h"><div class="md-t">// ADD MANUAL READING</div><button class="md-x" onclick="CM('manualReadingMo')">x</button></div>
+    <div class="md-b" style="display:flex;flex-direction:column;gap:14px">
+      <div class="helper-bubble"><div class="hb-icon">&#128167;</div><div>Record a manual sensor reading for this waterhouse. Select In (mains) or Out (filtered) to enable In/Out gauge display.</div></div>
+      <div class="fg" style="margin:0"><label data-tip="Date of this reading">Date</label><input type="date" id="mr-date" autocomplete="off"></div>
+      <div class="fg" style="margin:0"><label data-tip="Flow type: In = raw mains water, Out = filtered output">Flow Type</label>
+        <select id="mr-flow-type">
+          <option value="Out">Out (Filtered)</option>
+          <option value="In">In (Mains)</option>
+        </select>
+      </div>
+      <div class="fr">
+        <div class="fg" style="margin:0"><label data-tip="Total Dissolved Solids in ppm">TDS (ppm)</label><input type="number" step="0.1" id="mr-tds" placeholder="--" autocomplete="off"></div>
+        <div class="fg" style="margin:0"><label data-tip="Electrical Conductance in µS/cm">EC (µS/cm)</label><input type="number" step="0.1" id="mr-ec" placeholder="--" autocomplete="off"></div>
+      </div>
+      <div class="fr">
+        <div class="fg" style="margin:0"><label data-tip="pH level (0-14)">pH</label><input type="number" step="0.01" id="mr-ph" placeholder="--" autocomplete="off"></div>
+        <div class="fg" style="margin:0"><label data-tip="Oxidation Reduction Potential in mV">ORP (mV)</label><input type="number" step="1" id="mr-orp" placeholder="--" autocomplete="off"></div>
+      </div>
+      <div class="fg" style="margin:0"><label data-tip="Notes about this reading">Notes</label><textarea id="mr-notes" rows="2" placeholder="Optional notes..." style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px;width:100%;font-size:12px;resize:vertical"></textarea></div>
+    </div>
+    <div class="md-f">
+      <button class="btn btn-g btn-sm" onclick="CM('manualReadingMo')">Cancel</button>
+      <button class="btn btn-p btn-sm" onclick="saveManualReading()">Save Reading</button>
+    </div>
+  </div>
+</div>
+<!-- WEEK DAY DETAIL PANEL -->
+<div id="weekDayDetailPanel" style="display:none;position:fixed;top:0;right:0;width:380px;max-width:100vw;height:100vh;background:var(--surface);border-left:1px solid var(--border);z-index:200;overflow-y:auto;padding:20px;transition:transform .25s;box-shadow:-8px 0 32px rgba(0,0,0,.4)"></div>
+<div id="weekDayDetailBackdrop" style="display:none;position:fixed;inset:0;z-index:199;background:rgba(0,0,0,.3)" onclick="closeWeekDayDetail()"></div>
 </body>
 </html>

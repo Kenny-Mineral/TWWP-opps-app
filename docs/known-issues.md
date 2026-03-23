@@ -1,6 +1,27 @@
 # Known Issues, Bugs, and Stubs
 
-Last updated: 2026-03-23 (Sprint B — 6 tasks)
+Last updated: 2026-03-24 (Sprint C — 9 sub-tasks)
+
+---
+
+## Fixed this sprint (Sprint C)
+
+- ✅ `[FIX]` Rails STI type column conflict on TapMapTap — `self.inheritance_column = :_type_disabled` + `read_attribute(:type)` in controller
+- ✅ `[FIX]` WH Monitor In/Out gauge split — readings now separated by `flow_type` field; filtration efficiency stat added
+
+## Added this sprint (Sprint C)
+
+- ✅ Calendar month view completion dots (dev tasks ✅ / sprint events 🚀)
+- ✅ Week view clickable day headers → slide-in day detail panel
+- ✅ Month chip inline ••• menu (Edit/Complete/Delete)
+- ✅ logEvent() auto-creates sprint_complete calEvent (deduplicated)
+- ✅ Dev Tasks "Progress" button with per-group bars popup
+- ✅ WH Monitor manual reading modal (flow type, TDS/EC/pH/ORP, saves to tap_readings store)
+- ✅ Source badge on sensor gauge header (Tap-Map Live / Manual Entry)
+- ✅ Sensor readings history table in WH Monitor
+- ✅ Contacts pipeline kanban view (5 stages, setPipelineStage())
+- ✅ AI & Integrations modal restructured to 5-tab layout (700px × 92vh, persistent tab)
+- ✅ Fly.io min_machines_running = 1 (prevents cold starts)
 
 ---
 

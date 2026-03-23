@@ -1,6 +1,6 @@
 # TWWP Ops App — Current State
 
-**Last updated:** 2026-03-23 (Sprint B fixes — STI, In/Out gauges, keep-warm)
+**Last updated:** 2026-03-24 (Sprint C — Calendar enhancements, Dev Tasks progress, WH Monitor readings, Contacts pipeline)
 
 ---
 
@@ -8,6 +8,64 @@
 
 Single-file app at `index.html` deployed on GitHub Pages.
 Rails API at `https://twwp-ops-api.fly.dev`.
+
+---
+
+## Sprint C (2026-03-24)
+
+### C1.1 — Dev task completion dots on month view
+- `renderCalMonth()` now builds `devDotsByDate` (completed devtasks by date) and `sprintDotsByDate` (sprint_complete calEvents by date)
+- Each calendar cell shows ✅ and/or 🚀 emoji dots with tooltip titles if tasks/sprints completed on that day
+
+### C1.2 — Week view clickable day detail panel
+- Week view day column headers are now clickable (▶ indicator shown)
+- Opens a slide-in panel (`weekDayDetailPanel`) from the right listing all items for that day
+- Panel includes "+ Add Event" and "+ Add Task" quick-action buttons
+- Per-item Edit/Delete actions inline; close via backdrop click or x button
+
+### C1.3 — Month view chip inline ••• menu
+- Cal chips for `source==='event'` now show a ••• button on hover
+- `showChipMenu(id, el)` renders a fixed positioned popup with Edit / Complete / Delete options
+- `completeCalEvent(id)` opens completion modal and marks event status='complete'
+- CSS: `.cal-chip-menu-btn` is `opacity:0`; `.cal-chip-wrap:hover .cal-chip-menu-btn` sets `opacity:1`
+
+### C1.4 — logEvent() → calendar auto-sync for sprint_complete
+- `logEvent()` now checks if `action==='sprint_complete'` and auto-creates a calEvent with `type:'sprint_complete'`, `source:'auto'`, colour `#b06aff`
+- Deduplicates: no duplicate auto event for same date+title
+
+### C2.1 — Dev Tasks progress modal
+- "Progress" button added to Dev Tasks header (next to Re-sync Backlog)
+- `openDevProgress()` renders a floating popup with Total/Complete/In Progress/Open stats plus per-group progress bars
+
+### C3.1 — WH Monitor manual reading modal
+- "+ Reading" button added to WH Monitor page header
+- `manualReadingMo` modal: Date, Flow Type (In/Out), TDS, EC, pH, ORP, Notes fields
+- `saveManualReading()` creates reading with `source:'manual'`, `wh_id`, `tap_id`, stores to `twwp_tap_readings_v1`, calls `renderMonitor()`
+
+### C3.3 — Source badge on sensor gauge cards
+- `renderSensorGauges()` now detects if most recent reading is `source==='manual'` or live
+- Adds `sourceBadge` (amber "Manual Entry" or cyan "Tap-Map Live") in gauge header row
+
+### C3.4 — Readings history table in WH Monitor
+- `renderReadingsHistory(whId)` renders a table of up to 20 readings (filtered by tap_id or wh_id)
+- Shows Date, Flow type badge, TDS, EC, pH, ORP, Source badge — appended after renderMonitor() content
+
+### C7.1 — Contacts pipeline kanban view
+- "Pipeline" toggle button added to Contacts page header
+- `contactsPipeline` div toggles in place of `contactsGrid`
+- 5 columns: Lead → Prospect → Active Member → Guardian → Inactive
+- `pipeline_status` field on contact; defaults to 'Active Member' if unset
+- `setPipelineStage(contactId, stage)` moves cards between columns with logEvent audit
+
+---
+
+## Sprint C — SPEC constants (2026-03-24)
+
+- `SPEC_VERSION` → `'4.8'`, `SPEC_LAST_UPDATED` → `'2026-03-24'`
+- ADR-018: WH Monitor In/Out gauge split by flow_type
+- ADR-019: AI & Integrations modal tabbed layout (5 tabs)
+- ADR-020: Contacts pipeline kanban view (5 columns)
+- SPEC_GROWTH: Sprint C entry added (newest-first)
 
 ---
 

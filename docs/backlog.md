@@ -1,6 +1,6 @@
 # TWWP Ops App — Build Backlog
 
-**Last updated:** 2026-03-23 (Sprint B)
+**Last updated:** 2026-03-24 (Sprint C)
 
 **Labels:** `[EXPLICIT]` `[IMPLIED]` `[FIX]` `[OPEN]` ✅ done
 
@@ -299,3 +299,17 @@ branding, users and config — without touching the code.
 - `[IMPLIED]` Mark-as-read sync back to provider
 - `[IMPLIED]` Proton Mail Bridge support (waiting on Bridge API stability)
 - `[EXPLICIT]` Bulk email send from campaign contact list (X10)
+
+---
+
+## Sprint C — Calendar, Monitor, Dev Tasks, Contacts Pipeline
+
+- ✅ `[EXPLICIT]` C1.1: Dev task completion dots on month calendar view — DONE Sprint C
+- ✅ `[EXPLICIT]` C1.2: Week view clickable day headers → slide-in detail panel — DONE Sprint C
+- ✅ `[EXPLICIT]` C1.3: Month chip inline ••• hover menu (Edit/Complete/Delete) — DONE Sprint C
+- ✅ `[EXPLICIT]` C1.4: logEvent() sprint_complete → auto-creates calEvent — DONE Sprint C
+- ✅ `[EXPLICIT]` C2.1: Dev Tasks "Progress" button + group progress modal — DONE Sprint C
+- ✅ `[EXPLICIT]` C3.1: WH Monitor "+ Reading" button + manual reading modal — DONE Sprint C
+- ✅ `[EXPLICIT]` C3.3: Source badge (Manual/Tap-Map Live) on sensor gauge header — DONE Sprint C
+- ✅ `[EXPLICIT]` C3.4: Sensor readings history table in WH Monitor — DONE Sprint C
+- ✅ `[EXPLICIT]` C7.1: Contacts pipeline kanban view (5 stages, move cards between columns) — DONE Sprint C
