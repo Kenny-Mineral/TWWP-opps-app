@@ -3638,7 +3638,7 @@ async function doLogin(){
   // Convenience: typing "admin" maps to the full admin email
   if(u==='admin')u='thewholeywaterproject@gmail.com';
   const devMode=c.u===''&&c.p==='';
-  const railsUrl=getIntegration('rails-api');
+  const railsUrl=getIntegration('rails-api')||'https://twwp-ops-api.fly.dev';
 
   if(railsUrl){
     const loginUrl=railsUrl.replace(/\/$/,'')+'/auth/login';
