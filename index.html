@@ -1259,6 +1259,7 @@ tbody tr:hover{background:var(--surface2);}
     <div class="sb-item" id="ni-reports" data-tip="Reports — generate guardian reports, sponsor updates, technician summaries" onclick="go('reports',this)"><span class="sb-icon">&#128203;</span><span class="sb-lbl">Reports</span></div>
     <div class="sb-sect">People</div>
     <div class="sb-item" id="ni-contacts" data-tip="Contacts / CRM — guardians, members, suppliers, trustees, sponsors, contractors" onclick="go('contacts',this)"><span class="sb-icon">&#128101;</span><span class="sb-lbl">Contacts / CRM</span><span class="sb-badge hid" id="crmBadge">0</span></div>
+    <div class="sb-item" id="ni-emailinbox" data-tip="Email Inbox — live inbox from configured provider, AI reply suggestions, contact matching" onclick="go('emailinbox',this)"><span class="sb-icon">&#128140;</span><span class="sb-lbl">Email Inbox</span><span class="sb-badge hid" id="inboxBadge">0</span></div>
     <div class="sb-item" id="ni-emailregistry" data-tip="Email Registry — track outgoing emails, use templates, send via Rails API" onclick="go('emailregistry',this)"><span class="sb-icon">&#9993;</span><span class="sb-lbl">Email Registry</span></div>
     <div class="sb-sect">Projects</div>
     <div class="sb-item" id="ni-projects" data-tip="Projects — track initiatives across WH upgrades, fundraising, outreach, R&D" onclick="go('projects',this)"><span class="sb-icon">&#127919;</span><span class="sb-lbl">Projects</span><span class="sb-badge hid" id="projBadge">0</span></div>
@@ -1923,11 +1924,16 @@ tbody tr:hover{background:var(--surface2);}
   <div class="ph">
     <div><div class="ph-ey">People</div><div class="ph-title">Email Registry</div></div>
     <div class="ph-right">
+      <button class="btn btn-g btn-sm" data-tip="Configure email provider (Gmail, Outlook, IMAP)" onclick="openEmailProviderMo()">&#9881; Email Settings</button>
       <button class="btn btn-p btn-sm" data-tip="Compose a new email" onclick="openEmailMo()">+ Compose Email</button>
     </div>
   </div>
   <div class="pb">
-    <div class="helper-bubble"><div class="hb-icon">&#9993;</div><div><strong>Email Registry</strong> tracks outbound emails to contacts. Compose using templates, log sent emails, and track status.</div></div>
+    <div id="emailProviderBanner" style="display:none;margin-bottom:12px;padding:10px 14px;background:var(--surface2);border-radius:8px;border-left:3px solid var(--cyan);font-size:12px;display:flex;align-items:center;gap:10px">
+      <span id="emailProviderBannerText"></span>
+      <button class="btn btn-g btn-xs" onclick="openEmailProviderMo()">Change</button>
+    </div>
+    <div class="helper-bubble"><div class="hb-icon">&#9993;</div><div><strong>Email Registry</strong> tracks outbound emails to contacts. Compose using templates, log sent emails, and track status. Configure a provider via <strong>Email Settings</strong> to enable live inbox and sending.</div></div>
     <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
       <input class="inp" id="email-search" placeholder="Search by contact, subject…" style="flex:1;min-width:160px" oninput="renderEmailRegistry()">
       <select class="inp" id="email-status-filter" style="width:140px" onchange="renderEmailRegistry()">
@@ -1974,6 +1980,156 @@ tbody tr:hover{background:var(--surface2);}
     <div class="md-f">
       <button class="btn btn-g btn-sm" onclick="CM('emailMo')">Cancel</button>
       <button class="btn btn-p btn-sm" onclick="saveEmail()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== EMAIL INBOX PAGE ====== -->
+<div class="page" id="page-emailinbox">
+  <div class="ph">
+    <div><div class="ph-ey">People</div><div class="ph-title">Email Inbox</div></div>
+    <div class="ph-right">
+      <button class="btn btn-g btn-sm" data-tip="Refresh inbox now" onclick="refreshEmailInbox(this)">&#8635; Refresh</button>
+      <button class="btn btn-g btn-sm" data-tip="Configure email provider" onclick="openEmailProviderMo()">&#9881; Settings</button>
+    </div>
+  </div>
+  <div class="pb">
+    <div id="emailInboxStatus" style="margin-bottom:10px;font-size:12px;color:var(--text3)"></div>
+    <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
+      <input class="inp" id="inbox-search" placeholder="Search sender, subject…" style="flex:1;min-width:160px" oninput="renderEmailInbox()">
+      <select class="inp" id="inbox-filter" style="width:140px" onchange="renderEmailInbox()">
+        <option value="">All</option>
+        <option value="unread">Unread</option>
+        <option value="read">Read</option>
+      </select>
+    </div>
+    <div id="emailInboxList"></div>
+  </div>
+</div>
+
+<!-- EMAIL THREAD VIEW MODAL -->
+<div class="mo" id="emailThreadMo">
+  <div class="md" style="max-width:700px">
+    <div class="md-h"><div class="md-t" id="emailThreadTitle">// EMAIL THREAD</div><button class="md-x" onclick="CM('emailThreadMo')">x</button></div>
+    <div class="md-b">
+      <div id="emailThreadMeta" style="margin-bottom:12px;padding:10px 14px;background:var(--surface2);border-radius:8px;font-size:12px"></div>
+      <div id="emailThreadMessages" style="max-height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;margin-bottom:16px"></div>
+      <!-- AI Reply section -->
+      <div id="aiReplySection" style="border-top:1px solid var(--border);padding-top:14px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+          <span style="font-size:12px;font-weight:700;color:var(--cyan)">AI Reply</span>
+          <select class="inp" id="aiReplyTone" style="width:140px;font-size:11px" onchange="saveAiReplyTone()">
+            <option value="professional">Professional</option>
+            <option value="friendly">Friendly</option>
+            <option value="brief">Brief</option>
+          </select>
+          <button class="btn btn-p btn-sm" data-tip="Generate an AI suggested reply" onclick="generateAiReply()">&#129302; Suggest Reply</button>
+        </div>
+        <textarea class="inp" id="aiReplySuggestion" rows="6" placeholder="AI reply will appear here — you can edit before sending" style="font-size:12px;font-family:var(--mono);margin-bottom:10px"></textarea>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button class="btn btn-g btn-sm" onclick="CM('emailThreadMo')">Close</button>
+          <button class="btn btn-p btn-sm" data-tip="Send this reply" onclick="sendAiReply()">&#9993; Send Reply</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EMAIL PROVIDER PICKER MODAL -->
+<div class="mo" id="emailProviderMo">
+  <div class="md" style="max-width:620px">
+    <div class="md-h"><div class="md-t">// EMAIL PROVIDER</div><button class="md-x" onclick="CM('emailProviderMo')">x</button></div>
+    <div class="md-b">
+      <p style="font-size:12px;color:var(--text2);margin-bottom:16px">Connect an email provider to enable live inbox, AI-assisted replies, and sending from within the app.</p>
+
+      <!-- Provider cards -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
+        <!-- Gmail -->
+        <div class="card" id="epCard-gmail" style="padding:14px;cursor:pointer;border:2px solid transparent" onclick="selectEmailProvider('gmail')">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+            <span style="font-size:22px">📧</span>
+            <div><div style="font-weight:700">Gmail</div><div style="font-size:11px;color:var(--text3)">Google OAuth — one click</div></div>
+          </div>
+          <div id="epStatus-gmail" style="font-size:11px;color:var(--text3)">Not connected</div>
+        </div>
+        <!-- Outlook -->
+        <div class="card" id="epCard-outlook" style="padding:14px;cursor:pointer;border:2px solid transparent" onclick="selectEmailProvider('outlook')">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+            <span style="font-size:22px">📨</span>
+            <div><div style="font-weight:700">Outlook / Microsoft 365</div><div style="font-size:11px;color:var(--text3)">Microsoft OAuth — one click</div></div>
+          </div>
+          <div id="epStatus-outlook" style="font-size:11px;color:var(--text3)">Not connected</div>
+        </div>
+        <!-- IMAP -->
+        <div class="card" id="epCard-imap" style="padding:14px;cursor:pointer;border:2px solid transparent" onclick="selectEmailProvider('imap')">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+            <span style="font-size:22px">🔌</span>
+            <div><div style="font-weight:700">IMAP / SMTP</div><div style="font-size:11px;color:var(--text3)">Fastmail, Zoho, custom domains</div></div>
+          </div>
+          <div id="epStatus-imap" style="font-size:11px;color:var(--text3)">Not connected</div>
+        </div>
+        <!-- Proton -->
+        <div class="card" style="padding:14px;opacity:.55;cursor:not-allowed">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+            <span style="font-size:22px">🔒</span>
+            <div><div style="font-weight:700">Proton Mail</div><div style="font-size:11px;color:var(--amber)">Coming soon — requires Bridge</div></div>
+          </div>
+          <div style="font-size:11px;color:var(--text3)">Proton Mail Bridge provides a local IMAP server. Support planned once Bridge API is stable.</div>
+        </div>
+      </div>
+
+      <!-- Gmail connect section -->
+      <div id="epSection-gmail" style="display:none">
+        <div class="helper-bubble" style="margin-bottom:14px"><div class="hb-icon">📧</div><div>Gmail uses your existing Google OAuth token (configured in AI &amp; Integrations). Ensure you've completed Google OAuth setup first.</div></div>
+        <button class="btn btn-p" style="width:100%" onclick="connectEmailGmail()">Connect Gmail via Google OAuth</button>
+      </div>
+
+      <!-- Outlook connect section -->
+      <div id="epSection-outlook" style="display:none">
+        <div class="helper-bubble" style="margin-bottom:14px"><div class="hb-icon">📨</div><div>Outlook uses Microsoft Graph API. You'll need to register an Azure app and provide a client ID. OAuth flow is initiated via the Rails API.</div></div>
+        <div class="fg"><label>Azure Client ID</label><input class="inp" id="ep-ms-client-id" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"></div>
+        <button class="btn btn-p" style="width:100%;margin-top:8px" onclick="connectEmailOutlook()">Connect Outlook via Microsoft OAuth</button>
+      </div>
+
+      <!-- IMAP/SMTP form -->
+      <div id="epSection-imap" style="display:none">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="fg"><label>IMAP Host</label><input class="inp" id="ep-imap-host" placeholder="imap.fastmail.com"></div>
+          <div class="fg"><label>IMAP Port</label><input class="inp" id="ep-imap-port" type="number" value="993" placeholder="993"></div>
+          <div class="fg" style="grid-column:1/-1"><label>IMAP Username</label><input class="inp" id="ep-imap-user" placeholder="you@fastmail.com"></div>
+          <div class="fg" style="grid-column:1/-1"><label>IMAP Password / App Password</label><input class="inp" id="ep-imap-pass" type="password" placeholder="App password (not your login password)"></div>
+          <div style="grid-column:1/-1;height:1px;background:var(--border);margin:4px 0"></div>
+          <div class="fg"><label>SMTP Host</label><input class="inp" id="ep-smtp-host" placeholder="smtp.fastmail.com"></div>
+          <div class="fg"><label>SMTP Port</label><input class="inp" id="ep-smtp-port" type="number" value="587" placeholder="587"></div>
+          <div class="fg" style="grid-column:1/-1"><label>SMTP Username</label><input class="inp" id="ep-smtp-user" placeholder="you@fastmail.com"></div>
+          <div class="fg" style="grid-column:1/-1"><label>SMTP Password / App Password</label><input class="inp" id="ep-smtp-pass" type="password" placeholder="App password"></div>
+        </div>
+        <div id="epImapTestResult" style="font-size:12px;margin-top:8px"></div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button class="btn btn-g btn-sm" onclick="testImapConnection()">Test Connection</button>
+          <button class="btn btn-p" style="flex:1" onclick="saveImapConnection()">Save IMAP / SMTP</button>
+        </div>
+      </div>
+
+      <!-- Polling interval -->
+      <div style="border-top:1px solid var(--border);margin-top:18px;padding-top:14px">
+        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+          <label style="font-size:12px;font-weight:700;color:var(--text2)">Poll Interval</label>
+          <select class="inp" id="ep-poll-interval" style="width:160px" onchange="saveEmailPollInterval()">
+            <option value="120">Every 2 minutes</option>
+            <option value="300" selected>Every 5 minutes</option>
+            <option value="900">Every 15 minutes</option>
+            <option value="3600">Every hour</option>
+            <option value="21600">Every 6 hours</option>
+            <option value="86400">Every 24 hours</option>
+          </select>
+          <span style="font-size:11px;color:var(--text3)">How often to check for new messages</span>
+        </div>
+      </div>
+    </div>
+    <div class="md-f">
+      <button class="btn btn-g btn-sm" onclick="CM('emailProviderMo')">Close</button>
+      <button class="btn btn-d btn-sm" id="epDisconnectBtn" style="display:none" onclick="disconnectEmailProvider()">Disconnect</button>
     </div>
   </div>
 </div>
@@ -3194,7 +3350,8 @@ function go(page,el){
   if(page==='projects')renderProjects();
   if(page==='rd')renderRD();
   if(page==='docbuilder')renderDocBuilder();
-  if(page==='emailregistry')renderEmailRegistry();
+  if(page==='emailregistry'){renderEmailRegistry();updateEmailProviderBanner();}
+  if(page==='emailinbox'){initEmailInbox();}
   if(page==='campaigns'){seedCampaigns();renderCampaigns();}
   if(page==='trustees'){renderTrusteeSummary();renderLegal();renderWorkflowFlags('trustees','trusteesWorkflowFlags');}
   if(page==='financials'){seedServices();renderFinancials();}
@@ -4445,7 +4602,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 // Format: update the constant, save the file, deploy.
 // localStorage stores user-added entries that supplement these.
 
-const SPEC_VERSION = '4.5';
+const SPEC_VERSION = '4.6';
 const SPEC_LAST_UPDATED = '2026-03-23';
 
 // ── Block Index ────────────────────────────────────────────────────────────
@@ -4606,6 +4763,13 @@ const SPEC_ADRS = [
    decision:'org_config store (twwp_org_config_v1) added with: org_id (default twwp), org_name, logo, brand_colour, terminology object, modules feature flags, created/updated. DEFAULT_TERMINOLOGY map defines all overridable strings. getTerm(key) reads from org_config.terminology with fallback to DEFAULT_TERMINOLOGY. Sidebar labels for Locations and WH Monitor read from getTerm().',
    reasoning:'This is a cheap v1 stub that lets us test the pattern without the full multi-org schema (see ADR-010 for why full multi-org is deferred). The terminology editor in AI & Integrations lets non-technical admins rebrand without code changes.',
    pages:['page-devspec'],refs:['ADR-010','ADR-012']},
+  {id:'ADR-015',date:'2026-03-23',status:'Accepted',
+   title:'Multi-provider email architecture: single EmailService routing to Gmail / Outlook / IMAP',
+   problem:'Email sending and receiving is needed across multiple provider types. Different organisations use Gmail, Outlook, Fastmail, or custom IMAP servers. Hardcoding one provider would block others.',
+   options:['Gmail only','ActionMailer with SMTP only','Separate service classes per provider','Single EmailService with provider routing'],
+   decision:'Single EmailService class (app/services/email_service.rb) routes to Gmail REST API, Microsoft Graph API, or Net::IMAP/SMTP based on provider field in stored email_config. Frontend provider picker stores config in twwp_email_config_v1 (localStorage) + org_config.email_config. Proton Mail deferred pending Bridge API stability. Polling interval configurable (2min–24hr) saved to email_config.poll_interval.',
+   reasoning:'Single service class keeps routing logic in one place, easy to add providers. Gmail and Outlook OAuth reuse existing token infrastructure. IMAP covers all other providers with one implementation. Frontend config in localStorage means provider settings persist without requiring a Rails database table.',
+   pages:['page-emailinbox','page-emailregistry'],refs:['ADR-002','ADR-006']},
 ];
 // ── Growth Log ──────────────────────────────────────────────────────────────
 // Newest entries first. Claude adds an entry at the end of every session
@@ -4613,6 +4777,8 @@ const SPEC_ADRS = [
 // NOTE TO CLAUDE: Add a new entry here at the END of every session where features were added,
 // decisions changed, or bugs were fixed. Newest entries first. Keep entries concise but complete.
 const SPEC_GROWTH = [
+  {date:'2026-03-23',by:'Claude / Kenny',
+   summary:'Sprint A (8 tasks — quality fixes + email foundation): Fixed tooltip event delegation (mouseout relatedTarget check + _current guard, prevents flicker on child-element hover). Added backfillDevTasksToCalendar() deferred 1.5s on startup via setTimeout. Email Provider Picker modal (Gmail OAuth / Outlook OAuth / IMAP+SMTP manual form / Proton coming-soon) stores config in org_config.email_config + twwp_email_config_v1. Polling interval selector (2min–24hr) saved to email_config.poll_interval. Email Inbox page (page-emailinbox) under People sidebar — fetches from GET /api/email/inbox, matches senders to contacts store, Add to Contacts for unknowns, auto-polls, manual refresh. Email thread view modal with full body, contact card, AI Reply panel. AI Suggested Replies — generateAiReply() sends last message + contact record + KB context to configured AI provider; configurable tone (professional/friendly/brief) saved to org_config.ai_reply_tone; sendAiReply() sends via Rails + logs to Email Registry. Rails EmailService: email_service.rb routes to Gmail REST API, Microsoft Graph API, or Net::IMAP/SMTP; new endpoints GET /api/email/inbox + POST /api/email/connect/imap. SPEC_VERSION→4.6.'},
   {date:'2026-03-23',by:'Claude / Kenny',
    summary:'Session 15 (10 tasks): Sidebar data-tip tooltips on all 35 nav items; +Event button now opens date wizard before modal; calendar icon on dev task rows for on-demand cal sync; persistence banner in Growth Log/ADRs tabs with Copy for Claude button; SPEC_GROWTH backfilled with correct session dates; resource bar reads both task+devtask stores for completions; Onboarding Wizard (7 steps: Welcome, Branding, First Location, AI Key, Integrations, Roles/Team, Done); Setup Status checklist Dashboard card; requiresSetup() contextual interrupts wired to Calendar/Drive/AI/Email; org_config store + terminology map + Locations/WH Monitor label swap; SPEC_VERSION→4.5.'},
   {date:'2026-03-23',by:'Claude / Kenny',
@@ -4694,7 +4860,8 @@ const DEVNOTES = {
 
   campaigns: 'BUILD INTENT: Campaign lifecycle management from community interest through to active tap deployment. 6 stages: idea/outreach/planning/funded/active/complete.\n\nSTATUS: Functional. Campaign modal with all fields, stage filter, calendar event auto-created when status goes active.\n\nNEEDS: Link campaign to host contact, facilitator contact, and waterhouse. Funding progress bar. Campaign → Deployment link.',
 
-  emailregistry: 'BUILD INTENT: Track all outgoing emails to contacts. Draft → review → sent lifecycle. Templates for common TWWP emails.\n\nSTATUS: Functional. Three templates (Guardian Welcome, Maintenance Reminder, Reimbursement Approved). Send via Rails API (placeholder until SMTP configured).\n\nNEEDS: SMTP configuration in Rails. Email open tracking. Bulk send to a campaign\'s contact list. Link to Contact record.',
+  emailinbox: 'BUILD INTENT: Live email inbox from configured provider (Gmail / Outlook / IMAP). Matches senders to contacts, supports AI reply suggestions.\n\nSTATUS: Functional (Sprint A). Fetches from Rails GET /api/email/inbox. Auto-polls at configured interval. Contact-matching, Add to Contacts. AI Reply modal with tone setting.\n\nNEEDS: Full thread view (grouped messages). Outlook OAuth PKCE flow. Mark-as-read sync back to provider. Search within email bodies.',
+  emailregistry: 'BUILD INTENT: Track all outgoing emails to contacts. Draft → review → sent lifecycle. Templates for common TWWP emails.\n\nSTATUS: Functional. Three templates (Guardian Welcome, Maintenance Reminder, Reimbursement Approved). Email Settings button opens provider picker. Send via Rails API + EmailService (Gmail/Outlook/IMAP routing).\n\nNEEDS: Email open tracking. Bulk send to a campaign\'s contact list. Link to Contact record.',
 
   docbuilder: 'BUILD INTENT: Generate print-quality legal and operational documents from live app data. Three templates: Host Agreement, Reimbursement Receipt, Waterhouse Report.\n\nSTATUS: Functional. Preview in iframe, PDF download via print, upload to Google Drive via Rails API.\n\nNEEDS: More templates (sponsor agreement, trustee deed, incident report). Version history. E-signature integration. Waterhouse Report should pull from monitorData.',
 
@@ -5032,6 +5199,18 @@ const BACKLOG_GROUPS = [
     {id:'W8',title:'Onboarding analytics',detail:'Log each step completion to event ledger. Track time-to-complete wizard. Show in Events Ledger filtered by category=onboarding.',label:'IMPLIED'},
     {id:'W9',title:'ESP32 / IoT config step in onboarding',detail:'Add a step for configuring the ESP32 sensor node: device ID, wifi SSID, HA URL. Generates firmware config JSON. Completes esp32_config setup status key.',label:'EXPLICIT'},
     {id:'W10',title:'Stripe config step in onboarding',detail:'Add Stripe public key + payment link URL. Completes stripe_config setup status key. Links to Financials page Stripe section.',label:'EXPLICIT'},
+  ]},
+  {id:'X',title:'Email Foundation',desc:'Multi-provider email inbox, AI-assisted replies, and contact-linked communication layer. Sprint A baseline.',items:[
+    {id:'X1',title:'Email Provider Picker — Gmail OAuth connect',detail:'Gmail connected via existing Google OAuth token. Requires Google OAuth in AI & Integrations. Marks email_config.connected=true. DONE Sprint A.',label:'EXPLICIT'},
+    {id:'X2',title:'Email Provider Picker — IMAP/SMTP manual form',detail:'Host/port/user/pass for IMAP + SMTP. Test connection via Rails /api/email/connect/imap. Saves encrypted to Rails cache. DONE Sprint A.',label:'EXPLICIT'},
+    {id:'X3',title:'Email Provider Picker — Outlook OAuth',detail:'Requires Azure app registration. MS Graph API. OAuth flow stub in connect_email_outlook(). Full OAuth flow needs Rails PKCE endpoint.',label:'EXPLICIT'},
+    {id:'X4',title:'Email Inbox page (page-emailinbox)',detail:'Fetches from GET /api/email/inbox, auto-polls at configured interval, matches senders to contacts, Add to Contacts for unknowns. DONE Sprint A.',label:'EXPLICIT'},
+    {id:'X5',title:'AI Suggested Replies in email thread view',detail:'Last message + contact record + KB context → configured AI provider. Editable textarea. Send via Rails + log to Email Registry. Tone setting. DONE Sprint A.',label:'EXPLICIT'},
+    {id:'X6',title:'Email thread view — reply history',detail:'Show full thread (multiple messages in conversation) not just single message. Requires Rails to group by thread_id / In-Reply-To header.',label:'IMPLIED'},
+    {id:'X7',title:'Outlook OAuth flow — full PKCE via Rails',detail:'Add /api/email/connect/outlook endpoint to Rails. MS Graph OAuth2 PKCE. Store access_token + refresh_token in Rails cache.',label:'EXPLICIT'},
+    {id:'X8',title:'Proton Mail Bridge support',detail:'Coming soon. Proton Bridge exposes local IMAP on port 1143. Point IMAP config at localhost. Waiting on Bridge API stability.',label:'IMPLIED'},
+    {id:'X9',title:'Email unread badge count from inbox',detail:'Badge on ni-emailinbox sidebar item updates from fetchInboxFromRails(). DONE Sprint A.',label:'IMPLICIT'},
+    {id:'X10',title:'Bulk email send from campaign contact list',detail:'From Campaigns page: select a campaign → compose email → send to all contacts tagged to that campaign. Uses EmailService.',label:'EXPLICIT'},
   ]},
 ];
 
@@ -6023,6 +6202,12 @@ function syncTaskToCalendar(src, taskId){
 
 function openTaskMoForWH(){
   openTaskMo();
+}
+
+// Deferred startup backfill: ensures tasks + devtasks with due dates all have calendar events.
+// Runs after stores are fully ready so nothing is missed on first load.
+function backfillDevTasksToCalendar(){
+  calSyncAll();
 }
 
 
@@ -12328,6 +12513,465 @@ async function sendEmail(id){
 }
 
 // ============================================================
+// EMAIL PROVIDER PICKER  (A4)
+// ============================================================
+
+function getEmailConfig(){try{return JSON.parse(localStorage.getItem('twwp_email_config_v1')||'{}');}catch{return{};}}
+function saveEmailConfig(c){localStorage.setItem('twwp_email_config_v1',JSON.stringify(Object.assign({updated:new Date().toISOString()},c)));
+  // Also persist into org_config for portability
+  var cfg=getOrgCfg();cfg.email_config=c;saveOrgCfg(cfg);
+}
+
+var _epSelected=null;
+
+function openEmailProviderMo(){
+  _epSelected=null;
+  // Hide all provider sections
+  ['gmail','outlook','imap'].forEach(function(p){var s=G('epSection-'+p);if(s)s.style.display='none';});
+  var disco=G('epDisconnectBtn');if(disco)disco.style.display='none';
+  // Update card states + statuses
+  updateEmailProviderCards();
+  // Load polling interval
+  var cfg=getEmailConfig();
+  var pi=G('ep-poll-interval');if(pi)pi.value=String(cfg.poll_interval||300);
+  OM('emailProviderMo');
+}
+
+function updateEmailProviderCards(){
+  var cfg=getEmailConfig();
+  var connected=cfg.provider&&cfg.connected;
+  ['gmail','outlook','imap'].forEach(function(p){
+    var card=G('epCard-'+p);
+    var stat=G('epStatus-'+p);
+    if(!card||!stat)return;
+    if(connected&&cfg.provider===p){
+      card.style.border='2px solid var(--cyan)';
+      stat.style.color='var(--green)';
+      stat.textContent='✓ Connected'+(p==='imap'?' ('+cfg.imap_host+')':(p==='gmail'?' (Gmail OAuth)':' (Microsoft OAuth)'));
+    }else{
+      card.style.border='2px solid transparent';
+      stat.style.color='var(--text3)';
+      stat.textContent='Not connected';
+    }
+  });
+  var disco=G('epDisconnectBtn');
+  if(disco)disco.style.display=connected?'':'none';
+}
+
+function selectEmailProvider(provider){
+  _epSelected=provider;
+  ['gmail','outlook','imap'].forEach(function(p){
+    var s=G('epSection-'+p);if(s)s.style.display=p===provider?'block':'none';
+    var card=G('epCard-'+p);if(card)card.style.outline=p===provider?'2px solid var(--purple)':'none';
+  });
+  // Pre-fill IMAP form if already configured
+  if(provider==='imap'){
+    var cfg=getEmailConfig();
+    if(cfg.provider==='imap'){
+      if(G('ep-imap-host'))G('ep-imap-host').value=cfg.imap_host||'';
+      if(G('ep-imap-port'))G('ep-imap-port').value=cfg.imap_port||993;
+      if(G('ep-imap-user'))G('ep-imap-user').value=cfg.imap_user||'';
+      if(G('ep-imap-pass'))G('ep-imap-pass').value=''; // never pre-fill passwords
+      if(G('ep-smtp-host'))G('ep-smtp-host').value=cfg.smtp_host||'';
+      if(G('ep-smtp-port'))G('ep-smtp-port').value=cfg.smtp_port||587;
+      if(G('ep-smtp-user'))G('ep-smtp-user').value=cfg.smtp_user||'';
+      if(G('ep-smtp-pass'))G('ep-smtp-pass').value='';
+    }
+    if(G('ep-ms-client-id'))G('ep-ms-client-id').value='';
+  }
+}
+
+function connectEmailGmail(){
+  // Check for existing Google OAuth token
+  var gToken=localStorage.getItem('twwp_google_token')||localStorage.getItem('twwp_oauth_token')||'';
+  if(!gToken){
+    showDbToast('No Google OAuth token found. Complete Google OAuth setup in AI & Integrations first.',true);
+    CM('emailProviderMo');
+    openApiMo();
+    return;
+  }
+  saveEmailConfig({provider:'gmail',connected:true,oauth_token:gToken,poll_interval:getEmailPollInterval()});
+  updateEmailProviderCards();
+  showDbToast('✓ Gmail connected');
+  updateEmailProviderBanner();
+  startEmailPolling();
+}
+
+function connectEmailOutlook(){
+  var clientId=G('ep-ms-client-id')?.value.trim()||'';
+  if(!clientId){showDbToast('Azure Client ID required.',true);return;}
+  // Stub: in production this would initiate an OAuth2 PKCE flow via the Rails API
+  saveEmailConfig({provider:'outlook',connected:true,ms_client_id:clientId,poll_interval:getEmailPollInterval()});
+  updateEmailProviderCards();
+  showDbToast('✓ Outlook configured (OAuth flow requires Rails API wiring)');
+  updateEmailProviderBanner();
+}
+
+async function testImapConnection(){
+  var host=G('ep-imap-host')?.value.trim()||'';
+  var port=G('ep-imap-port')?.value||993;
+  var user=G('ep-imap-user')?.value.trim()||'';
+  var pass=G('ep-imap-pass')?.value||'';
+  if(!host||!user||!pass){showDbToast('Host, username, and password are required.',true);return;}
+  var railsUrl=getIntegration('rails-api-url')||localStorage.getItem('twwp_rails_api_url')||'';
+  if(!railsUrl){if(G('epImapTestResult'))G('epImapTestResult').innerHTML='<span style="color:var(--amber)">⚠ Rails API not configured — cannot test remotely.</span>';return;}
+  var jwt=JSON.parse(sessionStorage.getItem('twwp_rails_session')||'{}').token||'';
+  if(G('epImapTestResult'))G('epImapTestResult').textContent='Testing…';
+  try{
+    var resp=await fetch(railsUrl.replace(/\/$/,'')+'/api/email/connect/imap',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':jwt?'Bearer '+jwt:''},
+      body:JSON.stringify({imap_host:host,imap_port:parseInt(port),imap_user:user,imap_pass:pass,test_only:true})
+    });
+    var data=await resp.json();
+    if(resp.ok&&data.status==='ok'){
+      G('epImapTestResult').innerHTML='<span style="color:var(--green)">✓ Connection successful</span>';
+    }else{
+      G('epImapTestResult').innerHTML='<span style="color:var(--red)">✗ '+(data.error||'Connection failed')+'</span>';
+    }
+  }catch(err){
+    G('epImapTestResult').innerHTML='<span style="color:var(--red)">✗ '+err.message+'</span>';
+  }
+}
+
+function saveImapConnection(){
+  var host=G('ep-imap-host')?.value.trim()||'';
+  var port=parseInt(G('ep-imap-port')?.value||'993');
+  var user=G('ep-imap-user')?.value.trim()||'';
+  var pass=G('ep-imap-pass')?.value||'';
+  var sHost=G('ep-smtp-host')?.value.trim()||'';
+  var sPort=parseInt(G('ep-smtp-port')?.value||'587');
+  var sUser=G('ep-smtp-user')?.value.trim()||'';
+  var sPass=G('ep-smtp-pass')?.value||'';
+  if(!host||!user||!pass){showDbToast('IMAP host, username, and password are required.',true);return;}
+  var cfg={provider:'imap',connected:true,
+    imap_host:host,imap_port:port,imap_user:user,imap_pass:pass,
+    smtp_host:sHost,smtp_port:sPort,smtp_user:sUser,smtp_pass:sPass,
+    poll_interval:getEmailPollInterval()};
+  saveEmailConfig(cfg);
+  updateEmailProviderCards();
+  showDbToast('✓ IMAP / SMTP saved');
+  updateEmailProviderBanner();
+  startEmailPolling();
+  // Also persist to Rails if connected
+  var railsUrl=getIntegration('rails-api-url')||localStorage.getItem('twwp_rails_api_url')||'';
+  if(railsUrl){
+    var jwt=JSON.parse(sessionStorage.getItem('twwp_rails_session')||'{}').token||'';
+    fetch(railsUrl.replace(/\/$/,'')+'/api/email/connect/imap',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':jwt?'Bearer '+jwt:''},
+      body:JSON.stringify({imap_host:host,imap_port:port,imap_user:user,imap_pass:pass,
+        smtp_host:sHost,smtp_port:sPort,smtp_user:sUser,smtp_pass:sPass})
+    }).catch(function(){});
+  }
+}
+
+function saveEmailPollInterval(){
+  var cfg=getEmailConfig();
+  cfg.poll_interval=parseInt(G('ep-poll-interval')?.value||'300');
+  saveEmailConfig(cfg);
+}
+
+function getEmailPollInterval(){
+  return parseInt(G('ep-poll-interval')?.value||'300');
+}
+
+function disconnectEmailProvider(){
+  if(!confirm('Disconnect the current email provider?'))return;
+  saveEmailConfig({provider:'none',connected:false});
+  updateEmailProviderCards();
+  updateEmailProviderBanner();
+  showDbToast('Email provider disconnected');
+}
+
+function updateEmailProviderBanner(){
+  var cfg=getEmailConfig();
+  var banner=G('emailProviderBanner');if(!banner)return;
+  var txt=G('emailProviderBannerText');
+  if(cfg.connected&&cfg.provider&&cfg.provider!=='none'){
+    banner.style.display='flex';
+    var label={gmail:'Gmail (OAuth)',outlook:'Outlook (OAuth)',imap:'IMAP — '+cfg.imap_host}[cfg.provider]||cfg.provider;
+    txt.textContent='Email connected: '+label+' · Polling every '+(cfg.poll_interval>=3600?(cfg.poll_interval/3600)+'h':(cfg.poll_interval/60)+'min');
+  }else{
+    banner.style.display='none';
+  }
+}
+
+// Email polling
+var _emailPollTimer=null;
+function startEmailPolling(){
+  if(_emailPollTimer)clearInterval(_emailPollTimer);
+  var cfg=getEmailConfig();
+  if(!cfg.connected)return;
+  var interval=(cfg.poll_interval||300)*1000;
+  _emailPollTimer=setInterval(function(){fetchInboxFromRails(false);},interval);
+}
+
+// ============================================================
+// EMAIL INBOX PAGE  (A6)
+// ============================================================
+
+// emailInbox store: entries fetched from Rails
+// each entry: {id, message_id, from_email, from_name, subject, preview, body, date, read, contact_id, contact_name}
+function getInboxMessages(){try{return JSON.parse(localStorage.getItem('twwp_inbox_messages_v1')||'[]');}catch{return[];}}
+function saveInboxMessages(msgs){localStorage.setItem('twwp_inbox_messages_v1',JSON.stringify(msgs));}
+
+var _inboxInitialised=false;
+var _currentThreadId=null;
+
+function initEmailInbox(){
+  renderEmailInbox();
+  if(!_inboxInitialised){
+    _inboxInitialised=true;
+    fetchInboxFromRails(true);
+  }
+}
+
+async function fetchInboxFromRails(showLoader){
+  var cfg=getEmailConfig();
+  if(!cfg.connected){
+    var el=G('emailInboxStatus');
+    if(el)el.innerHTML='<span style="color:var(--amber)">⚠ No email provider configured. <a href="#" onclick="openEmailProviderMo();return false" style="color:var(--cyan)">Set up email →</a></span>';
+    return;
+  }
+  var railsUrl=getIntegration('rails-api-url')||localStorage.getItem('twwp_rails_api_url')||'';
+  if(!railsUrl){
+    var el2=G('emailInboxStatus');if(el2)el2.innerHTML='<span style="color:var(--amber)">⚠ Rails API not configured.</span>';
+    return;
+  }
+  if(showLoader){var sl=G('emailInboxStatus');if(sl)sl.textContent='Fetching inbox…';}
+  var jwt=JSON.parse(sessionStorage.getItem('twwp_rails_session')||'{}').token||'';
+  try{
+    var resp=await fetch(railsUrl.replace(/\/$/,'')+'/api/email/inbox',{
+      headers:{'Authorization':jwt?'Bearer '+jwt:''}
+    });
+    if(!resp.ok){throw new Error('HTTP '+resp.status);}
+    var data=await resp.json();
+    var messages=data.messages||[];
+    // Match contacts
+    var contacts=S.get('contacts');
+    messages=messages.map(function(m){
+      var match=contacts.find(function(c){return c.email&&c.email.toLowerCase()===(m.from_email||'').toLowerCase();});
+      if(match){m.contact_id=match.id;m.contact_name=match.name;}
+      return m;
+    });
+    saveInboxMessages(messages);
+    var unread=messages.filter(function(m){return !m.read;}).length;
+    var badge=G('inboxBadge');
+    if(badge){badge.textContent=unread;badge.classList.toggle('hid',unread===0);}
+    var st=G('emailInboxStatus');if(st)st.textContent='Last updated: '+new Date().toLocaleTimeString()+' · '+messages.length+' messages';
+    renderEmailInbox();
+  }catch(err){
+    var st2=G('emailInboxStatus');if(st2)st2.innerHTML='<span style="color:var(--red)">✗ Fetch failed: '+esc(err.message)+'</span>';
+  }
+}
+
+function renderEmailInbox(){
+  var el=G('emailInboxList');if(!el)return;
+  var messages=getInboxMessages();
+  var search=(G('inbox-search')?.value||'').toLowerCase();
+  var filter=G('inbox-filter')?.value||'';
+  if(search)messages=messages.filter(function(m){return (m.subject||'').toLowerCase().includes(search)||(m.from_name||m.from_email||'').toLowerCase().includes(search);});
+  if(filter==='unread')messages=messages.filter(function(m){return !m.read;});
+  if(filter==='read')messages=messages.filter(function(m){return !!m.read;});
+  if(!messages.length){
+    var cfg=getEmailConfig();
+    if(!cfg.connected){
+      el.innerHTML='<div style="color:var(--text3);padding:30px;text-align:center"><div style="font-size:32px;margin-bottom:10px">📭</div><div>No email provider connected.</div><button class="btn btn-p btn-sm" style="margin-top:12px" onclick="openEmailProviderMo()">Connect Email Provider</button></div>';
+    }else{
+      el.innerHTML='<div style="color:var(--text3);padding:30px;text-align:center"><div style="font-size:32px;margin-bottom:10px">📭</div><div>Inbox is empty'+(filter?' (filtered)':'')+'.</div></div>';
+    }
+    return;
+  }
+  el.innerHTML=messages.map(function(m){
+    var readStyle=m.read?'opacity:.7':';';
+    var borderColor=m.read?'var(--border)':'var(--cyan)';
+    var contactBadge=m.contact_name
+      ?'<span style="font-size:10px;background:var(--surface3);color:var(--cyan);padding:1px 7px;border-radius:4px;margin-left:6px">'+esc(m.contact_name)+'</span>'
+      :'<button class="btn btn-g btn-xs" style="margin-left:6px;font-size:9px" onclick="addInboxSenderToContacts(\''+esc(m.id)+'\');event.stopPropagation()">+ Add Contact</button>';
+    return '<div class="card" style="padding:12px 16px;margin-bottom:6px;border-left:3px solid '+borderColor+';cursor:pointer;'+readStyle+'" onclick="openEmailThread(\''+esc(m.id)+'\')">'+
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'+
+      '<div style="flex:1;min-width:0">'+
+      '<div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px">'+
+      '<span style="font-weight:'+(m.read?'400':'700')+';color:var(--text)">'+esc(m.from_name||m.from_email||'Unknown sender')+'</span>'+
+      contactBadge+'</div>'+
+      '<div style="font-size:13px;color:var(--text);margin-top:3px;'+(m.read?'':'font-weight:600')+'">'+esc(m.subject||'(no subject)')+'</div>'+
+      '<div style="font-size:11px;color:var(--text3);margin-top:3px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">'+esc((m.preview||m.body||'').substring(0,120))+'</div>'+
+      '</div>'+
+      '<div style="font-size:11px;color:var(--text3);white-space:nowrap">'+esc(fmtDate(m.date||m.received_at||''))+'</div></div>'+
+    '</div>';
+  }).join('');
+}
+
+function refreshEmailInbox(btn){
+  if(btn)btn.disabled=true;
+  fetchInboxFromRails(true).then(function(){if(btn)btn.disabled=false;}).catch(function(){if(btn)btn.disabled=false;});
+}
+
+function openEmailThread(msgId){
+  var messages=getInboxMessages();
+  var msg=messages.find(function(m){return m.id===msgId;});if(!msg)return;
+  _currentThreadId=msgId;
+  // Mark as read
+  msg.read=true;saveInboxMessages(messages);renderEmailInbox();
+  // Update badge
+  var unread=messages.filter(function(m){return !m.read;}).length;
+  var badge=G('inboxBadge');if(badge){badge.textContent=unread;badge.classList.toggle('hid',unread===0);}
+  // Populate modal
+  G('emailThreadTitle').textContent='// '+esc(msg.subject||'(no subject)');
+  var contact=msg.contact_name?S.find('contacts',msg.contact_id):null;
+  G('emailThreadMeta').innerHTML=
+    '<strong>From:</strong> '+esc(msg.from_name||msg.from_email||'Unknown')+' &lt;'+esc(msg.from_email||'')+'&gt;'+
+    (contact?'<br><strong>Contact:</strong> <a href="#" onclick="go(\'contacts\');CM(\'emailThreadMo\');return false" style="color:var(--cyan)">'+esc(contact.name)+'</a>':'<br><span style="color:var(--amber);font-size:11px">Sender not in contacts — <a href="#" onclick="addInboxSenderToContacts(\''+esc(msgId)+'\');return false" style="color:var(--cyan)">Add to Contacts</a></span>')+
+    '<br><strong>Date:</strong> '+esc(fmtDate(msg.date||msg.received_at||''));
+  G('emailThreadMessages').innerHTML='<div style="background:var(--surface2);border-radius:8px;padding:14px;font-size:13px;white-space:pre-wrap;line-height:1.6">'+esc(msg.body||msg.preview||'(no body)')+'</div>';
+  // Reset AI reply area
+  G('aiReplySuggestion').value='';
+  // Load saved tone
+  var cfg=getOrgCfg();
+  if(G('aiReplyTone'))G('aiReplyTone').value=cfg.ai_reply_tone||'professional';
+  OM('emailThreadMo');
+}
+
+function addInboxSenderToContacts(msgId){
+  var messages=getInboxMessages();
+  var msg=messages.find(function(m){return m.id===msgId;});if(!msg)return;
+  var now=new Date().toISOString();
+  var id=uid();
+  S.upsert('contacts',{id:id,name:msg.from_name||msg.from_email,email:msg.from_email||'',type:'lead',created:now,updated:now,notes:'Added from Email Inbox'});
+  msg.contact_id=id;msg.contact_name=msg.from_name||msg.from_email;
+  saveInboxMessages(messages);
+  renderEmailInbox();
+  showDbToast('✓ '+esc(msg.from_name||msg.from_email)+' added to Contacts');
+}
+
+// ============================================================
+// AI SUGGESTED REPLIES  (A7)
+// ============================================================
+
+function saveAiReplyTone(){
+  var tone=G('aiReplyTone')?.value||'professional';
+  var cfg=getOrgCfg();cfg.ai_reply_tone=tone;saveOrgCfg(cfg);
+}
+
+async function generateAiReply(){
+  var msgs=getInboxMessages();
+  var msg=msgs.find(function(m){return m.id===_currentThreadId;});if(!msg)return;
+  var btn=document.querySelector('[onclick="generateAiReply()"]');if(btn){btn.disabled=true;btn.textContent='Generating…';}
+  var tone=G('aiReplyTone')?.value||'professional';
+  var contact=msg.contact_id?S.find('contacts',msg.contact_id):null;
+  var contactCtx=contact
+    ?'Contact record:\nName: '+contact.name+'\nEmail: '+contact.email+'\nType: '+contact.type+(contact.org?'\nOrg: '+contact.org:'')+(contact.notes?'\nNotes: '+contact.notes:'')
+    :'Sender: '+msg.from_email+' (not in contacts)';
+  var kbCtx=getKBContext();
+  var prompt=kbCtx+'\n\n'+
+    'You are an assistant for The Wholey Water Project. Draft a '+tone+' email reply to the following message.\n\n'+
+    contactCtx+'\n\n'+
+    'Original email:\nSubject: '+msg.subject+'\nFrom: '+(msg.from_name||msg.from_email)+'\n\n'+
+    (msg.body||msg.preview||'')+'\n\n'+
+    'Reply tone: '+tone+'. Keep the reply concise and actionable. Do not include a subject line, just the body text.';
+  try{
+    var reply=await aiCallRaw(prompt);
+    var ta=G('aiReplySuggestion');if(ta)ta.value=reply;
+  }catch(err){
+    showDbToast('AI reply failed: '+err.message,true);
+  }finally{
+    if(btn){btn.disabled=false;btn.innerHTML='&#129302; Suggest Reply';}
+  }
+}
+
+async function aiCallRaw(prompt){
+  var cfg=getAiCfg();
+  var provider=cfg.provider||'gemini';
+  var kbCtx=getKBContext();
+  if(provider==='anthropic'){
+    return await callAnthropic(prompt,kbCtx);
+  }else if(provider==='openai'||provider==='openrouter'){
+    return await callOpenAIRaw(prompt,cfg,provider);
+  }else{
+    return await callGeminiRaw(prompt,cfg);
+  }
+}
+
+async function callAnthropic(userPrompt,sysPrompt){
+  var cfg=getAiCfg();
+  var resp=await aiHttpPost('https://api.anthropic.com/v1/messages',{
+    model:cfg.anthropic_model||'claude-3-5-haiku-20241022',
+    max_tokens:600,
+    system:sysPrompt||'You are a helpful assistant.',
+    messages:[{role:'user',content:userPrompt}]
+  },{
+    'x-api-key':cfg.anthropic_key||'',
+    'anthropic-version':'2023-06-01'
+  });
+  return resp.content[0].text;
+}
+
+async function callGeminiRaw(prompt,cfg){
+  var key=cfg.gemini_key||'';
+  var model=cfg.gemini_model||'gemini-2.0-flash';
+  var url='https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent?key='+encodeURIComponent(key);
+  var resp=await aiHttpPost(url,{contents:[{parts:[{text:prompt}]}]},{});
+  return (resp.candidates||[])[0]?.content?.parts?.[0]?.text||'';
+}
+
+async function callOpenAIRaw(prompt,cfg,provider){
+  var baseUrl=provider==='openrouter'?'https://openrouter.ai/api/v1':'https://api.openai.com/v1';
+  var key=provider==='openrouter'?cfg.openrouter_key||'':cfg.openai_key||'';
+  var model=provider==='openrouter'?(cfg.openrouter_model||'openai/gpt-4o-mini'):(cfg.openai_model||'gpt-4o-mini');
+  var resp=await aiHttpPost(baseUrl+'/chat/completions',{model,max_tokens:600,messages:[{role:'user',content:prompt}]},
+    {'Authorization':'Bearer '+key});
+  return resp.choices[0].message.content||'';
+}
+
+async function aiHttpPost(url,body,extraHeaders){
+  var proxyUrl=getIntegration('proxy-url')||localStorage.getItem('twwp_proxy_url')||'';
+  var fetchUrl=proxyUrl?proxyUrl+'?url='+encodeURIComponent(url):url;
+  var resp=await fetch(fetchUrl,{method:'POST',headers:Object.assign({'Content-Type':'application/json'},extraHeaders),body:JSON.stringify(body)});
+  if(!resp.ok){var e=await resp.text();throw new Error('HTTP '+resp.status+': '+e.substring(0,200));}
+  return resp.json();
+}
+
+async function sendAiReply(){
+  var ta=G('aiReplySuggestion');
+  var replyBody=ta?.value?.trim()||'';
+  if(!replyBody){showDbToast('Reply body is empty.',true);return;}
+  var msgs=getInboxMessages();
+  var msg=msgs.find(function(m){return m.id===_currentThreadId;});if(!msg)return;
+  if(requiresSetup('Email sending','rails_api',5))return;
+  var railsUrl=getIntegration('rails-api-url')||localStorage.getItem('twwp_rails_api_url')||'';
+  if(!railsUrl){showDbToast('Rails API not configured.',true);return;}
+  var jwt=JSON.parse(sessionStorage.getItem('twwp_rails_session')||'{}').token||'';
+  var subject='Re: '+(msg.subject||'');
+  var btn=document.querySelector('[onclick="sendAiReply()"]');if(btn){btn.disabled=true;btn.textContent='Sending…';}
+  try{
+    var resp=await fetch(railsUrl.replace(/\/$/,'')+'/api/email/send',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':jwt?'Bearer '+jwt:''},
+      body:JSON.stringify({to:msg.from_email||'',subject,body:replyBody,contact_name:msg.contact_name||msg.from_name||''})
+    });
+    var data=await resp.json();
+    if(resp.ok||data.status==='ok'){
+      // Log to Email Registry
+      var now=new Date().toISOString();
+      S.upsert('emailRegistry',{id:uid(),contact_id:msg.contact_id||'',contact_name:msg.contact_name||msg.from_name||'',
+        contact_email:msg.from_email||'',subject,body:replyBody,status:'sent',date:now.split('T')[0],
+        sent_at:now.split('T')[0],notes:'AI reply from inbox — original: '+esc(msg.subject||''),
+        created:now,updated:now});
+      logEvent('email','send','AI reply sent to '+msg.from_email,{subject});
+      showDbToast('✓ Reply sent and logged to Email Registry');
+      CM('emailThreadMo');
+    }else{
+      showDbToast('Send failed: '+(data.error||resp.status),true);
+    }
+  }catch(err){
+    showDbToast('Send failed: '+err.message,true);
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='✉ Send Reply';}
+  }
+}
+
+// ============================================================
 // CAMPAIGNS
 // ============================================================
 var campEditId=null;
@@ -12452,12 +13096,14 @@ function initApp(){
   // Add clear demo button to sidebar
   setTimeout(()=>{
     const exportSect=document.querySelector('.sb-nav');
-    if(exportSect&&!G('demoClearBtn')){const btn=document.createElement('div');btn.className='sb-item';btn.id='demoClearBtn';btn.innerHTML='<span class="sb-icon">&#128465;</span><span class="sb-lbl" style="color:var(--amber)">Clear Demo Data</span>';btn.onclick=clearDemoData;exportSect.appendChild(btn);}
+    if(exportSect&&!G('demoClearBtn')){const btn=document.createElement('div');btn.className='sb-item';btn.id='demoClearBtn';btn.setAttribute('data-tip','Remove all seeded demo records from localStorage');btn.innerHTML='<span class="sb-icon">&#128465;</span><span class="sb-lbl" style="color:var(--amber)">Clear Demo Data</span>';btn.onclick=clearDemoData;exportSect.appendChild(btn);}
   },600);
   initGlobalTooltip();
   initGlobalSearch();
   initOrgConfig();
   setTimeout(function(){checkRunOnboarding();updateSetupStatusCard();updatePersistBanners();},800);
+  // Deferred calendar backfill — runs after stores are fully available
+  setTimeout(backfillDevTasksToCalendar,1500);
 }
 
 // ── Global Search (Ctrl+K) ─────────────────────────────────────────────────
@@ -12750,10 +13396,13 @@ function saveTerminology(){
 function initGlobalTooltip(){
   var tip=G('globalTip');if(!tip)return;
   var _timer=null;
+  var _current=null;
   document.addEventListener('mouseover',function(e){
     var el=e.target.closest('[data-tip]');
     if(!el)return;
+    if(el===_current)return; // already showing for this element
     clearTimeout(_timer);
+    _current=el;
     _timer=setTimeout(function(){
       var txt=el.getAttribute('data-tip');if(!txt)return;
       tip.textContent=txt;
@@ -12762,10 +13411,8 @@ function initGlobalTooltip(){
       var r=el.getBoundingClientRect();
       var tx=r.left+r.width/2-tip.offsetWidth/2;
       var ty=r.top-tip.offsetHeight-8;
-      // Prevent overflow right
       if(tx+tip.offsetWidth>window.innerWidth-8)tx=window.innerWidth-tip.offsetWidth-8;
       if(tx<8)tx=8;
-      // If no room above, show below
       if(ty<8)ty=r.bottom+8;
       tip.style.left=tx+'px';
       tip.style.top=ty+'px';
@@ -12774,11 +13421,15 @@ function initGlobalTooltip(){
   document.addEventListener('mouseout',function(e){
     var el=e.target.closest('[data-tip]');
     if(!el)return;
+    // Don't hide if still inside the same [data-tip] element (moving to a child)
+    if(el.contains(e.relatedTarget))return;
     clearTimeout(_timer);
+    _current=null;
     tip.style.display='none';
   });
   document.addEventListener('click',function(){
     clearTimeout(_timer);
+    _current=null;
     if(tip)tip.style.display='none';
   });
 }

@@ -1,6 +1,6 @@
 # TWWP Ops App — Build Backlog
 
-**Last updated:** 2026-03-23 (session 15)
+**Last updated:** 2026-03-23 (Sprint A)
 
 **Labels:** `[EXPLICIT]` `[IMPLIED]` `[FIX]` `[OPEN]` ✅ done
 
@@ -272,3 +272,18 @@ branding, users and config — without touching the code.
 11. Waterhouse digital twin (GROUP F)
 12. ESP32 firmware + sensor integration (GROUP O)
 13. Tap-Map sync (GROUP P)
+
+---
+
+## GROUP X — Email Foundation (Sprint A)
+
+- ✅ `[EXPLICIT]` Gmail OAuth connect — reuses Google OAuth token — DONE Sprint A
+- ✅ `[EXPLICIT]` IMAP/SMTP manual form + Rails storage + test connection — DONE Sprint A
+- ✅ `[EXPLICIT]` Email Inbox page (page-emailinbox) — DONE Sprint A
+- ✅ `[EXPLICIT]` AI Suggested Replies — tone picker, KB injection, send + log — DONE Sprint A
+- `[EXPLICIT]` Outlook OAuth PKCE flow — needs Rails /api/email/connect/outlook (X7)
+- `[IMPLIED]` Gmail re-auth with gmail.send + gmail.readonly scopes
+- `[EXPLICIT]` Email thread grouping by In-Reply-To header (X6)
+- `[IMPLIED]` Mark-as-read sync back to provider
+- `[IMPLIED]` Proton Mail Bridge support (waiting on Bridge API stability)
+- `[EXPLICIT]` Bulk email send from campaign contact list (X10)

@@ -1,6 +1,31 @@
 # Known Issues, Bugs, and Stubs
 
-Last updated: 2026-03-23 (session 15 — 10 tasks)
+Last updated: 2026-03-23 (Sprint A — 8 tasks)
+
+---
+
+## Fixed this sprint (Sprint A)
+
+- ✅ `[FIX]` Tooltip flicker on sidebar nav — `mouseout` event delegation bug fixed with `relatedTarget` check
+- ✅ `[FIX]` Calendar backfill — `backfillDevTasksToCalendar()` now called with 1.5s defer on startup
+
+## Known issues as of Sprint A
+
+- ⚠️ Outlook OAuth PKCE flow incomplete — client ID stored but OAuth redirect not wired (BACKLOG X7)
+- ⚠️ Gmail email API scope — existing token has `drive` scope only; `gmail.send` + `gmail.readonly` scopes needed for live inbox/send via Gmail API
+- ⚠️ IMAP credentials in Rails cache — will not survive dyno restart; set `TWWP_EMAIL_CONFIG` env var on Fly.io to persist (see session-handoff-march23i.md)
+- ⚠️ Email thread grouping not implemented — inbox shows individual messages, not grouped by conversation (BACKLOG X6)
+
+---
+
+## Fixed in session 15 (10 tasks)
+
+- ✅ All 35 sidebar items now have data-tip tooltips
+- ✅ Calendar +Event button opens date wizard first
+- ✅ backfillDevTasksToCalendar added (Sprint A)
+- ✅ Onboarding wizard (7 steps)
+- ✅ Setup status checklist Dashboard card
+- ✅ requiresSetup() contextual interrupts
 
 ---
 

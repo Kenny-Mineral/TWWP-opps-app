@@ -576,16 +576,59 @@ Rails API at `https://twwp-ops-api.fly.dev`.
 
 ---
 
+---
+
+## Sprint A changes (2026-03-23) — SPEC_VERSION 4.6
+
+### A1 — Tooltip event delegation fix
+- Fixed `initGlobalTooltip()` mouseout bug: tooltip was hiding when mouse moved between child elements (e.g. `sb-icon` → `sb-lbl` within an `sb-item`).
+- Fix: `if(el.contains(e.relatedTarget)) return;` in mouseout handler.
+- Added `_current` guard — no timer restart when already showing for same element.
+- Added `data-tip` to dynamically created "Clear Demo Data" sidebar button.
+
+### A2 — Calendar startup backfill
+- Added `backfillDevTasksToCalendar()` — wraps `calSyncAll()`, runs deferred 1.5s after `initApp()`.
+- Ensures tasks with due dates get calendar events even if stores load after initial render.
+
+### A3 — SPEC constants updated
+- SPEC_VERSION → `4.6`, SPEC_GROWTH Sprint A entry added, ADR-015 added, BACKLOG GROUP X added.
+
+### A4 — Email Provider Picker UI
+- `emailProviderMo` modal: Gmail OAuth (one click), Outlook OAuth (client ID + stub), IMAP/SMTP manual form (host/port/user/pass), Proton coming-soon banner.
+- Test Connection button for IMAP calls Rails `/api/email/connect/imap`.
+- Polling interval selector: 2min / 5min / 15min / 1hr / 6hr / 24hr.
+- Config in `twwp_email_config_v1` localStorage + `org_config.email_config`.
+- Provider status banner on Email Registry page header.
+
+### A5 — Rails unified EmailService
+- `app/services/email_service.rb` — routes to Gmail REST API, Microsoft Graph API, or Net::IMAP/SMTP.
+- New routes: `GET /api/email/inbox`, `POST /api/email/connect/imap`.
+- `POST /api/email/send` updated — now routes via EmailService.
+- Deployed to Fly.io ✅.
+
+### A6 — Email Inbox page
+- Sidebar: "Email Inbox" (📬) under People, with unread badge (`inboxBadge`).
+- Page: thread list, search, unread/read filter, auto-poll on first visit.
+- Sender auto-matched to contacts by email; "+ Add Contact" for unknowns.
+- Manual refresh button.
+
+### A7 — AI Suggested Replies
+- Email thread view modal: full body, contact card, AI Reply panel.
+- Reply tone: Professional / Friendly / Brief — saved to `org_config.ai_reply_tone`.
+- `generateAiReply()` — message + contact + KB context → AI provider (all 4 providers supported).
+- `sendAiReply()` — sends via Rails + logs to emailRegistry store.
+
+---
+
 ## Next up
 
-1. **Re-authorise Google OAuth** — scope changed from `drive.file` → `drive`
-2. **Deploy Rails email + ledger endpoints** — `fly deploy` in ~/twwp-ops-api
-3. **Flip GitHub Pages source to GitHub Actions** (manual: repo Settings → Pages → Source → GitHub Actions)
-4. **User management page** (admin only) — invite, deactivate, change role
-5. **Wire `callModelForFeature()`** — into autofill and import wizard
-6. **Wire Receipt Inbox AI Parse tab**
-7. **Ledger Rails endpoint persistence** — add `ledger_entries` table to Rails (currently placeholder)
-8. **Activate Drive auto-backup on logout** — code written, unblocked by OAuth scope fix
-9. **Multi-device sync activation** — unblocked by OAuth fix
+1. **Outlook OAuth PKCE flow** — `connectEmailOutlook()` stores client ID but doesn't initiate OAuth. Needs Rails `/api/email/connect/outlook` endpoint (BACKLOG X7).
+2. **Gmail email scope** — existing OAuth token has `drive` scope only; re-auth needed for Gmail API (`gmail.send` + `gmail.readonly`).
+3. **Persist IMAP config on Fly.io** — set `TWWP_EMAIL_CONFIG` env var: `fly secrets set TWWP_EMAIL_CONFIG='...'`
+4. **Email thread grouping** — show full conversation threads (BACKLOG X6).
+5. **Re-authorise Google OAuth** — scope was already changed `drive.file` → `drive`; email scopes also needed now.
+6. **User management page** (admin only) — invite, deactivate, change role.
+7. **Ledger Rails endpoint persistence** — add `ledger_entries` table to Rails.
+8. **Activate Drive auto-backup on logout** — unblocked by OAuth scope fix.
 
-See `docs/handoff/session-handoff-march23h.md` for session 15 full summary.
+See `docs/handoff/session-handoff-march23i.md` for Sprint A full summary.
