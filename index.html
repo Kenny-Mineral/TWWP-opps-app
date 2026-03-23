@@ -675,7 +675,6 @@ tbody tr:hover{background:var(--surface2);}
                 <div class="fg" style="margin:0"><label data-tip="Google Drive API key from Cloud Console — for read-only file listing">API Key</label><input type="password" id="int-gdrive-key" placeholder="AIza..." autocomplete="off"><div style="font-size:10px;color:var(--text3);margin-top:3px"><a href="https://console.cloud.google.com" target="_blank" style="color:var(--cyan)">Cloud Console</a> → Enable Drive API → API Key</div></div>
                 <div class="fg" style="margin:0"><label data-tip="Folder ID — last segment of the Drive folder URL">Folder ID</label><input type="text" id="int-gdrive-folder" placeholder="1BxiMVs0XRA5nFMd..." autocomplete="off"><div style="font-size:10px;color:var(--text3);margin-top:3px">Last segment of the folder URL</div></div>
               </div>
-              <div class="fg" style="margin:0"><label data-tip="OAuth Client ID from Google Cloud Console — safe to store, not a secret">OAuth Client ID</label><input type="text" id="int-gdrive-client-id" placeholder="123456789-abc.apps.googleusercontent.com" autocomplete="off"><div style="font-size:10px;color:var(--text3);margin-top:3px">Cloud Console → Credentials → OAuth 2.0 Client ID → Web Application</div></div>
               <div><button class="btn btn-g btn-sm" onclick="testDriveConnection()" id="driveTestBtn" data-tip="Test Drive API key and folder ID">Test Connection</button> <span id="driveTestResult" style="font-size:11px;color:var(--text3);margin-left:8px"></span></div>
             </div>
           </div>
@@ -12980,10 +12979,10 @@ var STATUS_SERVICES=[
    getDetail:function(){var s=getRailsSession();var u=getIntegration("rails-api");return u?(s?"Connected as "+s.email:u.replace("https://","").slice(0,35)):"Not configured";},
    check:async function(){var s=getRailsSession();var u=getIntegration("rails-api");if(!u)return{ok:false,msg:"Not configured"};if(s)return{ok:true,msg:"Session active"};return{ok:"partial",msg:"URL saved — not connected"};},
    testFull:async function(){var u=getIntegration("rails-api");if(!u)return{ok:false,msg:"Not configured"};try{var r=await fetch(u.replace(/\/$/,"")+"/health");var d=await r.json();return d.status==="ok"?{ok:true,msg:"API healthy v"+d.version}:{ok:false,msg:"Unexpected response"};}catch(e){return{ok:false,msg:e.message.slice(0,50)};}} },
-  {id:"oauth",label:"Google OAuth (Browser)",
-   getDetail:function(){var t=getOAuthToken();return t?("Connected — expires "+new Date(t.expiry).toLocaleTimeString()):(getIntegration("gdrive-client-id")?"Client ID saved — not connected":"Not configured");},
-   check:async function(){var t=getOAuthToken();if(t&&t.access_token)return{ok:true,msg:"Connected"};var c=getIntegration("gdrive-client-id");return c?{ok:"partial",msg:"Client ID saved — tap Connect"}:{ok:false,msg:"Not configured"};},
-   testFull:async function(){var t=getOAuthToken();if(!t)return{ok:false,msg:"Not connected — use Connect button in AI & Integrations"};try{var r=await driveRequest("GET","https://www.googleapis.com/drive/v3/about?fields=user");var d=await r.json();return d.user?{ok:true,msg:"Connected as "+d.user.emailAddress}:{ok:false,msg:"Token invalid"};}catch(e){return{ok:false,msg:e.message.slice(0,50)};}} },
+  {id:"google-services",label:"Google Services",
+   getDetail:function(){var s=getRailsSession();if(!s||!s.token)return"Not connected";try{var p=JSON.parse(atob(s.token.split(".")[1]));if(p.exp&&p.exp*1000<Date.now())return"Session expired — reconnect";}catch(e){}return s.email?"Connected as "+s.email:"Connected via Rails API";},
+   check:async function(){var s=getRailsSession();if(!s||!s.token)return{ok:false,msg:"Not connected — use Connect via Rails API"};try{var p=JSON.parse(atob(s.token.split(".")[1]));if(p.exp&&p.exp*1000<Date.now())return{ok:"partial",msg:"Session expired — reconnect"};}catch(e){}return{ok:true,msg:s.email?"Connected as "+s.email:"Connected"};},
+   testFull:async function(){var s=getRailsSession();if(!s||!s.token)return{ok:false,msg:"Not connected — use Connect via Rails API in AI & Integrations"};try{var p=JSON.parse(atob(s.token.split(".")[1]));if(p.exp&&p.exp*1000<Date.now())return{ok:"partial",msg:"Session expired — click Reconnect in AI & Integrations → Google"};}catch(e){}try{var u=getIntegration("rails-api");var r=await fetch(u.replace(/\/$/,"")+"/health");var d=await r.json();return d.status==="ok"?{ok:true,msg:"Rails API healthy"+(s.email?" — "+s.email:"")}:{ok:"partial",msg:"Connected but API response unexpected"};}catch(e){return{ok:"partial",msg:"Session stored but API unreachable"};}} },
   {id:"ha",label:"Home Assistant",
    getDetail:function(){return getIntegration("ha-url")||"Not configured";},
    check:async function(){var u=getIntegration("ha-url");var t=getIntegration("ha-token");return(u&&t)?{ok:"partial",msg:"Saved - not tested"}:{ok:false,msg:"Not configured"};},
@@ -13095,12 +13094,11 @@ function updateOAuthUI(){
   var railsConnected=isRailsConnected();
   var connected=isOAuthConnected()||railsConnected;
   var btn=G("oauthConnectBtn");var dis=G("oauthDisconnectBtn");var stat=G("oauthStatus");
-  if(btn)btn.textContent=connected?"Reconnect":"\u{1F517} Connect Google Account";
-  if(dis)dis.style.display=connected?"inline-block":"none";
+  if(btn)btn.textContent=railsConnected?"&#128640; Reconnect":"&#128640; Connect via Rails API";
+  if(dis)dis.style.display=railsConnected?"inline-block":"none";
   if(stat){
-    var t=getOAuthToken();
-    stat.style.color=connected?"var(--green)":"var(--text3)";
-    if(railsConnected){var rs=getRailsSession();stat.style.color="var(--green)";stat.textContent="\u2713 Connected via Rails API"+(rs&&rs.email?" as "+rs.email:"");} else {stat.textContent=connected?"\u2713 Connected"+(t&&t.email?" as "+t.email:""):"Not connected";}
+    stat.style.color=railsConnected?"var(--green)":"var(--text3)";
+    if(railsConnected){var rs=getRailsSession();stat.textContent="\u2713 Connected via Rails API"+(rs&&rs.email?" as "+rs.email:"");} else {stat.textContent="Not connected";}
   }
 }
 
