@@ -4617,61 +4617,116 @@ async function pullTapMapReadings(btn){
 function renderSensorGauges(whId){
   var readings=JSON.parse(localStorage.getItem('twwp_tap_readings_v1')||'[]');
   var loc=S.find('locations',whId);
-  if(!loc||!loc.tap_id)return '';
-  var tidStr=String(loc.tap_id);
-  var whReadings=readings.filter(function(r){return String(r.tap_id)===tidStr;}).slice(0,20);
+  var whReadings=[];
+  if(loc&&loc.tap_id){
+    var tidStr=String(loc.tap_id);
+    whReadings=readings.filter(function(r){return String(r.tap_id)===tidStr;}).slice(0,40);
+  }
+  // Fallback: show most recent readings regardless of tap_id (covers manual entries)
+  if(!whReadings.length)whReadings=readings.slice(0,40);
   if(!whReadings.length)return '';
+
   var latest=whReadings[0];
   var minsAgo=Math.round((Date.now()-new Date(latest.created_at).getTime())/60000);
   var timeLabel=minsAgo<60?minsAgo+' mins ago':Math.round(minsAgo/60)+' hrs ago';
 
-  function sensorColor(val,type){
-    if(type==='ph'){return(val>=6.5&&val<=7.5)?'#2ecc71':(val>=6.0&&val<=8.0)?'#f5a623':'#e74c3c';}
-    if(type==='tds'){return val<50?'#2ecc71':val<150?'#f5a623':'#e74c3c';}
-    if(type==='ec'){return val<100?'#2ecc71':val<300?'#f5a623':'#e74c3c';}
-    return 'var(--cyan)';
+  var inReadings=whReadings.filter(function(r){return r.flow_type==='In';});
+  var outReadings=whReadings.filter(function(r){return r.flow_type==='Out';});
+  var hasFlowType=inReadings.length>0||outReadings.length>0;
+
+  function latestVal(arr,field){
+    if(!arr.length)return null;
+    var v=parseFloat(arr[0][field]);
+    return isNaN(v)?null:v;
   }
+  function sparkVals(arr,field){return arr.map(function(r){return parseFloat(r[field])||0;}).reverse();}
   function sparkline(vals,color){
     if(!vals||!vals.length)return '';
-    var w=120,h=32,pad=2;
+    var w=80,h=24,pad=2;
     var min=Math.min.apply(null,vals),max=Math.max.apply(null,vals);
     var range=max-min||1;
     var pts=vals.map(function(v,i){var x=pad+(i/(vals.length-1||1))*(w-2*pad);var y=h-pad-(v-min)/range*(h-2*pad);return x+','+y;}).join(' ');
     return '<svg width="'+w+'" height="'+h+'" style="display:block"><polyline points="'+pts+'" fill="none" stroke="'+color+'" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   }
-  var tdsVals=whReadings.map(function(r){return parseFloat(r.total_dissolved_solids)||0;}).reverse();
-  var ecVals=whReadings.map(function(r){return parseFloat(r.electronic_conductance)||0;}).reverse();
-  var phVals=whReadings.map(function(r){return parseFloat(r.potential_of_hydrogen)||0;}).reverse();
-  var orpVals=whReadings.map(function(r){return parseFloat(r.oxidation_reduction_potential)||0;}).reverse();
-
-  var tds=parseFloat(latest.total_dissolved_solids)||0;
-  var ec=parseFloat(latest.electronic_conductance)||0;
-  var ph=parseFloat(latest.potential_of_hydrogen)||0;
-  var orp=parseFloat(latest.oxidation_reduction_potential)||0;
-
-  function sensorCard(label,val,unit,color,spark,hint){
-    return '<div style="background:var(--surface);border-radius:10px;padding:12px;border-left:3px solid '+color+'">'+
-      '<div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">'+label+'</div>'+
-      '<div style="font-size:22px;font-weight:700;color:'+color+'">'+val.toFixed(1)+'<span style="font-size:11px;color:var(--text3);margin-left:4px">'+unit+'</span></div>'+
-      (hint?'<div style="font-size:9px;color:'+color+';margin-top:2px">'+hint+'</div>':'')+
-      '<div style="margin-top:8px">'+spark+'</div>'+
-      '</div>';
+  function colorIn(val,type){
+    if(val===null)return 'var(--text3)';
+    if(type==='tds')return val<50?'#2ecc71':val<150?'#f5a623':'#e74c3c';
+    if(type==='ec')return val<100?'#2ecc71':val<300?'#f5a623':'#e74c3c';
+    if(type==='ph')return(val>=6.5&&val<=7.5)?'#2ecc71':(val>=6.0&&val<=8.0)?'#f5a623':'#e74c3c';
+    if(type==='orp')return val>=200?'#2ecc71':val>=0?'#f5a623':'#e74c3c';
+    return 'var(--cyan)';
   }
-  function phHint(v){return v>=6.5&&v<=7.5?'Optimal':v>=6.0&&v<=8.0?'Acceptable':'Out of range';}
-  function tdsHint(v){return v<50?'Excellent':v<150?'Acceptable':'High';}
-  function ecHint(v){return v<100?'Good':v<300?'Elevated':'High';}
+  function colorOut(val,type){
+    if(val===null)return 'var(--text3)';
+    if(type==='tds')return val<10?'#2ecc71':val<30?'#f5a623':'#e74c3c';
+    if(type==='ec')return val<20?'#2ecc71':val<60?'#f5a623':'#e74c3c';
+    if(type==='ph')return(val>=6.5&&val<=8.5)?'#2ecc71':(val>=6.0&&val<=9.0)?'#f5a623':'#e74c3c';
+    if(type==='orp')return '#2ecc71'; // negative ORP on RO output is normal/expected — always green
+    return 'var(--cyan)';
+  }
+  function inOutCard(label,field,unit,type){
+    var inVal=latestVal(inReadings,field),outVal=latestVal(outReadings,field);
+    var ic=colorIn(inVal,type),oc=colorOut(outVal,type);
+    function fmt(v){return v===null?'--':(type==='orp'?v.toFixed(0):v.toFixed(1));}
+    return '<div style="background:var(--surface);border-radius:10px;padding:12px;border-top:3px solid var(--surface2)">'+
+      '<div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">'+label+'</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'+
+      '<div style="border-left:3px solid '+ic+';padding-left:8px"><div style="font-size:9px;color:var(--text3);margin-bottom:2px">IN</div>'+
+      '<div style="font-size:18px;font-weight:700;color:'+ic+'">'+fmt(inVal)+'<span style="font-size:10px;margin-left:2px;color:var(--text3)">'+unit+'</span></div>'+
+      '<div style="margin-top:4px">'+sparkline(sparkVals(inReadings,field),ic)+'</div></div>'+
+      '<div style="border-left:3px solid '+oc+';padding-left:8px"><div style="font-size:9px;color:var(--text3);margin-bottom:2px">OUT</div>'+
+      '<div style="font-size:18px;font-weight:700;color:'+oc+'">'+fmt(outVal)+'<span style="font-size:10px;margin-left:2px;color:var(--text3)">'+unit+'</span></div>'+
+      '<div style="margin-top:4px">'+sparkline(sparkVals(outReadings,field),oc)+'</div></div>'+
+      '</div></div>';
+  }
 
-  return '<div style="background:var(--surface2);border-radius:12px;padding:16px;margin-bottom:24px">'+
+  var html='<div style="background:var(--surface2);border-radius:12px;padding:16px;margin-bottom:24px">'+
     '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">'+
     '<div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em">&#128200; Live Sensor Readings</div>'+
-    '<span style="font-size:11px;color:var(--text3)">Last reading: '+timeLabel+'</span>'+
-    '</div>'+
-    '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px">'+
-    sensorCard('TDS',tds,'ppm',sensorColor(tds,'tds'),sparkline(tdsVals,sensorColor(tds,'tds')),tdsHint(tds))+
-    sensorCard('EC',ec,'µS/cm',sensorColor(ec,'ec'),sparkline(ecVals,sensorColor(ec,'ec')),ecHint(ec))+
-    sensorCard('pH',ph,'',sensorColor(ph,'ph'),sparkline(phVals,sensorColor(ph,'ph')),phHint(ph))+
-    sensorCard('ORP',orp,'mV','var(--purple)',sparkline(orpVals,'var(--purple)'),''+latest.flow_type||'')+
-    '</div></div>';
+    '<span style="font-size:11px;color:var(--text3)">Last reading: '+timeLabel+'</span></div>';
+  if(hasFlowType){
+    html+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px">'+
+      inOutCard('TDS','total_dissolved_solids','ppm','tds')+
+      inOutCard('EC','electronic_conductance','µS/cm','ec')+
+      inOutCard('pH','potential_of_hydrogen','','ph')+
+      inOutCard('ORP','oxidation_reduction_potential','mV','orp')+
+      '</div>';
+    var tdsIn=latestVal(inReadings,'total_dissolved_solids');
+    var tdsOut=latestVal(outReadings,'total_dissolved_solids');
+    if(tdsIn!==null&&tdsOut!==null&&tdsIn>0){
+      var effPct=((tdsIn-tdsOut)/tdsIn*100);
+      var effColor=effPct>=95?'#2ecc71':effPct>=80?'#f5a623':'#e74c3c';
+      html+='<div style="margin-top:12px;background:var(--surface);border-radius:10px;padding:12px;display:flex;align-items:center;gap:12px">'+
+        '<div style="font-size:24px;font-weight:700;color:'+effColor+'">'+effPct.toFixed(1)+'%</div>'+
+        '<div><div style="font-size:11px;font-weight:700;color:var(--text2)">Filtration Efficiency</div>'+
+        '<div style="font-size:10px;color:var(--text3)">TDS reduction: '+tdsIn.toFixed(1)+' → '+tdsOut.toFixed(1)+' ppm</div></div></div>';
+    }
+  } else {
+    // No flow_type data — single gauge view
+    var r0=whReadings[0];
+    var tds=parseFloat(r0.total_dissolved_solids)||0;
+    var ec=parseFloat(r0.electronic_conductance)||0;
+    var ph=parseFloat(r0.potential_of_hydrogen)||0;
+    var orp=parseFloat(r0.oxidation_reduction_potential)||0;
+    var tdsC=tds<50?'#2ecc71':tds<150?'#f5a623':'#e74c3c';
+    var ecC=ec<100?'#2ecc71':ec<300?'#f5a623':'#e74c3c';
+    var phC=(ph>=6.5&&ph<=7.5)?'#2ecc71':(ph>=6.0&&ph<=8.0)?'#f5a623':'#e74c3c';
+    function sc(l,v,u,c,sp){
+      return '<div style="background:var(--surface);border-radius:10px;padding:12px;border-left:3px solid '+c+'">'+
+        '<div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">'+l+'</div>'+
+        '<div style="font-size:22px;font-weight:700;color:'+c+'">'+v.toFixed(1)+'<span style="font-size:11px;color:var(--text3);margin-left:4px">'+u+'</span></div>'+
+        '<div style="margin-top:8px">'+sp+'</div></div>';
+    }
+    function spk(field,color){return sparkline(whReadings.map(function(r){return parseFloat(r[field])||0;}).reverse(),color);}
+    html+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px">'+
+      sc('TDS',tds,'ppm',tdsC,spk('total_dissolved_solids',tdsC))+
+      sc('EC',ec,'µS/cm',ecC,spk('electronic_conductance',ecC))+
+      sc('pH',ph,'',phC,spk('potential_of_hydrogen',phC))+
+      sc('ORP',orp,'mV','var(--purple)',spk('oxidation_reduction_potential','var(--purple)'))+
+      '</div>';
+  }
+  html+='</div>';
+  return html;
 }
 
 // R&D

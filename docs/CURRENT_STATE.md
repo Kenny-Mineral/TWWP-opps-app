@@ -1,6 +1,6 @@
 # TWWP Ops App — Current State
 
-**Last updated:** 2026-03-23 (sprint end — sessions 9–11)
+**Last updated:** 2026-03-23 (Sprint B fixes — STI, In/Out gauges, keep-warm)
 
 ---
 
@@ -8,6 +8,25 @@
 
 Single-file app at `index.html` deployed on GitHub Pages.
 Rails API at `https://twwp-ops-api.fly.dev`.
+
+---
+
+## Sprint B fixes (2026-03-23)
+
+### Fix 1 — TapMapTap STI conflict (twwp-ops-api)
+- `TapMapTap`: `self.inheritance_column = :_type_disabled` disables Rails STI on the `type` column
+- Controller `taps` action: `t.read_attribute(:type)` to safely return the raw column value
+- GET /api/tap_map/taps now returns `type` field in JSON without STI interference
+
+### Fix 2 — WH Monitor In/Out gauge display
+- `renderSensorGauges()` fully rewritten with flow_type-aware rendering
+- Splits readings into `In` / `Out` groups; shows side-by-side per-metric cards (TDS, EC, pH, ORP)
+- Filtration efficiency stat: TDS reduction % with green/amber/red colouring (≥95% = green)
+- ORP negative on RO output shown as green (expected); pH 6.5–8.5 output range = green
+- Fallback: if no tap_id match, shows most recent readings from store (covers manual entries)
+
+### Fix 3 — Fly.io keep-warm (twwp-ops-api)
+- `fly.toml`: `min_machines_running` raised from 0 → 1 to prevent cold-start timeouts
 
 ---
 
