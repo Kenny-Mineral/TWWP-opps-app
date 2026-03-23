@@ -325,6 +325,20 @@ branding, users and config — without touching the code.
 
 - ✅ `[EXPLICIT]` Part 1: Token capture in callModelForFeature(), sendAIHelperMsg(), aiCallJSON() — DONE
 - ✅ `[EXPLICIT]` Part 2: logTokenUsage() + calculateTokenCost() + helper query functions — DONE
+
+---
+
+## Sprint D — Onboarding, User Management, Email, Stripe, Blog, Waitlist
+
+- ✅ `[EXPLICIT]` D1: Onboarding Wizard (7 steps: org_type, branding, guardian email, AI provider, integration status, invite, done) — DONE Sprint D
+- ✅ `[EXPLICIT]` D2: User Management (Rails endpoints, Users page with invite/role/deactivate, admin-gated) — DONE Sprint D
+- ✅ `[EXPLICIT]` D3: Email Service infrastructure (EmailService.send_email routing, Resend/SendGrid/Brevo/Mailtrap, POST /api/email/test) — DONE Sprint D
+- ✅ `[EXPLICIT]` D4: Email Providers page (provider cards, config fields, from-address manager, test/live mode, sending stats) — DONE Sprint D
+- ✅ `[EXPLICIT]` D5: Stripe page (Overview/VIP/Charges/Subscriptions tabs, 4 Rails endpoints, MRR/revenue stats) — DONE Sprint D
+- ✅ `[EXPLICIT]` D6: VIP member tagging (contact fields: is_vip/vip_since/total_contributed/subscription_status, pullTapMapContacts cross-reference, 💎 badge + filter) — DONE Sprint D
+- ✅ `[EXPLICIT]` D7: Waitlist page (pull from TapMapWaitListEntry, stats by interest, table with Add to Contacts/Campaign) — DONE Sprint D
+- ✅ `[EXPLICIT]` D8: Blog Management page (TapMapBlogPost, ContentController, create/edit/publish, News & Sources tab) — DONE Sprint D
+- ✅ `[EXPLICIT]` D9: AI News Scraper (fetch from sources, AI extract articles, weekly digest generation, news-to-blog draft) — DONE Sprint D
 - ✅ `[EXPLICIT]` Part 3: Resource bar token indicator (rb-tokens, goToUsageTab()) — DONE
 - ✅ `[EXPLICIT]` Part 4: Developer → Usage tab (summary cards, bar charts, last 50 calls, sprint tokens table, CSV export) — DONE
 - ✅ `[EXPLICIT]` Part 5: org_config.current_sprint field + sprint selector in Usage tab — DONE

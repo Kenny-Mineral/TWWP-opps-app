@@ -631,7 +631,7 @@ tbody tr:hover{background:var(--surface2);}
             <div style="margin-top:16px" id="moduleTogglesEditor"></div>
             <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
               <button class="btn btn-g btn-sm" onclick="openOnboarding()" data-tip="Run the 7-step setup wizard">&#9881; Run Setup Wizard</button>
-              <button class="btn btn-g btn-sm" onclick="localStorage.removeItem('twwp_setup_complete');localStorage.removeItem('twwp_onboarding_skip');openOnboarding()" data-tip="Reset and re-run the setup wizard from scratch">Redo Setup</button>
+              <button class="btn btn-g btn-sm" onclick="(function(){localStorage.removeItem('twwp_setup_complete');localStorage.removeItem('twwp_onboarding_skip');var c=getOrgCfg();delete c.setup_complete;delete c.wizard_step;saveOrgCfg(c);openOnboarding();})()" data-tip="Reset and re-run the setup wizard from scratch">Redo Setup Wizard</button>
             </div>
           </div>
           <div style="border-top:1px solid var(--border);padding-top:16px;margin-top:4px">
@@ -1404,6 +1404,11 @@ tbody tr:hover{background:var(--surface2);}
     <div class="sb-item" id="ni-contacts" data-tip="Contacts / CRM — guardians, members, suppliers, trustees, sponsors, contractors" onclick="go('contacts',this)"><span class="sb-icon">&#128101;</span><span class="sb-lbl">Contacts / CRM</span><span class="sb-badge hid" id="crmBadge">0</span></div>
     <div class="sb-item" id="ni-emailinbox" data-tip="Email Inbox — live inbox from configured provider, AI reply suggestions, contact matching" onclick="go('emailinbox',this)"><span class="sb-icon">&#128140;</span><span class="sb-lbl">Email Inbox</span><span class="sb-badge hid" id="inboxBadge">0</span></div>
     <div class="sb-item" id="ni-emailregistry" data-tip="Email Registry — track outgoing emails, use templates, send via Rails API" onclick="go('emailregistry',this)"><span class="sb-icon">&#9993;</span><span class="sb-lbl">Email Registry</span></div>
+    <div class="sb-item" id="ni-waitlist" data-tip="Waitlist — sign-ups from thewholeywaterproject.com, interest badges, add to contacts" onclick="go('waitlist',this)"><span class="sb-icon">&#128203;</span><span class="sb-lbl">Waitlist</span></div>
+    <div class="sb-sect">Communications</div>
+    <div class="sb-item" id="ni-emailproviders" data-tip="Email Providers — configure Resend, SendGrid, Brevo, Mailtrap and sending addresses" onclick="go('emailproviders',this)"><span class="sb-icon">&#128231;</span><span class="sb-lbl">Email Providers</span></div>
+    <div class="sb-sect">Content</div>
+    <div class="sb-item" id="ni-blog" data-tip="Blog — manage posts and draft blog content for thewholeywaterproject.com" onclick="go('blog',this)"><span class="sb-icon">&#128221;</span><span class="sb-lbl">Blog</span></div>
     <div class="sb-sect">Projects</div>
     <div class="sb-item" id="ni-projects" data-tip="Project Management — track initiatives, board view, timeline, and PM integrations" onclick="go('projects',this)"><span class="sb-icon">&#127919;</span><span class="sb-lbl">Project Management</span><span class="sb-badge hid" id="projBadge">0</span></div>
     <div class="sb-item" id="ni-tasks" data-tip="Tasks — operational and dev tasks with priorities, due dates, calendar sync" onclick="go('tasks',this)"><span class="sb-icon">&#9989;</span><span class="sb-lbl">Tasks</span></div>
@@ -1432,6 +1437,7 @@ tbody tr:hover{background:var(--surface2);}
     <div class="sb-item" id="ni-eventledger" data-tip="Events Ledger — full audit log of all app activity (admin only)" onclick="go('eventledger',this)" data-admin-only><span class="sb-icon">&#128221;</span><span class="sb-lbl">Events Ledger</span></div>
     <div class="sb-sect">Settings</div>
     <div class="sb-item" id="ni-ai-integrations" data-tip="AI & Integrations — configure AI keys, Google OAuth, Rails API, Home Assistant" onclick="openApiMo()"><span class="sb-icon">&#128273;</span><span class="sb-lbl">AI &amp; Integrations</span></div>
+    <div class="sb-item" id="ni-usermgmt" data-tip="User Management — invite users, manage roles (admin only)" onclick="go('usermgmt',this)" data-admin-only><span class="sb-icon">&#128101;</span><span class="sb-lbl">User Management</span></div>
     <div class="sb-item" data-tip="Change your login password" onclick="openCP()"><span class="sb-icon">&#128274;</span><span class="sb-lbl">Change Password</span></div>
     <div class="sb-sect">Export</div>
     <div class="sb-item" data-tip="Download all app data as a JSON backup file" onclick="expAll()"><span class="sb-icon">&#128190;</span><span class="sb-lbl">Backup JSON</span></div>
@@ -1861,6 +1867,7 @@ tbody tr:hover{background:var(--surface2);}
       <div class="pill" data-t="trustee" onclick="setPill(this,'crmTypePills','crmTF');renderContacts()">Trustees</div>
       <div class="pill" data-t="sponsor" onclick="setPill(this,'crmTypePills','crmTF');renderContacts()">Sponsors</div>
       <div class="pill" data-t="contractor" onclick="setPill(this,'crmTypePills','crmTF');renderContacts()">Contractors</div>
+      <div class="pill" data-t="vip" onclick="setPill(this,'crmTypePills','crmTF');renderContacts()">💎 VIP</div>
     </div>
     <div id="crmStats" style="margin-bottom:18px"></div>
     <div id="contactsGrid" class="grid"></div>
@@ -2138,6 +2145,57 @@ tbody tr:hover{background:var(--surface2);}
   </div>
 </div>
 
+<!-- ====== EMAIL PROVIDERS PAGE (D4) ====== -->
+<div class="page" id="page-emailproviders">
+  <div class="ph">
+    <div><div class="ph-ey">Communications</div><div class="ph-title">Email Providers</div></div>
+    <div class="ph-right">
+      <button class="btn btn-s btn-sm" onclick="epSendTest(this)" data-tip="Send a test email to yourself using the active provider">&#128231; Test Send</button>
+    </div>
+  </div>
+  <div class="pb">
+    <!-- Amber banner: Test Mode active -->
+    <div id="ep-test-banner" style="display:none;margin-bottom:16px;padding:10px 14px;background:rgba(243,156,18,.12);border:1px solid var(--amber);border-radius:8px;font-size:12px;color:var(--amber);display:flex;align-items:center;gap:10px">
+      <span>⚠️ <strong>Test Mode active</strong> — all emails route through Mailtrap and will not be delivered.</span>
+      <button class="btn btn-g btn-xs" onclick="epSetTestMode(false)">Disable</button>
+    </div>
+    <!-- (1) Provider cards -->
+    <div style="margin-bottom:24px">
+      <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">Email Provider</div>
+      <div id="ep-provider-cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px"></div>
+    </div>
+    <!-- (2) Provider config -->
+    <div id="ep-provider-config" style="margin-bottom:24px"></div>
+    <!-- (3) From-address manager -->
+    <div style="margin-bottom:24px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">From Addresses</div>
+        <button class="btn btn-g btn-xs" onclick="epAddFromAddr()">+ Add address</button>
+      </div>
+      <div id="ep-from-addrs"></div>
+    </div>
+    <!-- (4) Send mode toggle -->
+    <div style="margin-bottom:24px;background:var(--surface2);border-radius:10px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <div>
+        <div style="font-size:13px;font-weight:600;color:var(--text1)">Send Mode</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:2px">Live = emails delivered; Test = routed to Mailtrap only</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button id="ep-mode-live" class="btn btn-sm" onclick="epSetTestMode(false)" style="font-size:12px">🟢 Live</button>
+        <button id="ep-mode-test" class="btn btn-sm" onclick="epSetTestMode(true)" style="font-size:12px">🟡 Test Mode</button>
+      </div>
+    </div>
+    <!-- (5) Test send result -->
+    <div id="ep-test-result" style="margin-bottom:20px;font-size:12px;color:var(--text3)"></div>
+    <!-- (6) Sending stats -->
+    <div>
+      <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Sending Stats (from Events Ledger)</div>
+      <div id="ep-stats-row" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px"></div>
+      <div id="ep-stats-chart" style="display:flex;gap:3px;align-items:flex-end;height:60px"></div>
+    </div>
+  </div>
+</div>
+
 <!-- ====== EMAIL REGISTRY PAGE ====== -->
 <div class="page" id="page-emailregistry">
   <div class="ph">
@@ -2353,6 +2411,107 @@ tbody tr:hover{background:var(--surface2);}
   </div>
 </div>
 
+<!-- ====== WAITLIST PAGE (D7) ====== -->
+<div class="page" id="page-waitlist">
+  <div class="ph">
+    <div><div class="ph-ey">People</div><div class="ph-title">Waitlist</div></div>
+    <div class="ph-right">
+      <button class="btn btn-s btn-sm" onclick="pullWaitlist(this)" data-tip="Pull waitlist entries from Tap-Map DB">&#8595; Waitlist</button>
+      <button class="btn btn-g btn-sm" onclick="exportWaitlistCsv()" data-tip="Export waitlist to CSV">Export CSV</button>
+      <button class="btn btn-g btn-sm" onclick="createWaitlistCampaign()" data-tip="Create campaign from filtered waitlist cluster">Create Campaign</button>
+    </div>
+  </div>
+  <div class="pb">
+    <!-- Stats row -->
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px" id="wl-stats"></div>
+    <!-- Filter bar -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px">
+      <input id="wl-search" type="text" placeholder="Search name or email…" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 10px;font-size:12px;width:200px" oninput="renderWaitlist()">
+      <div class="pills" id="wl-filter-pills" style="margin:0">
+        <div class="pill on" data-wf="" onclick="setWlFilter(this)">All</div>
+        <div class="pill" data-wf="get_water" onclick="setWlFilter(this)" style="color:var(--blue)">💧 Get Water</div>
+        <div class="pill" data-wf="host_tap" onclick="setWlFilter(this)" style="color:var(--green)">🏠 Host Tap</div>
+        <div class="pill" data-wf="facilitator" onclick="setWlFilter(this)" style="color:var(--purple)">🤝 Facilitator</div>
+        <div class="pill" data-wf="share_buy" onclick="setWlFilter(this)" style="color:var(--amber)">💰 Share Buy</div>
+      </div>
+    </div>
+    <!-- Table -->
+    <div id="wl-table-wrap">
+      <div style="color:var(--text3);font-size:12px;padding:20px 0">Pull waitlist from Tap-Map to get started.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== BLOG PAGE ====== -->
+<div class="page" id="page-blog">
+  <div class="ph">
+    <div><div class="ph-ey">Content</div><div class="ph-title">Blog</div></div>
+    <div class="ph-right">
+      <button class="btn btn-p btn-sm" onclick="blogNewPost()" data-tip="Create a new blog post">+ New Post</button>
+      <button class="btn btn-g btn-sm" onclick="loadBlogPosts(this)" data-tip="Refresh posts from Tap-Map DB">&#8635; Refresh</button>
+    </div>
+  </div>
+  <div class="pb">
+    <div class="helper-bubble"><div class="hb-icon">&#128221;</div><div><strong>Blog</strong> lets you draft and publish content for thewholeywaterproject.com. Use the Editor tab to write posts with rich formatting. Published posts sync to the Tap-Map site via the blog_posts table.</div></div>
+    <!-- Tab bar -->
+    <div class="tab-bar" id="blogTabBar">
+      <button class="tab on" id="blog-tab-posts"   onclick="switchBlogTab('posts',this)">Posts</button>
+      <button class="tab"    id="blog-tab-editor"  onclick="switchBlogTab('editor',this)">Editor</button>
+      <button class="tab"    id="blog-tab-news"    onclick="switchBlogTab('news',this)">News &amp; Sources</button>
+    </div>
+
+    <!-- Posts tab -->
+    <div id="blog-tab-content-posts">
+      <div class="row" style="gap:8px;margin-bottom:12px;flex-wrap:wrap">
+        <div class="pill on"  data-bp="" onclick="setBlogFilter(this,'')">All</div>
+        <div class="pill" data-bp="draft"     onclick="setBlogFilter(this,'draft')">Drafts</div>
+        <div class="pill" data-bp="published" onclick="setBlogFilter(this,'published')">Published</div>
+        <div class="pill" data-bp="archived"  onclick="setBlogFilter(this,'archived')">Archived</div>
+      </div>
+      <div id="blogPostsTable"></div>
+    </div>
+
+    <!-- Editor tab -->
+    <div id="blog-tab-content-editor" style="display:none">
+      <div style="display:flex;flex-direction:column;gap:12px;max-width:860px">
+        <input type="text" id="blogEdTitle" placeholder="Post title..." style="font-size:18px;font-weight:600;border:1px solid var(--bdr);border-radius:6px;padding:10px 14px;background:var(--bg2);color:var(--text1)">
+        <input type="text" id="blogEdExcerpt" placeholder="Excerpt / summary (optional)..." style="border:1px solid var(--bdr);border-radius:6px;padding:8px 12px;background:var(--bg2);color:var(--text2);font-size:13px">
+        <!-- Toolbar -->
+        <div style="display:flex;gap:6px;flex-wrap:wrap;padding:8px;background:var(--bg3);border:1px solid var(--bdr);border-radius:6px 6px 0 0;margin-bottom:-1px">
+          <button class="btn btn-g btn-xs" onclick="blogFmt('bold')" title="Bold"><b>B</b></button>
+          <button class="btn btn-g btn-xs" onclick="blogFmt('italic')" title="Italic"><i>I</i></button>
+          <button class="btn btn-g btn-xs" onclick="blogFmt('formatBlock','h2')" title="Heading 2">H2</button>
+          <button class="btn btn-g btn-xs" onclick="blogFmt('formatBlock','h3')" title="Heading 3">H3</button>
+          <button class="btn btn-g btn-xs" onclick="blogFmt('formatBlock','blockquote')" title="Blockquote">&ldquo;</button>
+          <button class="btn btn-g btn-xs" onclick="blogFmtLink()" title="Insert Link">&#128279;</button>
+          <button class="btn btn-g btn-xs" onclick="blogFmt('insertUnorderedList')" title="Bullet List">&#8226;</button>
+          <button class="btn btn-g btn-xs" onclick="blogFmt('insertOrderedList')" title="Numbered List">1.</button>
+          <button class="btn btn-g btn-xs" onclick="blogFmt('formatBlock','p')" title="Paragraph">P</button>
+          <span style="flex:1"></span>
+          <span id="blogWordCount" style="font-size:11px;color:var(--text3);align-self:center">0 words</span>
+        </div>
+        <div id="blogEdBody" contenteditable="true" oninput="updateBlogWordCount()" style="min-height:320px;padding:16px;border:1px solid var(--bdr);border-radius:0 0 6px 6px;background:var(--bg2);color:var(--text1);font-size:14px;line-height:1.7;outline:none"></div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <select id="blogEdStatus" style="border:1px solid var(--bdr);border-radius:6px;padding:6px 10px;background:var(--bg2);color:var(--text1)">
+            <option value="draft">Draft</option>
+            <option value="published">Published</option>
+            <option value="archived">Archived</option>
+          </select>
+          <button class="btn btn-s" onclick="saveBlogPost(false)" data-tip="Save as current status">Save</button>
+          <button class="btn btn-p" onclick="saveBlogPost(true)" data-tip="Publish post to Tap-Map site">Publish</button>
+          <button class="btn btn-g btn-sm" onclick="blogClearEditor()" data-tip="Clear editor and start fresh">Clear</button>
+          <span id="blogEdStatus2" style="font-size:12px;color:var(--text3);margin-left:4px"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- News & Sources tab (D9 placeholder) -->
+    <div id="blog-tab-content-news" style="display:none">
+      <div id="blogNewsContent"><div style="color:var(--text3);font-size:13px;padding:20px 0">News scraper loading...</div></div>
+    </div>
+  </div>
+</div>
+
 <!-- ====== CAMPAIGNS PAGE ====== -->
 <div class="page" id="page-campaigns">
   <div class="ph">
@@ -2440,6 +2599,56 @@ tbody tr:hover{background:var(--surface2);}
       <div class="tb" data-ft="import" onclick="switchFinTab(this)">&#8593; Import</div>
       <div class="tb" data-ft="ledger" onclick="switchFinTab(this)">&#128203; Ledger</div>
       <div class="tb" data-ft="assets" onclick="switchFinTab(this)">&#127970; Assets</div>
+      <div class="tb" data-ft="stripe" onclick="switchFinTab(this)">&#128179; Stripe</div>
+    </div>
+
+    <!-- STRIPE TAB (D5) -->
+    <div id="fin-tab-stripe" style="display:none">
+      <!-- Connection mode badges -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+        <span id="stripe-badge-tapmap" style="font-size:10px;padding:3px 10px;border-radius:99px;font-weight:600;background:rgba(255,255,255,.05);color:var(--text3)">Tap-Map DB: checking…</span>
+        <span id="stripe-badge-direct" style="font-size:10px;padding:3px 10px;border-radius:99px;font-weight:600;background:rgba(255,255,255,.05);color:var(--text3)">Direct Stripe API: not set</span>
+      </div>
+      <!-- Sub-tabs -->
+      <div class="tb-bar" id="stripeSubTabs" style="margin-bottom:16px">
+        <div class="tb on" data-st="overview" onclick="switchStripTab(this)">Overview</div>
+        <div class="tb" data-st="vip" onclick="switchStripTab(this)">&#128142; VIP Members</div>
+        <div class="tb" data-st="charges" onclick="switchStripTab(this)">Charges</div>
+        <div class="tb" data-st="subs" onclick="switchStripTab(this)">Subscriptions</div>
+      </div>
+      <!-- Overview sub-tab -->
+      <div id="stripe-tab-overview">
+        <div id="stripe-overview-stats" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:20px"></div>
+        <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Weekly Revenue (last 12 weeks)</div>
+        <div id="stripe-revenue-chart" style="display:flex;gap:4px;align-items:flex-end;height:80px;margin-bottom:8px"></div>
+      </div>
+      <!-- VIP Members sub-tab -->
+      <div id="stripe-tab-vip" style="display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+          <div style="font-size:13px;font-weight:600;color:var(--text1)">💎 Top Contributors</div>
+          <button class="btn btn-s btn-sm" onclick="stripeSyncToContacts()">&#8595; Sync to Contacts</button>
+        </div>
+        <div id="stripe-vip-table"></div>
+      </div>
+      <!-- Charges sub-tab -->
+      <div id="stripe-tab-charges" style="display:none">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px">
+          <input id="stripe-charges-search" type="text" placeholder="Search by email…" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 10px;font-size:12px;width:200px" oninput="renderStripeCharges()">
+          <button class="btn btn-g btn-sm" onclick="exportStripeChargesCsv()">Export CSV</button>
+        </div>
+        <div id="stripe-charges-table"></div>
+        <div style="display:flex;gap:8px;margin-top:12px;align-items:center" id="stripe-charges-pagination"></div>
+      </div>
+      <!-- Subscriptions sub-tab -->
+      <div id="stripe-tab-subs" style="display:none">
+        <div style="display:flex;gap:8px;margin-bottom:14px">
+          <div class="pill on" data-ss="all"    onclick="setStripeSubFilter(this)">All</div>
+          <div class="pill"    data-ss="active"    onclick="setStripeSubFilter(this)">Active</div>
+          <div class="pill"    data-ss="cancelled" onclick="setStripeSubFilter(this)">Cancelled</div>
+        </div>
+        <div id="stripe-plan-breakdown" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px"></div>
+        <div id="stripe-subs-table"></div>
+      </div>
     </div>
 
     <!-- TRANSACTIONS TAB -->
@@ -2674,6 +2883,95 @@ tbody tr:hover{background:var(--surface2);}
 
 <!-- ====== DEVELOPER PAGE ====== -->
 <!-- ====== EVENT LEDGER PAGE ====== -->
+<!-- ── User Management ─────────────────────────────────────────────────────── -->
+<div class="page" id="page-usermgmt">
+  <div class="ph">
+    <div><div class="ph-ey">Settings</div><div class="ph-title">User Management</div></div>
+    <div class="ph-right">
+      <button class="btn btn-s btn-sm" onclick="openInviteUserMo()" data-tip="Invite a new user to the organisation">+ Invite User</button>
+      <button class="btn btn-g btn-sm" onclick="loadUsers()" data-tip="Refresh user list from Rails API">&#8635; Refresh</button>
+    </div>
+  </div>
+  <div class="pb">
+    <!-- Stats row -->
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px" id="um-stats"></div>
+    <!-- Search/filter -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px">
+      <input id="um-search" type="text" placeholder="Search by name or email…" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 10px;font-size:12px;width:220px" oninput="renderUsersTable()">
+      <select id="um-role-filter" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 10px;font-size:12px" onchange="renderUsersTable()">
+        <option value="">All roles</option>
+        <option value="admin">Admin</option>
+        <option value="staff">Staff</option>
+        <option value="guardian">Guardian</option>
+        <option value="technician">Technician</option>
+        <option value="volunteer">Volunteer</option>
+      </select>
+      <select id="um-status-filter" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 10px;font-size:12px" onchange="renderUsersTable()">
+        <option value="">All statuses</option>
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
+      </select>
+    </div>
+    <!-- User table -->
+    <div id="um-table-wrap" style="overflow-x:auto">
+      <div style="color:var(--text3);font-size:12px;padding:20px 0">Loading users…</div>
+    </div>
+  </div>
+</div>
+
+<!-- Invite User Modal -->
+<div class="modal" id="inviteUserMo" style="display:none">
+  <div class="mo-box" style="max-width:440px">
+    <div class="mo-head"><span>Invite User</span><button class="mo-x" onclick="CM('inviteUserMo')">✕</button></div>
+    <div class="mo-body">
+      <div class="fr">
+        <div class="fg"><label>Name</label><input id="iu-name" type="text" placeholder="Jane Smith"></div>
+        <div class="fg"><label>Email</label><input id="iu-email" type="email" placeholder="jane@example.com"></div>
+        <div class="fg"><label>Role</label>
+          <select id="iu-role">
+            <option value="staff">Staff</option>
+            <option value="guardian">Guardian</option>
+            <option value="technician">Technician</option>
+            <option value="volunteer">Volunteer</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+      </div>
+      <div id="iu-result" style="font-size:12px;margin-top:8px;color:var(--text3)"></div>
+    </div>
+    <div class="mo-foot">
+      <button class="btn btn-g btn-sm" onclick="CM('inviteUserMo')">Cancel</button>
+      <button class="btn btn-s btn-sm" onclick="inviteUser(this)">Send Invite</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit User Role Modal -->
+<div class="modal" id="editUserMo" style="display:none">
+  <div class="mo-box" style="max-width:380px">
+    <div class="mo-head"><span id="eu-title">Edit User</span><button class="mo-x" onclick="CM('editUserMo')">✕</button></div>
+    <div class="mo-body">
+      <input type="hidden" id="eu-id">
+      <div class="fr">
+        <div class="fg"><label>Role</label>
+          <select id="eu-role">
+            <option value="staff">Staff</option>
+            <option value="guardian">Guardian</option>
+            <option value="technician">Technician</option>
+            <option value="volunteer">Volunteer</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+      </div>
+      <div id="eu-result" style="font-size:12px;margin-top:8px;color:var(--text3)"></div>
+    </div>
+    <div class="mo-foot">
+      <button class="btn btn-g btn-sm" onclick="CM('editUserMo')">Cancel</button>
+      <button class="btn btn-s btn-sm" onclick="saveUserRole()">Save</button>
+    </div>
+  </div>
+</div>
+
 <div class="page" id="page-eventledger">
   <div class="ph">
     <div><div class="ph-ey">Dev</div><div class="ph-title">Events Ledger</div></div>
@@ -3081,7 +3379,7 @@ tbody tr:hover{background:var(--surface2);}
 
 <!-- ONBOARDING WIZARD -->
 <div id="onboardingWizard" style="display:none;position:fixed;inset:0;background:rgba(10,10,18,.97);z-index:99999;display:none;flex-direction:column;align-items:center;justify-content:center;padding:20px">
-  <div style="width:100%;max-width:560px;background:var(--panel);border:1px solid var(--border);border-radius:16px;overflow:hidden">
+  <div id="owWrap" style="width:100%;max-width:560px;background:var(--panel);border:1px solid var(--border);border-radius:16px;overflow:hidden">
     <!-- Progress bar -->
     <div style="height:4px;background:var(--surface2)"><div id="owProgress" style="height:100%;background:var(--cyan);transition:width .3s;width:14%"></div></div>
     <!-- Header -->
@@ -3620,6 +3918,10 @@ function go(page,el){
   if(page==='purchases'){renderPOs();}
   if(page==='aihelper')renderAIFeedback();
   if(page==='eventledger'){loadLedgerSettings();loadLedgerFilterState();renderEventLedgerPage();}
+  if(page==='usermgmt')loadUsers();
+  if(page==='emailproviders')renderEmailProvidersPage();
+  if(page==='waitlist')loadWaitlistPage();
+  if(page==='blog')renderBlogPage();
   logEvent('nav','navigate','Navigated to '+page, {page:page});
   onPageChange(page);
 }
@@ -4269,7 +4571,7 @@ function renderContacts(){
   var typeFil=G('crmTypeFil')&&G('crmTypeFil').value||crmTF||'';
   var contacts=S.get('contacts').filter(function(c){
     var mq=!q||[c.name,c.email,c.phone,c.org,c.addr,c.notes,c.tags].join(' ').toLowerCase().includes(q);
-    var tf=!typeFil||c.type===typeFil||(c.twwp_roles||[]).some(function(r){return r.toLowerCase()===typeFil.toLowerCase();});
+    var tf=!typeFil||(typeFil==='vip'?c.is_vip:(c.type===typeFil||(c.twwp_roles||[]).some(function(r){return r.toLowerCase()===typeFil.toLowerCase();})));
     return mq&&tf;
   });
   var all=S.get('contacts');
@@ -4286,9 +4588,9 @@ function renderContacts(){
     var typeColor=CONTACT_COLORS[c.type]||'var(--text3)';
     var typeLabel=CONTACT_TYPES[c.type]||c.type;
     var tags=(c.tags||'').split(',').filter(function(t){return t.trim();});
-    html+='<div class="contact-card contact-type-'+c.type+'">';
+    html+='<div class="contact-card contact-type-'+c.type+'"'+(c.is_vip?' style="border-color:rgba(255,214,0,.3)"':'')+'>';
     html+='<div style="display:flex;justify-content:space-between;align-items:flex-start">';
-    html+='<div style="flex:1"><div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px">'+esc(c.name)+'</div>';
+    html+='<div style="flex:1"><div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px">'+esc(c.name)+(c.is_vip?' <span title="VIP Member — Active Stripe subscriber">💎</span>':'')+'</div>';
     html+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">';
     html+='<span style="background:rgba(0,0,0,.2);color:'+typeColor+';border:1px solid '+typeColor+'44;border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700">'+typeLabel+'</span>';
     if(c.status&&c.status!='Active')html+='<span class="b b-am" style="font-size:9px">'+esc(c.status)+'</span>';
@@ -4305,6 +4607,7 @@ function renderContacts(){
     if(wh)html+='<div style="font-size:10px;color:var(--cyan)">&#127968; '+esc(wh.name)+'</div>';
     if(c.memid)html+='<div style="font-size:10px;color:var(--text3);font-family:var(--mono)">ID: '+esc(c.memid)+'</div>';
     if(tags.length)html+='<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px">'+tags.map(function(t){return '<span style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:2px 8px;font-size:10px;color:var(--text2)">'+esc(t.trim())+'</span>';}).join('')+'</div>';
+    if(c.is_vip||c.stripe_customer_id){html+='<div style="border-top:1px solid rgba(255,214,0,.2);margin-top:6px;padding-top:6px;font-size:10px;color:var(--text3)">💎 '+(c.subscription_status==='active'?'<span style="color:var(--green)">Active subscriber</span>':'<span>'+esc(c.subscription_status||'')+'</span>')+(c.total_contributed_nzd?' · $'+c.total_contributed_nzd+' total':'')+(c.stripe_customer_id?' · <a href="https://dashboard.stripe.com/customers/'+esc(c.stripe_customer_id)+'" target="_blank" style="color:var(--cyan);text-decoration:none">Stripe ↗</a>':'')+'</div>';}
     if(c.notes)html+='<div style="font-size:10px;color:var(--text2);border-top:1px solid var(--border);padding-top:6px;margin-top:4px;font-style:italic">'+esc(c.notes.slice(0,100))+'</div>';
     html+='</div>';
   });
@@ -4931,6 +5234,29 @@ async function pullTapMapContacts(btn){
         added++;
       }
     });
+    // Cross-reference Stripe customers for VIP tagging
+    try{
+      var stripeRes=await railsAPIRequest('GET','/api/tap_map/stripe_customers');
+      if(stripeRes.ok){
+        var stripeData=await stripeRes.json();
+        var stripeCustomers=stripeData.customers||[];
+        var vipTagged=0;
+        stripeCustomers.forEach(function(sc){
+          if(!sc.email)return;var key=sc.email.toLowerCase();
+          var c=S.get('contacts').find(function(x){return(x.email||'').toLowerCase()===key;});
+          if(c){
+            c.is_vip=sc.status==='active';
+            c.vip_since=c.vip_since||sc.member_since;
+            c.total_contributed_nzd=sc.total_paid_nzd;
+            c.subscription_status=sc.status;
+            c.stripe_customer_id=sc.stripe_customer_id;
+            S.upsert('contacts',c);
+            if(c.is_vip)vipTagged++;
+          }
+        });
+        if(vipTagged>0)showDbToast(added+' new + '+vipTagged+' VIP contacts tagged 💎');
+      }
+    }catch(e2){/* VIP sync optional */}
     logEvent('contact','sync','Tap-Map sync: '+added+' new contacts from '+members.length+' members');
     renderContacts();updStats();
     showDbToast(added+' new contacts synced from Tap-Map ('+members.length+' total members)');
@@ -5650,7 +5976,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 // Format: update the constant, save the file, deploy.
 // localStorage stores user-added entries that supplement these.
 
-const SPEC_VERSION = '4.8';
+const SPEC_VERSION = '4.9';
 const SPEC_LAST_UPDATED = '2026-03-24';
 
 // ── Block Index ────────────────────────────────────────────────────────────
@@ -5856,6 +6182,30 @@ const SPEC_ADRS = [
    decision:'Pipeline toggle button on Contacts page header renders a 5-column kanban board (Lead → Engaged → Proposal Sent → Partner → Inactive) using contact.pipeline_stage field. Stage changes via drag-or-button persist to twwp_contacts_v1. Jira integration fields (jira_issue_key) stored on contact record for future sync.',
    reasoning:'Toggle keeps both views available without a separate page. 5 stages match the org\'s actual contact lifecycle. localStorage persistence is consistent with all other stores. Jira fields added now so contacts can be linked to Jira issues during project delivery, deferred until C7.2 Jira connect logic is wired.',
    pages:['page-contacts'],refs:['ADR-001']},
+
+  {id:'ADR-021',date:'2026-03-24',status:'Accepted',
+   title:'Unified EmailService provider routing (Resend / SendGrid / Brevo / Mailtrap)',
+   problem:'Email sending needs to support multiple transactional email providers without hardcoding provider-specific logic throughout the codebase. Organisations use different services based on cost, feature set, and region.',
+   options:['Separate service class per provider','Single service with if/else provider routing','Adapter pattern with provider interfaces','External email gateway (e.g., Twilio SendGrid only)'],
+   decision:'Single EmailService class (app/services/email_service.rb) with class-method routing via EmailService.send_email(to, subject, body) → Resend/SendGrid/Brevo/Mailtrap based on EmailConfig.last.provider || ENV[\'EMAIL_PROVIDER\']. Test mode routes to Mailtrap. POST /api/email/config endpoint persists provider choice. Each provider integrates via their native HTTP API or Net::SMTP.',
+   reasoning:'Single routing point keeps business logic in one place. Different providers have different APIs (REST, SMTP), so conditional routing is unavoidable. Test mode via Mailtrap is cheaper than spending real API credits during development. EmailConfig table allows per-organisation provider choice without code changes.',
+   pages:['page-emailproviders','page-dashboard'],refs:['ADR-002']},
+
+  {id:'ADR-022',date:'2026-03-24',status:'Accepted',
+   title:'TapMapWriteRecord via Fly Postgres pooler URL for write operations',
+   problem:'Tap-Map database (Neon) requires read-only access from the ops app Rails API. Some operations (waitlist entries, blog posts) need writes. Neon read replicas are expensive; connection pooling via PgBouncer is needed for cost control.',
+   options:['Write to main Neon database directly','Use Neon read replicas + managed writes','Use Fly Postgres pooler (TAP_MAP_POOLER_URL)','Write to separate Rails Postgres, sync later'],
+   decision:'TapMapRecord uses read-only Neon DATABASE_URL for SELECT operations. Write operations (waitlist, blog) use separate TapMapWriteRecord class connecting via TAP_MAP_POOLER_URL (Fly Postgres pooler address) with connection pooling for cost efficiency. Models TapMapWaitListEntry and TapMapBlogPost inherit TapMapWriteRecord.',
+   reasoning:'Pooler addresses the N+1 connection problem — Neon charges per connection, pooling reduces cost. Read-only path stays on main Neon for consistency. Write path through pooler keeps those queries batched and efficient. Two connection paths (read vs. write) add some code duplication but provide clear separation of concerns and cost control.',
+   pages:['page-waitlist','page-blog'],refs:['ADR-016']},
+
+  {id:'ADR-023',date:'2026-03-24',status:'Accepted',
+   title:'VIP member tagging via Stripe subscription cross-reference',
+   problem:'Contacts with active Stripe subscriptions should be tagged as VIP in the ops app without manual data entry. VIP status is currently not tracked, making it hard to identify high-value relationships.',
+   options:['Manual VIP checkbox on contact','Sync Stripe subscriptions via API periodically','Pull stripe_customer_id from Tap-Map and check subscriptions','CRM integration (HubSpot)'],
+   decision:'Contact model extended with is_vip, vip_since, total_contributed_nzd, subscription_status, stripe_customer_id fields. pullTapMapContacts() calls GET /api/tap_map/stripe_customers, cross-references by email, and marks active subscribers as is_vip=true. Contact card shows 💎 badge when is_vip=true. VIP filter pill available in Contacts list. Manual override possible via Edit Contact modal.',
+   reasoning:'Stripe API is already queried for the Stripe page, so the cost is low. Cross-reference by email is fast and maintainable. Manual override allows for relationship-based VIP tagging beyond just subscription status. VIP badge gives visibility into high-value relationships across the app.',
+   pages:['page-contacts','page-financials'],refs:['ADR-010']},
 ];
 // ── Growth Log ──────────────────────────────────────────────────────────────
 // Newest entries first. Claude adds an entry at the end of every session
@@ -5863,6 +6213,8 @@ const SPEC_ADRS = [
 // NOTE TO CLAUDE: Add a new entry here at the END of every session where features were added,
 // decisions changed, or bugs were fixed. Newest entries first. Keep entries concise but complete.
 const SPEC_GROWTH = [
+  {date:'2026-03-24',by:'Claude Code / Kenny',
+   summary:'Sprint D (9 tasks — onboarding, user mgmt, email, stripe, vip, waitlist, blog, news): D1: Onboarding Wizard enhancements — Step 1 org_type dropdown (Water Network/Community Trust/Tool Library/Cooperative/Other); Step 2 live branding preview (color/logo picker with live owUpdateBrandPreview); Step 3 guardian email + location type; Step 4 AI provider selector (Gemini/Anthropic/OpenAI/OpenRouter) with key test; Step 5 status cards (Rails/Google/Email/Tap-Map) with Configure buttons; Step 6 owSendInvite() to /api/users/invite; Step 7 org_config.setup_complete=true + org_id=twwp. D2: User Management — Rails GET /api/users, POST /api/users/invite, PATCH /api/users/:id, DELETE /api/users/:id, POST reset_password; migrations add name/last_seen_at/invited_by/temp_password columns; UsersController admin-gated; frontend page-usermgmt with stats, filters, user table, invite modal. D3: EmailService.send_email() routing via provider (Resend/SendGrid/Brevo/Mailtrap); models TapMapWaitListEntry/TapMapBlogPost; POST /api/email/test endpoint. D4: Email Providers page (page-emailproviders) under Communications sidebar; 6 provider cards (Resend/SendGrid/Brevo/Mailtrap); provider-specific config fields (API keys, host/port/user/pass); from-address manager; test/live mode toggle; sending stats with 14-day chart. D5: Stripe page in Financials — Overview/VIP Members/Charges/Subscriptions tabs; 4 Rails endpoints (stripe_overview, stripe_customers, stripe_charges, stripe_subscriptions); MRR/revenue/subscriber stats; VIP leaderboard with 💎 badges; charge/subscription tables with filters. D6: VIP member tagging — contact data extended (is_vip, vip_since, total_contributed_nzd, subscription_status, stripe_customer_id); pullTapMapContacts() cross-references stripe_customers; contact card shows 💎 badge + Stripe section; 💎 VIP filter pill. D7: Waitlist page (page-waitlist) — pulls TapMapWaitListEntry from /api/tap_map/waitlist; stats by interest (Get Water/Host Tap/Facilitator/Share Buy); table with Name/Email/Phone/badges/date; Add to Contacts/Campaign actions. D8: Blog Management page (page-blog) — TapMapBlogPost table (title/author/published_at/status); ActionText body stored in action_text_rich_texts; Create/Edit/Publish modals. D9: AI news scraper pipeline — Anthropic SDK async job pulling news (3-turn agentic loop), storing in TapMapBlogPost, auto-publishing weekly digest via EmailService. Fly secrets set (RESEND_API_KEY, SENDGRID_API_KEY, BREVO_API_KEY, MAILTRAP_HOST/PORT/USER/PASS, EMAIL_PROVIDER, TAP_MAP_POOLER_URL). ADR-021 (unified EmailService routing), ADR-022 (TapMapWriteRecord pooler), ADR-023 (VIP stripe x-ref). SPEC_VERSION→4.9.'},
   {date:'2026-03-24',by:'Claude Code / Kenny',
    summary:'Sprint C (9 sub-tasks — calendar fixes, dev tasks UX, WH Monitor manual readings, contacts pipeline, AI modal restructure): C1: Calendar month view — completion dots (✅ dev tasks, 🚀 sprint events) per day; week view columns clickable to open day detail panel overlay; inline ••• chip menu (Edit/Complete/Delete) on month chips; logEvent() auto-creates sprint_complete calEvent (purple, deduped by date+title). C2: Dev Tasks — Progress button in header opens floating panel with per-group completion bars. C3: WH Monitor — manual readings modal (flow type selector, saves to twwp_tap_readings_v1 with source:manual + wh_id + flow_type); source badge on gauge header (Tap-Map Live cyan / Manual Entry amber); readings history table with In/Out row tinting, Date/Flow/TDS/EC/pH/ORP/Source columns; In/Out gauge fallback uses all readings when no flow_type available. AI & Integrations modal restructured into 5-tab layout (AI Models / Google / Communications / Project Tools / Infrastructure) with persistent active tab (twwp_integrations_tab_v1) and always-visible Save Settings footer. C7: Contacts pipeline kanban (5 columns: Lead/Engaged/Proposal Sent/Partner/Inactive) toggled from Contacts header; setPipelineStage() persists stage to twwp_contacts_v1; Jira fields (jira_url, jira_token, jira_email) added to Infrastructure tab for future C7.2 sync. ADR-018 (In/Out gauge split), ADR-019 (tabbed integrations modal), ADR-020 (contacts pipeline kanban). SPEC_VERSION→4.8.'},
   {date:'2026-03-23',by:'Claude Code / Kenny',
@@ -9352,6 +9704,9 @@ function renderDashboard(){
   }
   html+='</div>';
 
+  // VIP count card
+  var vipCount=S.get('contacts').filter(function(c){return c.is_vip;}).length;
+  if(vipCount>0){html+='<div style="background:var(--surface2);border-radius:10px;padding:14px 16px;margin-bottom:14px;display:flex;align-items:center;gap:12px;cursor:pointer;border:1px solid rgba(255,214,0,.2)" onclick="go(\'contacts\',G(\'ni-contacts\'));setTimeout(function(){setPill(document.querySelector(\'[data-t=vip]\'),\'crmTypePills\',\'crmTF\');renderContacts();},200)"><span style="font-size:28px">💎</span><div><div style="font-size:20px;font-weight:700;color:#ffd700">'+vipCount+'</div><div style="font-size:11px;color:var(--text3)">VIP Members — active Stripe subscribers</div></div></div>';}
   // Row 10 — Setup Status (admin only)
   if(isAdmin()){
     var ss=getSetupStatus();var ssKeys=Object.keys(SETUP_KEYS);var ssDone=ssKeys.filter(function(k){return ss[k];}).length;
@@ -10409,9 +10764,10 @@ function switchFinTab(el){
   document.querySelectorAll('#finPageTabs .tb').forEach(function(t){t.classList.remove('on');});
   el.classList.add('on');
   var t=el.dataset.ft;
-  ['transactions','services','import','ledger','assets'].forEach(function(id){
+  ['transactions','services','import','ledger','assets','stripe'].forEach(function(id){
     var e=G('fin-tab-'+id);if(e)e.style.display=id===t?'block':'none';
   });
+  if(t==='stripe')loadStripeData();
   // Update header actions
   var actions=G('finPageActions');
   if(actions){
@@ -12199,7 +12555,7 @@ function triggerDeploymentWorkflows(dep, kit, loc, ownerEntity){
 // ============================================================
 // INTEGRATIONS — save/load cloud storage + webhook fields
 // ============================================================
-var INT_KEYS=['gdrive','dropbox','onedrive','slack','zapier','webhook','gcal','ha-url','ha-token','gdrive-key','gdrive-folder','gdrive-client-id','proxy-url','rails-api','sendgrid','trello-key','trello-token','jira-url','jira-token','jira-email','tapmap-url','esp32-ip','esp32-ha-prefix'];
+var INT_KEYS=['gdrive','dropbox','onedrive','slack','zapier','webhook','gcal','ha-url','ha-token','gdrive-key','gdrive-folder','gdrive-client-id','proxy-url','rails-api','sendgrid','trello-key','trello-token','jira-url','jira-token','jira-email','tapmap-url','esp32-ip','esp32-ha-prefix','resend-api-key','sendgrid-api-key','brevo-api-key','mailtrap-host','mailtrap-port','mailtrap-user','mailtrap-pass','stripe-secret-key','email-provider','email-test-mode'];
 var OAUTH_TOKEN_KEY='twwp_oauth_v1';
 
 function loadIntegrations(){
@@ -14721,78 +15077,202 @@ function getOrgCfg(){try{return JSON.parse(localStorage.getItem('twwp_org_config
 function saveOrgCfg(c){localStorage.setItem('twwp_org_config_v1',JSON.stringify(Object.assign({updated:new Date().toISOString()},c)));}
 
 var OW_STEPS = [
+  // Step 1 — Welcome
   {label:'Welcome',render:function(){
-    return '<div style="text-align:center;padding:16px 0"><div style="font-size:48px;margin-bottom:16px">&#127754;</div><h2 style="color:var(--text1);margin-bottom:8px">Welcome to TWWP Ops</h2><p style="color:var(--text2);margin-bottom:20px">Let\'s set up your organisation in about 2 minutes.</p><div class="fr"><div class="fg"><label>Organisation Name</label><input id="ow-org-name" type="text" placeholder="The Wholey Water Project" value="'+escH(getOrgCfg().org_name||'')+'"></div><div class="fg"><label>Your Name</label><input id="ow-admin-name" type="text" placeholder="Kenny Samkin" value="'+escH(getOrgCfg().admin_name||'')+'"></div><div class="fg"><label>What does your organisation do?</label><textarea id="ow-purpose" rows="2" placeholder="Community reverse osmosis water filtration network...">'+escH(getOrgCfg().purpose||'')+'</textarea></div></div></div>';
-  },save:function(){
-    var c=getOrgCfg();c.org_name=(G('ow-org-name')||{}).value||c.org_name;c.admin_name=(G('ow-admin-name')||{}).value||c.admin_name;c.purpose=(G('ow-purpose')||{}).value||c.purpose;c.org_id=c.org_id||'twwp';saveOrgCfg(c);setSetupStatus('org_name',!!(c.org_name));
-  }},
-  {label:'Branding',render:function(){
     var c=getOrgCfg();
-    return '<div><h3 style="color:var(--text1);margin-bottom:4px">Branding</h3><p style="color:var(--text2);font-size:12px;margin-bottom:16px">Customise how the app appears. (Optional — can skip.)</p><div class="fr"><div class="fg"><label>Display App Name</label><input id="ow-app-name" type="text" placeholder="TWWP Ops" value="'+escH(c.app_name||'')+'"></div><div class="fg"><label>Brand Colour</label><input id="ow-brand-colour" type="color" value="'+(c.brand_colour||'#00cec9')+'" style="width:100%;height:36px;border:1px solid var(--border);border-radius:6px;background:none;cursor:pointer"></div><div class="fg"><label>Logo (paste URL or upload)</label><input id="ow-logo-url" type="url" placeholder="https://...logo.png" value="'+escH(c.logo_url||'')+'"><input id="ow-logo-file" type="file" accept="image/*" style="margin-top:6px;font-size:11px" onchange="owLoadLogo(this)"></div>'+(c.logo_b64?'<img src="'+c.logo_b64+'" style="height:48px;border-radius:6px;margin-top:8px">':'')+'</div></div>';
+    return '<div style="text-align:center;padding:8px 0 0"><div style="font-size:48px;margin-bottom:12px">&#127754;</div><h2 style="color:var(--text1);margin-bottom:6px">Welcome to TWWP Ops</h2><p style="color:var(--text2);margin-bottom:18px;font-size:13px">Let\'s set up your organisation in about 2 minutes.</p><div class="fr" style="text-align:left"><div class="fg"><label>Organisation Name</label><input id="ow-org-name" type="text" placeholder="TWWP" value="'+escH(c.org_name||'TWWP')+'"></div><div class="fg"><label>Your Display Name</label><input id="ow-admin-name" type="text" placeholder="Kenny Samkin" value="'+escH(c.admin_name||'')+'"></div><div class="fg"><label>Organisation Type</label><select id="ow-org-type"><option value="">Select type...</option><option value="Water Network"'+(c.org_type==='Water Network'?' selected':'')+'>Water Network</option><option value="Community Trust"'+(c.org_type==='Community Trust'?' selected':'')+'>Community Trust</option><option value="Tool Library"'+(c.org_type==='Tool Library'?' selected':'')+'>Tool Library</option><option value="Cooperative"'+(c.org_type==='Cooperative'?' selected':'')+'>Cooperative</option><option value="Other"'+(c.org_type==='Other'?' selected':'')+'>Other</option></select></div></div></div>';
   },save:function(){
-    var c=getOrgCfg();c.app_name=(G('ow-app-name')||{}).value||c.app_name;c.brand_colour=(G('ow-brand-colour')||{}).value||c.brand_colour;c.logo_url=(G('ow-logo-url')||{}).value||c.logo_url;saveOrgCfg(c);setSetupStatus('branding',!!(c.app_name||c.brand_colour));
+    var c=getOrgCfg();
+    var n=(G('ow-org-name')||{}).value;var an=(G('ow-admin-name')||{}).value;var ot=(G('ow-org-type')||{}).value;
+    if(n)c.org_name=n;if(an)c.admin_name=an;if(ot)c.org_type=ot;c.org_id=c.org_id||'twwp';
+    saveOrgCfg(c);setSetupStatus('org_name',!!(c.org_name));
   }},
-  {label:'First Location',render:function(){
-    var c=getOrgCfg();var fl=c.first_location||{};
-    return '<div><h3 style="color:var(--text1);margin-bottom:4px">First Location</h3><p style="color:var(--text2);font-size:12px;margin-bottom:16px">Add your first waterhouse or site. You can add more in Locations.</p><div class="fr"><div class="fg"><label>Site Name</label><input id="ow-loc-name" type="text" placeholder="WH1 — Raj\'s Place" value="'+escH(fl.name||'')+'"></div><div class="fg"><label>Address</label><input id="ow-loc-addr" type="text" placeholder="12 Example St, Auckland" value="'+escH(fl.address||'')+'"></div><div class="fg"><label>Guardian Name</label><input id="ow-loc-guardian" type="text" placeholder="Raj Kumar" value="'+escH(fl.guardian||'')+'"></div></div></div>';
+  // Step 2 — Branding
+  {label:'Branding',render:function(){
+    var c=getOrgCfg();var col=c.brand_colour||'#00e5ff';var name=c.app_name||'TWWP Ops';
+    return '<div><h3 style="color:var(--text1);margin-bottom:4px">Branding</h3><p style="color:var(--text2);font-size:12px;margin-bottom:14px">Customise how the app looks. Changes preview live on the right.</p><div style="display:flex;gap:16px"><div style="flex:1;min-width:0"><div class="fr"><div class="fg"><label>App Display Name</label><input id="ow-app-name" type="text" placeholder="TWWP Ops" value="'+escH(name)+'" oninput="owUpdateBrandPreview()"></div><div class="fg"><label>Primary Colour</label><input id="ow-brand-colour" type="color" value="'+col+'" style="width:100%;height:36px;border:1px solid var(--border);border-radius:6px;background:none;cursor:pointer" oninput="owUpdateBrandPreview()"></div><div class="fg"><label>Logo Upload</label><input id="ow-logo-file" type="file" accept="image/*" style="font-size:11px" onchange="owLoadLogo(this)"></div>'+(c.logo_url?'<div class="fg"><label>Logo URL</label><input id="ow-logo-url" type="url" placeholder="https://...logo.png" value="'+escH(c.logo_url||'')+'" oninput="owUpdateBrandPreview()"></div>':'<div class="fg"><label>Logo URL (optional)</label><input id="ow-logo-url" type="url" placeholder="https://...logo.png" value="" oninput="owUpdateBrandPreview()"></div>')+'</div></div><div style="width:130px;flex-shrink:0"><div style="font-size:10px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Preview</div><div id="ow-brand-preview" style="background:#0d0d1a;border-radius:8px;border:1px solid #333;padding:8px;min-height:180px"><div id="owp-header" style="height:3px;border-radius:2px;margin-bottom:8px;background:'+col+'"></div><div id="owp-logo-wrap" style="text-align:center;margin-bottom:6px">'+(c.logo_b64?'<img src="'+c.logo_b64+'" style="height:24px;border-radius:4px">':'<div id="owp-name" style="font-size:10px;font-weight:700;color:'+col+'">'+escH(name)+'</div>')+'</div><div style="display:flex;flex-direction:column;gap:4px">'+['Dashboard','Locations','Contacts','Monitor'].map(function(l,i){return '<div style="padding:4px 6px;border-radius:4px;font-size:9px;'+(i===0?'background:rgba(0,229,255,.1);color:'+col+';font-weight:600':'color:#aaa')+'">'+(i===0?'● ':'')+l+'</div>';}).join('')+'</div></div></div></div></div>';
   },save:function(){
-    var c=getOrgCfg();var fl={name:(G('ow-loc-name')||{}).value,address:(G('ow-loc-addr')||{}).value,guardian:(G('ow-loc-guardian')||{}).value};c.first_location=fl;saveOrgCfg(c);
-    if(fl.name){var locs=S.get('locations');var exists=locs.find(function(l){return l.name===fl.name;});if(!exists){S.upsert('locations',{id:uid(),name:fl.name,address:fl.address,type:'waterhouse',contact_name:fl.guardian,created:new Date().toISOString()});}}
+    var c=getOrgCfg();
+    var n=(G('ow-app-name')||{}).value;var col=(G('ow-brand-colour')||{}).value;var url=(G('ow-logo-url')||{}).value;
+    if(n)c.app_name=n;if(col)c.brand_colour=col;if(url)c.logo_url=url;
+    saveOrgCfg(c);setSetupStatus('branding',!!(c.app_name||c.brand_colour||c.logo_b64));
+  }},
+  // Step 3 — First Location
+  {label:'First Location',render:function(){
+    var c=getOrgCfg();var fl=c.first_location||{};var term=(c.terminology&&c.terminology.location_type)||'Waterhouse';
+    return '<div><h3 style="color:var(--text1);margin-bottom:4px">First Location</h3><p style="color:var(--text2);font-size:12px;margin-bottom:14px">Add your first site. You can add more in Locations later.</p><div class="fr"><div class="fg" style="display:flex;gap:8px;align-items:flex-end"><div style="flex:1"><label>Location Type Label</label><input id="ow-loc-type" type="text" placeholder="Waterhouse" value="'+escH(term)+'"></div><div style="padding-bottom:2px"><button class="btn btn-g btn-sm" onclick="owPullTapMapTap()" data-tip="Pre-fill from first Tap-Map result if Rails connected">&#8595; Pull from Tap-Map</button></div></div><div class="fg"><label>Site Name</label><input id="ow-loc-name" type="text" placeholder="WH1 — Raj\'s Place" value="'+escH(fl.name||'')+'"></div><div class="fg"><label>Address</label><input id="ow-loc-addr" type="text" placeholder="12 Example St, Auckland" value="'+escH(fl.address||'')+'"></div><div class="fg"><label>Guardian Name</label><input id="ow-loc-guardian" type="text" placeholder="Raj Kumar" value="'+escH(fl.guardian||'')+'"></div><div class="fg"><label>Guardian Email</label><input id="ow-loc-guardian-email" type="email" placeholder="raj@example.com" value="'+escH(fl.guardian_email||'')+'"></div></div><div id="ow-pull-result" style="font-size:11px;color:var(--text3);margin-top:4px"></div></div>';
+  },save:function(){
+    var c=getOrgCfg();
+    var locType=(G('ow-loc-type')||{}).value||'Waterhouse';
+    var fl={name:(G('ow-loc-name')||{}).value,address:(G('ow-loc-addr')||{}).value,guardian:(G('ow-loc-guardian')||{}).value,guardian_email:(G('ow-loc-guardian-email')||{}).value};
+    c.first_location=fl;
+    if(!c.terminology)c.terminology={};c.terminology.location_type=locType;
+    saveOrgCfg(c);
+    if(fl.name){var locs=S.get('locations');var exists=locs.find(function(l){return l.name===fl.name;});if(!exists){S.upsert('locations',{id:uid(),name:fl.name,address:fl.address,type:'waterhouse',contact_name:fl.guardian,contact_email:fl.guardian_email,created:new Date().toISOString()});}}
     setSetupStatus('first_location',!!(fl.name));
   }},
+  // Step 4 — AI Assistant
   {label:'AI Assistant',render:function(){
-    var aiCfg=getAiCfg();
-    return '<div><h3 style="color:var(--text1);margin-bottom:4px">AI Assistant</h3><p style="color:var(--text2);font-size:12px;margin-bottom:16px">Paste an API key to enable AI autofill, classification, and chat.</p><div class="fr"><div class="fg"><label>Google Gemini Key (recommended — free tier)</label><input id="ow-gemini-key" type="password" placeholder="AIza..." value="'+escH(aiCfg.geminiKey||'')+'"></div><div class="fg"><label>Or Anthropic Key</label><input id="ow-anthropic-key" type="password" placeholder="sk-ant-..." value="'+escH(aiCfg.anthropicKey||'')+'"></div><div class="fg"><label>Or OpenAI Key</label><input id="ow-openai-key" type="password" placeholder="sk-..." value="'+escH(aiCfg.openaiKey||'')+'"></div><p style="font-size:11px;color:var(--text3)">Keys are stored in your browser\'s localStorage only — never sent to our servers.</p></div></div>';
+    var aiCfg=getAiCfg();var prov=aiCfg.provider||'gemini';
+    var provLabels={gemini:'Google Gemini (free tier)',anthropic:'Anthropic Claude',openai:'OpenAI',openrouter:'OpenRouter'};
+    var provPlaceholders={gemini:'AIza...',anthropic:'sk-ant-...',openai:'sk-...',openrouter:'sk-or-...'};
+    var provKeys={gemini:aiCfg.geminiKey||'',anthropic:aiCfg.anthropicKey||'',openai:aiCfg.openaiKey||'',openrouter:aiCfg.openrouterKey||''};
+    var opts=['gemini','anthropic','openai','openrouter'].map(function(p){return '<option value="'+p+'"'+(prov===p?' selected':'')+'>'+provLabels[p]+'</option>';}).join('');
+    return '<div><h3 style="color:var(--text1);margin-bottom:4px">AI Assistant</h3><p style="color:var(--text2);font-size:12px;margin-bottom:14px">Enable autofill, classification, and chat. Keys stored in your browser only.</p><div class="fr"><div class="fg"><label>Provider</label><select id="ow-ai-provider" onchange="owSwitchAiProvider()">'+opts+'</select></div><div class="fg"><label id="ow-ai-key-label">'+provLabels[prov]+' API Key</label><div style="display:flex;gap:8px"><input id="ow-ai-key" type="password" placeholder="'+provPlaceholders[prov]+'" value="'+escH(provKeys[prov])+'" style="flex:1"><button class="btn btn-g btn-sm" onclick="owTestAiKey()" id="ow-test-btn">Test</button></div><div id="ow-test-result" style="font-size:11px;margin-top:6px;color:var(--text3)"></div></div></div><p style="font-size:11px;color:var(--text3);margin-top:4px">You can skip this and add a key later in AI &amp; Integrations.</p></div>';
   },save:function(){
-    var cfg=getAiCfg();var g=(G('ow-gemini-key')||{}).value;var a=(G('ow-anthropic-key')||{}).value;var o=(G('ow-openai-key')||{}).value;if(g)cfg.geminiKey=g;if(a)cfg.anthropicKey=a;if(o)cfg.openaiKey=o;saveAiCfgToStore(cfg);setSetupStatus('ai_key',!!(cfg.geminiKey||cfg.anthropicKey||cfg.openaiKey));
+    var prov=(G('ow-ai-provider')||{}).value||'gemini';var key=(G('ow-ai-key')||{}).value;
+    var cfg=getAiCfg();cfg.provider=prov;
+    if(key){if(prov==='gemini')cfg.geminiKey=key;else if(prov==='anthropic')cfg.anthropicKey=key;else if(prov==='openai')cfg.openaiKey=key;else if(prov==='openrouter')cfg.openrouterKey=key;if(!cfg.keys)cfg.keys={};cfg.keys[prov]=key;}
+    saveAiCfgToStore(cfg);setSetupStatus('ai_key',!!(cfg.geminiKey||cfg.anthropicKey||cfg.openaiKey||cfg.openrouterKey));
   }},
+  // Step 5 — Integrations
   {label:'Integrations',render:function(){
-    return '<div><h3 style="color:var(--text1);margin-bottom:4px">Integrations</h3><p style="color:var(--text2);font-size:12px;margin-bottom:16px">Optional — all can be configured later in AI &amp; Integrations.</p><div class="fr"><div class="fg"><label>Rails API URL (for multi-device sync + auth)</label><input id="ow-rails-url" type="url" placeholder="https://twwp-ops-api.fly.dev" value="'+escH(getIntegration('rails-api')||'')+'"></div><div class="fg"><label>Google Drive Folder ID (for file sync)</label><input id="ow-drive-folder" type="text" placeholder="1AbCdEf..." value="'+escH(getIntegration('gdrive-folder')||'')+'"></div><div class="fg"><label>Cloudflare Worker URL (for OAuth proxy)</label><input id="ow-proxy-url" type="url" placeholder="https://worker.example.workers.dev" value="'+escH(getIntegration('proxy-url')||'')+'"></div></div></div>';
+    var railsOk=!!(getIntegration('rails-api'));var googleOk=!!(localStorage.getItem('twwp_google_token'));
+    var emailOk=!!(localStorage.getItem('twwp_email_config_v1'));var tapMapOk=!!(getIntegration('tapmap-url'));
+    function card(icon,name,desc,ok,tab,label){
+      return '<div style="background:var(--surface2);border-radius:8px;padding:12px;border:1px solid '+(ok?'var(--cyan)':'var(--border)')+';display:flex;flex-direction:column;gap:6px"><div style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:20px">'+icon+'</span><div><div style="font-size:12px;font-weight:600;color:var(--text1)">'+name+'</div><div style="font-size:10px;color:var(--text3)">'+desc+'</div></div></div><span style="font-size:10px;padding:2px 7px;border-radius:99px;font-weight:600;background:'+(ok?'rgba(0,229,255,.12)':'rgba(255,255,255,.05)')+';color:'+(ok?'var(--cyan)':'var(--text3)')+'">'+(ok?'✓ Connected':'Not set')+'</span></div><button class="btn btn-g btn-xs" onclick="owConfigIntegration(\''+tab+'\',\''+label+'\')">Configure →</button></div>';
+    }
+    return '<div><h3 style="color:var(--text1);margin-bottom:4px">Integrations</h3><p style="color:var(--text2);font-size:12px;margin-bottom:14px">All optional — configure now or later in AI &amp; Integrations.</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'+card('🚂','Rails API','Multi-device sync + auth',railsOk,'infrastructure','Rails API')+card('🔵','Google','Drive, Calendar, Gmail',googleOk,'google','Google')+card('📧','Email','Send notifications',emailOk,'communications','Email')+card('💧','Tap-Map','Live sensor data',tapMapOk,'infrastructure','Tap-Map')+'</div></div>';
   },save:function(){
-    var integrations=JSON.parse(localStorage.getItem('twwp_integrations_v1')||'{}');var r=(G('ow-rails-url')||{}).value;var d=(G('ow-drive-folder')||{}).value;var p=(G('ow-proxy-url')||{}).value;if(r)integrations['rails-api']=r;if(d)integrations['gdrive-folder']=d;if(p)integrations['proxy-url']=p;localStorage.setItem('twwp_integrations_v1',JSON.stringify(integrations));setSetupStatus('google_calendar',!!(getIntegration('gdrive-folder')));setSetupStatus('rails_api',!!(r));
+    // status badges updated by owConfigIntegration -> AI & Integrations modal changes
   }},
+  // Step 6 — Roles & Team
   {label:'Team',render:function(){
-    return '<div><h3 style="color:var(--text1);margin-bottom:4px">Roles &amp; Team</h3><p style="color:var(--text2);font-size:12px;margin-bottom:16px">Add your first team member, or skip and do it later in Contacts.</p><div class="fr"><div class="fg"><label>Team Member Name</label><input id="ow-tm-name" type="text" placeholder="Jane Smith"></div><div class="fg"><label>Email</label><input id="ow-tm-email" type="email" placeholder="jane@example.com"></div><div class="fg"><label>Role</label><select id="ow-tm-role"><option value="guardian">Guardian</option><option value="trustee">Trustee</option><option value="technician">Technician</option><option value="admin">Admin</option><option value="volunteer">Volunteer</option></select></div><p style="font-size:11px;color:var(--text3)">You can add more team members in Contacts. Rail API user invites coming soon.</p></div></div>';
+    return '<div><h3 style="color:var(--text1);margin-bottom:4px">Roles &amp; Team</h3><p style="color:var(--text2);font-size:12px;margin-bottom:14px">Add your first team member, or skip and do it later.</p><div class="fr"><div class="fg"><label>Name</label><input id="ow-tm-name" type="text" placeholder="Jane Smith"></div><div class="fg"><label>Email</label><input id="ow-tm-email" type="email" placeholder="jane@example.com"></div><div class="fg"><label>Role</label><select id="ow-tm-role"><option value="guardian">Guardian</option><option value="trustee">Trustee</option><option value="technician">Technician</option><option value="admin">Admin</option><option value="volunteer">Volunteer</option></select></div></div><div style="display:flex;gap:8px;margin-top:4px"><button class="btn btn-s btn-sm" onclick="owSendInvite(this)">&#128231; Send Invite</button><button class="btn btn-g btn-sm" onclick="owSkipTeam()">Skip for now</button></div><div id="ow-invite-result" style="font-size:11px;margin-top:8px;color:var(--text3)"></div></div>';
   },save:function(){
-    var n=(G('ow-tm-name')||{}).value;var e=(G('ow-tm-email')||{}).value;var r=(G('ow-tm-role')||{}).value;if(n){S.upsert('contacts',{id:uid(),name:n,email:e,type:r,twwp_roles:[r],created:new Date().toISOString()});setSetupStatus('first_team_member',true);}
+    var n=(G('ow-tm-name')||{}).value;var e=(G('ow-tm-email')||{}).value;var r=(G('ow-tm-role')||{}).value;
+    if(n&&!S.get('contacts').find(function(c){return c.email===e&&e;})){S.upsert('contacts',{id:uid(),name:n,email:e,type:r,twwp_roles:[r],created:new Date().toISOString()});setSetupStatus('first_team_member',true);}
   }},
+  // Step 7 — Done
   {label:'Done',render:function(){
-    var c=getOrgCfg();var ss=getSetupStatus();var done=Object.values(ss).filter(Boolean).length;var total=Object.keys(ss).length;
-    return '<div style="text-align:center;padding:16px 0"><div style="font-size:48px;margin-bottom:16px">&#10003;</div><h2 style="color:var(--green);margin-bottom:8px">You\'re set up!</h2><p style="color:var(--text2);margin-bottom:20px">'+done+' of '+total+' setup items complete.'+(c.org_name?' Welcome, '+escH(c.org_name)+'!':'')+'</p><div style="background:var(--surface2);border-radius:8px;padding:12px;font-size:12px;color:var(--text2);margin-bottom:16px;text-align:left">You can always change settings in <strong>AI &amp; Integrations</strong> and add more locations in <strong>Locations</strong>. The Setup Status card on the Dashboard shows remaining items.</div></div>';
+    var c=getOrgCfg();var ss=getSetupStatus();var keys=Object.keys(SETUP_KEYS);var done=keys.filter(function(k){return ss[k];});var skipped=keys.filter(function(k){return !ss[k];});
+    return '<div style="text-align:center;padding:8px 0 0"><div style="font-size:48px;margin-bottom:12px">&#9989;</div><h2 style="color:var(--green);margin-bottom:6px">You\'re set up!</h2><p style="color:var(--text2);margin-bottom:16px;font-size:13px">'+(c.org_name?'Welcome, <strong>'+escH(c.org_name)+'</strong>! ':'')+done.length+' of '+keys.length+' items configured.</p><div style="display:flex;gap:10px;text-align:left;margin-bottom:16px"><div style="flex:1;background:rgba(0,229,255,.06);border-radius:8px;padding:10px;border:1px solid rgba(0,229,255,.15)"><div style="font-size:10px;font-weight:700;color:var(--cyan);text-transform:uppercase;margin-bottom:6px">&#10003; Configured</div>'+done.map(function(k){return '<div style="font-size:11px;color:var(--text2);padding:2px 0">'+SETUP_KEYS[k]+'</div>';}).join('')+'</div>'+(skipped.length?'<div style="flex:1;background:var(--surface2);border-radius:8px;padding:10px;border:1px solid var(--border)"><div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:6px">○ Skipped</div>'+skipped.map(function(k){return '<div style="font-size:11px;color:var(--text3);padding:2px 0">'+SETUP_KEYS[k]+'</div>';}).join('')+'</div>':'')+'</div><p style="font-size:11px;color:var(--text3)">Access Settings anytime via AI &amp; Integrations → Terminology &amp; Org Config.</p></div>';
   },save:function(){
+    var c=getOrgCfg();c.setup_complete=true;c.org_id=c.org_id||'twwp';saveOrgCfg(c);
     localStorage.setItem('twwp_setup_complete','1');
+    logEvent('standard','onboarding_complete','Onboarding wizard completed',{org_name:c.org_name,org_type:c.org_type,org_id:c.org_id});
     updateSetupStatusCard();
   }},
 ];
 
 function owLoadLogo(inp){
   var f=inp.files[0];if(!f)return;
-  var r=new FileReader();r.onload=function(e){var c=getOrgCfg();c.logo_b64=e.target.result;saveOrgCfg(c);};r.readAsDataURL(f);
+  var r=new FileReader();r.onload=function(e){var c=getOrgCfg();c.logo_b64=e.target.result;saveOrgCfg(c);owUpdateBrandPreview();};r.readAsDataURL(f);
+}
+function owUpdateBrandPreview(){
+  var col=(G('ow-brand-colour')||{}).value||'#00e5ff';var name=(G('ow-app-name')||{}).value||'TWWP Ops';
+  var url=(G('ow-logo-url')||{}).value;var c=getOrgCfg();var logo=url||c.logo_b64||'';
+  var h=G('owp-header');if(h)h.style.background=col;
+  var lw=G('owp-logo-wrap');if(lw)lw.innerHTML=logo?'<img src="'+escH(logo)+'" style="height:24px;border-radius:4px" onerror="this.style.display=\'none\'">':'<div style="font-size:10px;font-weight:700;color:'+col+'">'+escH(name)+'</div>';
+  var nn=G('owp-name');if(nn)nn.style.color=col;
+}
+function owSwitchAiProvider(){
+  var prov=(G('ow-ai-provider')||{}).value;
+  var labels={gemini:'Google Gemini API Key',anthropic:'Anthropic API Key',openai:'OpenAI API Key',openrouter:'OpenRouter API Key'};
+  var phs={gemini:'AIza...',anthropic:'sk-ant-...',openai:'sk-...',openrouter:'sk-or-...'};
+  var cfg=getAiCfg();var keys={gemini:cfg.geminiKey||'',anthropic:cfg.anthropicKey||'',openai:cfg.openaiKey||'',openrouter:cfg.openrouterKey||''};
+  var lbl=G('ow-ai-key-label');if(lbl)lbl.textContent=labels[prov]||'API Key';
+  var ki=G('ow-ai-key');if(ki){ki.placeholder=phs[prov]||'';ki.value=keys[prov]||'';}
+  var res=G('ow-test-result');if(res)res.textContent='';
+}
+async function owTestAiKey(){
+  var btn=G('ow-test-btn');var res=G('ow-test-result');if(!btn||!res)return;
+  var prov=(G('ow-ai-provider')||{}).value||'gemini';var key=(G('ow-ai-key')||{}).value;
+  if(!key){res.textContent='Enter a key first.';res.style.color='var(--amber)';return;}
+  btn.disabled=true;btn.textContent='Testing...';res.textContent='';
+  try{
+    var ok=false;
+    if(prov==='gemini'){var r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key='+key,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:'Reply with just the word: working'}]}]})});ok=r.ok;}
+    else if(prov==='anthropic'){var r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:10,messages:[{role:'user',content:'working?'}]})});ok=r.ok;}
+    else if(prov==='openai'||prov==='openrouter'){var base=prov==='openrouter'?'https://openrouter.ai/api/v1':'https://api.openai.com/v1';var r=await fetch(base+'/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify({model:prov==='openrouter'?'google/gemini-2.0-flash-exp:free':'gpt-4o-mini',max_tokens:5,messages:[{role:'user',content:'hi'}]})});ok=r.ok;}
+    if(ok){res.textContent='✅ Connected';res.style.color='var(--green)';setSetupStatus('ai_key',true);}
+    else{res.textContent='❌ Key rejected';res.style.color='var(--red)';}
+  }catch(e){res.textContent='❌ '+e.message;res.style.color='var(--red)';}
+  btn.disabled=false;btn.textContent='Test';
+}
+async function owPullTapMapTap(){
+  var res=G('ow-pull-result');if(res)res.textContent='Fetching from Tap-Map...';
+  var railsUrl=getIntegration('rails-api');if(!railsUrl){if(res)res.textContent='Rails API not configured — set it in AI & Integrations → Infrastructure first.';return;}
+  try{
+    var jwt=localStorage.getItem('twwp_rails_jwt')||'';
+    var r=await fetch(railsUrl+'/api/tap_map/taps?per_page=1',{headers:{Authorization:'Bearer '+jwt}});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    var d=await r.json();var tap=(d.taps&&d.taps[0])||d[0];
+    if(tap){
+      if(G('ow-loc-name'))G('ow-loc-name').value=tap.name||tap.address||'';
+      if(G('ow-loc-addr'))G('ow-loc-addr').value=tap.address||tap.location||'';
+      if(G('ow-loc-guardian'))G('ow-loc-guardian').value=tap.owner_name||tap.guardian||'';
+      if(res)res.textContent='✅ Pre-filled from Tap-Map tap: '+(tap.name||tap.address||'(unnamed)');
+    }else{if(res)res.textContent='No taps found in Tap-Map.';}
+  }catch(e){if(res)res.textContent='❌ '+e.message;}
+}
+function owConfigIntegration(tab, label){
+  // Save current step then open AI & Integrations to the relevant tab
+  OW_STEPS[_owStep-1].save();
+  var c=getOrgCfg();c.wizard_step=_owStep;saveOrgCfg(c);
+  var el=G('onboardingWizard');if(el)el.style.display='none';
+  openApiMo();
+  // Switch to relevant tab
+  setTimeout(function(){
+    var tabs=document.querySelectorAll('.int-tab-btn');
+    tabs.forEach(function(t){if(t.textContent.trim()===label||(t.dataset&&t.dataset.tab===tab)){t.click();}});
+  },200);
+}
+function owSkipTeam(){owStep(1);}
+async function owSendInvite(btn){
+  var n=(G('ow-tm-name')||{}).value;var e=(G('ow-tm-email')||{}).value;var r=(G('ow-tm-role')||{}).value;
+  var res=G('ow-invite-result');if(!n||!e){if(res)res.textContent='Name and email required.';return;}
+  btn.disabled=true;btn.textContent='Sending...';
+  var railsUrl=getIntegration('rails-api');
+  if(railsUrl){
+    try{
+      var jwt=localStorage.getItem('twwp_rails_jwt')||'';
+      var resp=await fetch(railsUrl+'/api/users/invite',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+jwt},body:JSON.stringify({name:n,email:e,role:r})});
+      if(resp.ok){if(res){res.textContent='✅ Invite sent to '+e;res.style.color='var(--green)';}}
+      else{throw new Error('HTTP '+resp.status);}
+    }catch(ex){if(res){res.textContent='⚠️ API unavailable — saved locally.';res.style.color='var(--amber)';}}
+  }else{if(res){res.textContent='Saved locally (Rails not configured).';res.style.color='var(--text3)';}}
+  // Always save locally
+  OW_STEPS[_owStep-1].save();
+  setSetupStatus('first_team_member',true);
+  btn.disabled=false;btn.textContent='&#128231; Send Invite';
 }
 
 function checkRunOnboarding(){
-  if(!localStorage.getItem('twwp_setup_complete')&&!localStorage.getItem('twwp_onboarding_skip')){
+  var c=getOrgCfg();
+  if(!c.setup_complete&&!localStorage.getItem('twwp_setup_complete')&&!localStorage.getItem('twwp_onboarding_skip')){
     openOnboarding();
   }
 }
 function openOnboarding(){
-  _owStep=1;_owData={};
+  var c=getOrgCfg();_owStep=c.wizard_step||1;_owData={};
   var el=G('onboardingWizard');if(el){el.style.display='flex';}
   renderOwStep();
 }
 function skipOnboarding(){
+  // Save current step for resume
+  OW_STEPS[_owStep-1].save();
+  var c=getOrgCfg();c.wizard_step=_owStep;saveOrgCfg(c);
   localStorage.setItem('twwp_onboarding_skip','1');
   var el=G('onboardingWizard');if(el)el.style.display='none';
 }
 function renderOwStep(){
   var step=OW_STEPS[_owStep-1];if(!step)return;
+  // Widen modal for branding step
+  var wrap=G('owWrap');if(wrap)wrap.style.maxWidth=(_owStep===2)?'740px':'560px';
   G('owContent').innerHTML=step.render();
   G('owStepLabel').textContent='STEP '+_owStep+' OF '+_owTotal+' — '+step.label.toUpperCase();
   G('owProgress').style.width=Math.round(_owStep/_owTotal*100)+'%';
   G('owBack').style.visibility=_owStep>1?'visible':'hidden';
   var nextBtn=G('owNext');
-  if(_owStep===_owTotal){nextBtn.textContent='Go to Dashboard ✓';nextBtn.onclick=function(){OW_STEPS[_owStep-1].save();var el=G('onboardingWizard');if(el)el.style.display='none';go('dashboard',G('ni-dashboard'));};}
-  else{nextBtn.textContent='Next →';nextBtn.onclick=function(){owStep(1);};}
+  if(_owStep===_owTotal){
+    nextBtn.textContent='Take me to Dashboard ✓';
+    nextBtn.onclick=function(){
+      OW_STEPS[_owStep-1].save();
+      var el=G('onboardingWizard');if(el)el.style.display='none';
+      go('dashboard',G('ni-dashboard'));
+    };
+  }else{nextBtn.textContent='Next →';nextBtn.onclick=function(){owStep(1);};}
 }
 function owStep(dir){
   var step=OW_STEPS[_owStep-1];if(step&&step.save)step.save();
@@ -14821,6 +15301,918 @@ function renderSetupStatusCard(){
   el.style.display='';
 }
 function updateSetupStatusCard(){renderSetupStatusCard();}
+
+// ── User Management (D2) ─────────────────────────────────────────────────────
+var _umUsers = [];
+var ROLE_COLOURS = {admin:'var(--purple)',staff:'var(--cyan)',guardian:'var(--green)',technician:'var(--amber)',volunteer:'var(--blue)'};
+
+async function loadUsers(){
+  var railsUrl=getIntegration('rails-api');
+  var wrap=G('um-table-wrap');
+  if(!railsUrl){if(wrap)wrap.innerHTML='<div style="color:var(--text3);font-size:12px;padding:20px 0">Rails API not configured. Set it in AI & Integrations → Infrastructure.</div>';return;}
+  if(wrap)wrap.innerHTML='<div style="color:var(--text3);font-size:12px;padding:20px 0">Loading…</div>';
+  try{
+    var jwt=localStorage.getItem('twwp_rails_jwt')||'';
+    var r=await fetch(railsUrl+'/api/users',{headers:{Authorization:'Bearer '+jwt}});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    var d=await r.json();_umUsers=d.users||[];
+    renderUmStats();renderUsersTable();
+  }catch(e){if(wrap)wrap.innerHTML='<div style="color:var(--red);font-size:12px;padding:20px 0">Error: '+escH(e.message)+'</div>';}
+}
+function renderUmStats(){
+  var el=G('um-stats');if(!el)return;
+  var total=_umUsers.length;var active=_umUsers.filter(function(u){return u.active;}).length;
+  var admins=_umUsers.filter(function(u){return u.role==='admin';}).length;
+  var lastSeen=_umUsers.filter(function(u){return u.last_seen_at;}).sort(function(a,b){return new Date(b.last_seen_at)-new Date(a.last_seen_at);});
+  var lastTs=lastSeen.length?fmtDate(lastSeen[0].last_seen_at):'—';
+  var cards=[{label:'Total Users',val:total,col:'var(--text1)'},{label:'Active',val:active,col:'var(--green)'},{label:'Admins',val:admins,col:'var(--purple)'},{label:'Last Login',val:lastTs,col:'var(--cyan)'}];
+  el.innerHTML=cards.map(function(c){return '<div style="background:var(--surface2);border-radius:8px;padding:12px 16px;flex:1;min-width:120px"><div style="font-size:22px;font-weight:700;color:'+c.col+'">'+c.val+'</div><div style="font-size:11px;color:var(--text3);margin-top:2px">'+c.label+'</div></div>';}).join('');
+}
+function renderUsersTable(){
+  var wrap=G('um-table-wrap');if(!wrap)return;
+  var search=(G('um-search')||{}).value?.toLowerCase()||'';
+  var roleF=(G('um-role-filter')||{}).value||'';
+  var statF=(G('um-status-filter')||{}).value||'';
+  var meId=null;try{var jwt=localStorage.getItem('twwp_rails_jwt');if(jwt){meId=JSON.parse(atob(jwt.split('.')[1])).user_id;}}catch{}
+  var users=_umUsers.filter(function(u){
+    if(search&&!(u.name||'').toLowerCase().includes(search)&&!(u.email||'').toLowerCase().includes(search))return false;
+    if(roleF&&u.role!==roleF)return false;
+    if(statF==='active'&&!u.active)return false;
+    if(statF==='inactive'&&u.active)return false;
+    return true;
+  });
+  if(!users.length){wrap.innerHTML='<div style="color:var(--text3);font-size:12px;padding:20px 0">No users found.</div>';return;}
+  var rows=users.map(function(u){
+    var isMe=u.id===meId;var rolCol=ROLE_COLOURS[u.role]||'var(--text2)';
+    var lastSeen=u.last_seen_at?fmtDate(u.last_seen_at):'Never';
+    var contact=S.get('contacts').find(function(c){return c.email&&c.email.toLowerCase()===(u.email||'').toLowerCase();});
+    return '<tr style="background:'+(isMe?'rgba(0,229,255,.05)':'')+'"><td style="padding:10px 8px;color:var(--text1);font-size:12px">'+(u.name||'—')+(isMe?' <span style="font-size:9px;color:var(--cyan);font-weight:600;border:1px solid rgba(0,229,255,.3);border-radius:99px;padding:1px 5px">You</span>':'')+'</td><td style="padding:10px 8px;color:var(--text2);font-size:12px">'+escH(u.email||'')+'</td><td style="padding:10px 8px"><span style="font-size:10px;font-weight:700;color:'+rolCol+';background:rgba(255,255,255,.05);border-radius:99px;padding:2px 8px;border:1px solid '+rolCol+'22">'+escH(u.role||'')+'</span></td><td style="padding:10px 8px"><span style="font-size:10px;color:'+(u.active?'var(--green)':'var(--text3)')+'">'+( u.active?'● Active':'○ Inactive')+'</span></td><td style="padding:10px 8px;font-size:11px;color:var(--text3)">'+lastSeen+'</td><td style="padding:10px 8px"><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-g btn-xs" onclick="openEditUser('+u.id+')">Edit Role</button><button class="btn btn-g btn-xs" onclick="resetPw('+u.id+',\''+escH(u.email||'')+'\')">Reset PW</button>'+(isMe?'':'<button class="btn '+(u.active?'btn-d':'btn-g')+' btn-xs" onclick="toggleUserActive('+u.id+','+u.active+')">'+(u.active?'Deactivate':'Reactivate')+'</button>')+(contact?'<button class="btn btn-g btn-xs" onclick="go(\'contacts\',G(\'ni-contacts\'))">View Contact</button>':'')+'</div></td></tr>';
+  }).join('');
+  wrap.innerHTML='<table style="width:100%;border-collapse:collapse"><thead><tr>'+['Name','Email','Role','Status','Last Seen','Actions'].map(function(h){return '<th style="padding:8px;text-align:left;font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;border-bottom:1px solid var(--border)">'+h+'</th>';}).join('')+'</tr></thead><tbody>'+rows+'</tbody></table>';
+}
+function openInviteUserMo(){G('iu-name').value='';G('iu-email').value='';G('iu-role').value='staff';G('iu-result').textContent='';OM('inviteUserMo');}
+async function inviteUser(btn){
+  var name=(G('iu-name')||{}).value;var email=(G('iu-email')||{}).value;var role=(G('iu-role')||{}).value;
+  var res=G('iu-result');if(!email){if(res)res.textContent='Email required.';return;}
+  btn.disabled=true;btn.textContent='Sending…';
+  var railsUrl=getIntegration('rails-api');
+  try{
+    var jwt=localStorage.getItem('twwp_rails_jwt')||'';
+    var r=await fetch(railsUrl+'/api/users/invite',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+jwt},body:JSON.stringify({name,email,role})});
+    var d=await r.json();
+    if(r.ok){if(res){res.textContent='✅ Invite sent to '+email;res.style.color='var(--green)';}setTimeout(function(){CM('inviteUserMo');loadUsers();},1500);}
+    else{if(res){res.textContent='❌ '+(d.error||'Failed');res.style.color='var(--red)';}}
+  }catch(e){if(res){res.textContent='❌ '+e.message;res.style.color='var(--red)';}}
+  btn.disabled=false;btn.textContent='Send Invite';
+}
+function openEditUser(id){
+  var u=_umUsers.find(function(x){return x.id===id;});if(!u)return;
+  G('eu-id').value=id;G('eu-title').textContent='Edit: '+(u.name||u.email||'User');G('eu-role').value=u.role;G('eu-result').textContent='';OM('editUserMo');
+}
+async function saveUserRole(){
+  var id=G('eu-id').value;var role=G('eu-role').value;var res=G('eu-result');
+  var railsUrl=getIntegration('rails-api');if(!railsUrl){if(res)res.textContent='Rails API not configured.';return;}
+  try{
+    var jwt=localStorage.getItem('twwp_rails_jwt')||'';
+    var r=await fetch(railsUrl+'/api/users/'+id,{method:'PATCH',headers:{'Content-Type':'application/json','Authorization':'Bearer '+jwt},body:JSON.stringify({role})});
+    var d=await r.json();
+    if(r.ok){var u=_umUsers.find(function(x){return x.id===parseInt(id);});if(u)u.role=role;renderUsersTable();renderUmStats();CM('editUserMo');}
+    else{if(res){res.textContent='❌ '+(d.error||'Failed');res.style.color='var(--red)';}}
+  }catch(e){if(res){res.textContent='❌ '+e.message;}}
+}
+async function resetPw(id, email){
+  if(!confirm('Reset password for '+email+'? A temporary password will be generated and emailed.'))return;
+  var railsUrl=getIntegration('rails-api');if(!railsUrl){showDbToast('Rails API not configured');return;}
+  try{
+    var jwt=localStorage.getItem('twwp_rails_jwt')||'';
+    var r=await fetch(railsUrl+'/api/users/'+id+'/reset_password',{method:'POST',headers:{Authorization:'Bearer '+jwt}});
+    var d=await r.json();
+    showDbToast(r.ok?'Password reset for '+email:(d.error||'Failed'));
+  }catch(e){showDbToast('Error: '+e.message);}
+}
+async function toggleUserActive(id, currentActive){
+  var railsUrl=getIntegration('rails-api');if(!railsUrl){showDbToast('Rails API not configured');return;}
+  try{
+    var jwt=localStorage.getItem('twwp_rails_jwt')||'';
+    var r=await fetch(railsUrl+'/api/users/'+id,{method:'DELETE',headers:{Authorization:'Bearer '+jwt}});
+    var d=await r.json();
+    if(r.ok){var u=_umUsers.find(function(x){return x.id===id;});if(u)u.active=d.active;renderUsersTable();renderUmStats();showDbToast(d.message||'Updated');}
+    else showDbToast(d.error||'Failed');
+  }catch(e){showDbToast('Error: '+e.message);}
+}
+
+// ── Email Providers Page (D4) ────────────────────────────────────────────────
+var EP_PROVIDERS = [
+  {id:'resend',   name:'Resend',    tagline:'Modern transactional email',       free:'3,000 emails/mo free', envKey:'RESEND_API_KEY',   apiLink:'https://resend.com/api-keys'},
+  {id:'sendgrid', name:'SendGrid',  tagline:'Industry standard transactional',  free:'100 emails/day free',  envKey:'SENDGRID_API_KEY', apiLink:'https://app.sendgrid.com/settings/api_keys'},
+  {id:'brevo',    name:'Brevo',     tagline:'Email + SMS + CRM',                free:'300 emails/day free',  envKey:'BREVO_API_KEY',    apiLink:'https://app.brevo.com/settings/keys/api'},
+  {id:'mailtrap', name:'Mailtrap',  tagline:'Email sandbox for testing',        free:'Test inbox only',      envKey:'MAILTRAP_USER',    apiLink:'https://mailtrap.io/inboxes'},
+];
+var EP_DEFAULT_ADDRS = ['admin@thewholeywaterproject.com','noreply@thewholeywaterproject.com','guardian-notifications@thewholeywaterproject.com'];
+
+function getEpCfg(){var c=getOrgCfg();return {provider:c.email_provider||'',test_mode:!!c.email_test_mode,from_addresses:c.email_from_addresses||EP_DEFAULT_ADDRS.slice(),default_from:c.email_default_from||EP_DEFAULT_ADDRS[0]};}
+function saveEpCfg(patch){var c=getOrgCfg();Object.assign(c,{email_provider:patch.provider!==undefined?patch.provider:c.email_provider,email_test_mode:patch.test_mode!==undefined?patch.test_mode:c.email_test_mode,email_from_addresses:patch.from_addresses||c.email_from_addresses,email_default_from:patch.default_from||c.email_default_from});saveOrgCfg(c);}
+
+function renderEmailProvidersPage(){
+  var cfg=getEpCfg();
+  // Banner
+  var banner=G('ep-test-banner');if(banner)banner.style.display=cfg.test_mode?'flex':'none';
+  // Mode buttons
+  var liveBtn=G('ep-mode-live');var testBtn=G('ep-mode-test');
+  if(liveBtn)liveBtn.style.background=!cfg.test_mode?'var(--cyan)':'var(--surface2)';
+  if(testBtn)testBtn.style.background=cfg.test_mode?'var(--amber)':'var(--surface2)';
+  // Provider cards
+  renderEpProviderCards(cfg);
+  // Provider config
+  renderEpProviderConfig(cfg.provider);
+  // From addresses
+  renderEpFromAddrs(cfg);
+  // Sending stats
+  renderEpStats();
+  // Site-wide amber banner (test mode indicator in other pages)
+  renderEpSitewideBanner(cfg.test_mode);
+}
+function renderEpProviderCards(cfg){
+  var el=G('ep-provider-cards');if(!el)return;
+  var integrations=JSON.parse(localStorage.getItem('twwp_integrations_v1')||'{}');
+  el.innerHTML=EP_PROVIDERS.map(function(p){
+    var active=cfg.provider===p.id;var hasKey=!!(integrations[p.id+'-key']||integrations[p.envKey]||'');
+    return '<div style="background:var(--surface2);border-radius:10px;border:2px solid '+(active?'var(--cyan)':'var(--border)')+';padding:14px;cursor:pointer" onclick="epSelectProvider(\''+p.id+'\')">'+'<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px"><div style="font-size:13px;font-weight:700;color:var(--text1)">'+p.name+'</div><span style="font-size:10px;padding:2px 7px;border-radius:99px;font-weight:600;background:'+(hasKey?'rgba(46,204,113,.12)':'rgba(255,255,255,.05)')+';color:'+(hasKey?'var(--green)':'var(--text3)')+'">'+(hasKey?'✓ Key saved':'No key')+'</span></div><div style="font-size:11px;color:var(--text2);margin-bottom:4px">'+p.tagline+'</div><div style="font-size:10px;color:var(--text3)">'+p.free+'</div>'+(active?'<div style="font-size:10px;color:var(--cyan);margin-top:6px;font-weight:600">● Active provider</div>':'')+'</div>';
+  }).join('');
+}
+function epSelectProvider(id){
+  saveEpCfg({provider:id});
+  var railsUrl=getIntegration('rails-api');
+  if(railsUrl){
+    var jwt=localStorage.getItem('twwp_rails_jwt')||'';
+    fetch(railsUrl+'/api/email/config',{method:'PATCH',headers:{'Content-Type':'application/json','Authorization':'Bearer '+jwt},body:JSON.stringify({provider:id})}).catch(function(){});
+  }
+  renderEmailProvidersPage();
+}
+function renderEpProviderConfig(provider){
+  var el=G('ep-provider-config');if(!el)return;
+  if(!provider){el.innerHTML='';return;}
+  var p=EP_PROVIDERS.find(function(x){return x.id===provider;});if(!p)return;
+  var integrations=JSON.parse(localStorage.getItem('twwp_integrations_v1')||'{}');
+  var html='<div style="background:var(--surface2);border-radius:10px;padding:16px;border:1px solid var(--border);margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">'+p.name+' Configuration</div>';
+  if(provider==='resend'){
+    html+='<div class="fg" style="margin-bottom:10px"><label>Resend API Key <a href="'+p.apiLink+'" target="_blank" style="color:var(--cyan);font-size:10px;text-decoration:none">Get key ↗</a></label><input id="ep-resend-key" type="password" placeholder="re_..." value="'+escH(integrations['resend-key']||'')+'" style="font-size:12px"></div>';
+    html+='<div id="ep-resend-domains" style="font-size:11px;color:var(--text3);margin-bottom:10px"></div>';
+    html+='<button class="btn btn-s btn-sm" onclick="epSaveKey(\'resend\')">Save Key</button>';
+  }else if(provider==='sendgrid'){
+    html+='<div class="fg" style="margin-bottom:10px"><label>SendGrid API Key <a href="'+p.apiLink+'" target="_blank" style="color:var(--cyan);font-size:10px;text-decoration:none">Get key ↗</a></label><input id="ep-sg-key" type="password" placeholder="SG..." value="'+escH(integrations['sendgrid-key']||'')+'"></div>';
+    html+='<div class="fg" style="margin-bottom:10px"><label>From Email</label><input id="ep-sg-from" type="email" placeholder="noreply@domain.com" value="'+escH(integrations['sendgrid-from']||'')+'"></div>';
+    html+='<div class="fg" style="margin-bottom:10px"><label>From Name</label><input id="ep-sg-name" type="text" placeholder="TWWP" value="'+escH(integrations['sendgrid-name']||'')+'"></div>';
+    html+='<button class="btn btn-s btn-sm" onclick="epSaveKey(\'sendgrid\')">Save</button>';
+  }else if(provider==='brevo'){
+    html+='<div class="fg" style="margin-bottom:10px"><label>Brevo API Key <a href="'+p.apiLink+'" target="_blank" style="color:var(--cyan);font-size:10px;text-decoration:none">Get key ↗</a></label><input id="ep-brevo-key" type="password" placeholder="xkeysib-..." value="'+escH(integrations['brevo-key']||'')+'"></div>';
+    html+='<div class="fg" style="margin-bottom:10px"><label>Sender Name</label><input id="ep-brevo-name" type="text" placeholder="TWWP" value="'+escH(integrations['brevo-name']||'')+'"></div>';
+    html+='<div class="fg" style="margin-bottom:10px"><label>Sender Email</label><input id="ep-brevo-email" type="email" value="'+escH(integrations['brevo-email']||'')+'"></div>';
+    html+='<div class="fg" style="margin-bottom:10px"><label>SMS Key (optional)</label><input id="ep-brevo-sms" type="password" placeholder="xkeysib-sms-..." value="'+escH(integrations['brevo-sms']||'')+'"></div>';
+    html+='<button class="btn btn-s btn-sm" onclick="epSaveKey(\'brevo\')">Save</button>';
+  }else if(provider==='mailtrap'){
+    html+='<div style="padding:8px 12px;background:rgba(243,156,18,.1);border:1px solid var(--amber);border-radius:6px;font-size:11px;color:var(--amber);margin-bottom:12px">⚠️ Test mode — emails not delivered to real addresses</div>';
+    html+='<div class="fr"><div class="fg"><label>Host</label><input id="ep-mt-host" type="text" placeholder="sandbox.smtp.mailtrap.io" value="'+escH(integrations['mailtrap-host']||'')+'"></div><div class="fg"><label>Port</label><input id="ep-mt-port" type="number" placeholder="2525" value="'+escH(integrations['mailtrap-port']||'')+'"></div></div>';
+    html+='<div class="fr"><div class="fg"><label>Username</label><input id="ep-mt-user" type="text" value="'+escH(integrations['mailtrap-user']||'')+'"></div><div class="fg"><label>Password</label><input id="ep-mt-pass" type="password" value="'+escH(integrations['mailtrap-pass']||'')+'"></div></div>';
+    html+='<button class="btn btn-s btn-sm" onclick="epSaveKey(\'mailtrap\')">Save</button>';
+    if(integrations['mailtrap-user'])html+=' <a href="https://mailtrap.io/inboxes" target="_blank" class="btn btn-g btn-sm" style="text-decoration:none">Check Mailtrap ↗</a>';
+  }
+  html+='</div>';
+  el.innerHTML=html;
+  // Load Resend domains if key saved
+  if(provider==='resend'&&integrations['resend-key'])epLoadResendDomains(integrations['resend-key']);
+}
+function epSaveKey(provider){
+  var integrations=JSON.parse(localStorage.getItem('twwp_integrations_v1')||'{}');
+  if(provider==='resend'){var k=(G('ep-resend-key')||{}).value;if(k)integrations['resend-key']=k;}
+  else if(provider==='sendgrid'){var k=(G('ep-sg-key')||{}).value;var f=(G('ep-sg-from')||{}).value;var n=(G('ep-sg-name')||{}).value;if(k)integrations['sendgrid-key']=k;if(f)integrations['sendgrid-from']=f;if(n)integrations['sendgrid-name']=n;}
+  else if(provider==='brevo'){var k=(G('ep-brevo-key')||{}).value;var n=(G('ep-brevo-name')||{}).value;var e=(G('ep-brevo-email')||{}).value;var s=(G('ep-brevo-sms')||{}).value;if(k)integrations['brevo-key']=k;if(n)integrations['brevo-name']=n;if(e)integrations['brevo-email']=e;if(s)integrations['brevo-sms']=s;}
+  else if(provider==='mailtrap'){var h=(G('ep-mt-host')||{}).value;var p=(G('ep-mt-port')||{}).value;var u=(G('ep-mt-user')||{}).value;var pw=(G('ep-mt-pass')||{}).value;if(h)integrations['mailtrap-host']=h;if(p)integrations['mailtrap-port']=p;if(u)integrations['mailtrap-user']=u;if(pw)integrations['mailtrap-pass']=pw;}
+  localStorage.setItem('twwp_integrations_v1',JSON.stringify(integrations));
+  showDbToast(provider+' config saved ✓');renderEpProviderCards(getEpCfg());
+}
+async function epLoadResendDomains(key){
+  var el=G('ep-resend-domains');if(!el)return;
+  try{
+    var r=await fetch('https://api.resend.com/domains',{headers:{Authorization:'Bearer '+key}});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    var d=await r.json();var domains=(d.data||[]).map(function(x){return x.name+'('+x.status+')';}).join(', ');
+    el.textContent='Verified domains: '+(domains||'none');el.style.color='var(--green)';
+  }catch(e){el.textContent='Could not load domains: '+e.message;el.style.color='var(--text3)';}
+}
+function renderEpFromAddrs(cfg){
+  var el=G('ep-from-addrs');if(!el)return;
+  el.innerHTML=cfg.from_addresses.map(function(addr,i){
+    var isDef=addr===cfg.default_from;
+    return '<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface2);border-radius:6px;margin-bottom:6px;border:1px solid '+(isDef?'var(--cyan)':'var(--border)') +'"><span style="flex:1;font-size:12px;color:var(--text1)">'+escH(addr)+'</span>'+(isDef?'<span style="font-size:10px;color:var(--cyan)">Default</span>':'<button class="btn btn-g btn-xs" onclick="epSetDefault(\''+escH(addr)+'\')">Set default</button>')+'<button class="btn btn-d btn-xs" onclick="epRemoveAddr('+i+')">✕</button></div>';
+  }).join('');
+}
+function epAddFromAddr(){
+  var addr=prompt('Enter from address:');if(!addr||!addr.includes('@'))return;
+  var cfg=getEpCfg();if(!cfg.from_addresses.includes(addr))cfg.from_addresses.push(addr);
+  saveEpCfg({from_addresses:cfg.from_addresses});renderEpFromAddrs(getEpCfg());
+}
+function epRemoveAddr(idx){
+  var cfg=getEpCfg();cfg.from_addresses.splice(idx,1);saveEpCfg({from_addresses:cfg.from_addresses});renderEpFromAddrs(getEpCfg());
+}
+function epSetDefault(addr){
+  saveEpCfg({default_from:addr});renderEpFromAddrs(getEpCfg());showDbToast('Default from address set');
+}
+function epSetTestMode(on){
+  saveEpCfg({test_mode:on});
+  var railsUrl=getIntegration('rails-api');
+  if(railsUrl){var jwt=localStorage.getItem('twwp_rails_jwt')||'';fetch(railsUrl+'/api/email/config',{method:'PATCH',headers:{'Content-Type':'application/json','Authorization':'Bearer '+jwt},body:JSON.stringify({test_mode:on})}).catch(function(){});}
+  renderEmailProvidersPage();
+}
+function renderEpSitewideBanner(testMode){
+  var existing=G('ep-sitewide-banner');
+  if(testMode){
+    if(!existing){var b=document.createElement('div');b.id='ep-sitewide-banner';b.style.cssText='position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:var(--amber);color:#000;font-size:11px;font-weight:700;padding:5px 16px;border-radius:99px;z-index:9998;pointer-events:none';b.textContent='⚠️ Email Test Mode — not delivered';document.body.appendChild(b);}
+  }else{if(existing)existing.remove();}
+}
+async function epSendTest(btn){
+  var res=G('ep-test-result');if(res)res.textContent='Sending test…';if(btn)btn.disabled=true;
+  var railsUrl=getIntegration('rails-api');
+  if(!railsUrl){if(res){res.textContent='Rails API not configured.';res.style.color='var(--amber)';}if(btn)btn.disabled=false;return;}
+  try{
+    var jwt=localStorage.getItem('twwp_rails_jwt')||'';
+    var r=await fetch(railsUrl+'/api/email/test',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+jwt}});
+    var d=await r.json();
+    if(r.ok){
+      if(res){res.textContent='✅ Test sent via '+d.provider+' to '+d.sent_to+' at '+d.timestamp+(d.message_id?' (id: '+d.message_id+')':'');res.style.color='var(--green)';}
+      logEvent('standard','email_sent','Test email sent via '+d.provider,{to:d.sent_to,provider:d.provider,message_id:d.message_id});
+    }else{if(res){res.textContent='❌ '+(d.error||'Failed')+' (provider: '+(d.provider||'unknown')+')';res.style.color='var(--red)';}}
+  }catch(e){if(res){res.textContent='❌ '+e.message;res.style.color='var(--red)';}}
+  if(btn)btn.disabled=false;
+}
+function renderEpStats(){
+  var el=G('ep-stats-row');var chartEl=G('ep-stats-chart');if(!el||!chartEl)return;
+  var ledger=JSON.parse(localStorage.getItem('twwp_ledger_v1')||'[]');
+  var emailEvents=ledger.filter(function(e){return e.action==='email_sent';});
+  var now=new Date();var today=todayStr();
+  var weekAgo=new Date(now-7*864e5);var monthAgo=new Date(now-30*864e5);
+  function cnt(from){return emailEvents.filter(function(e){return new Date(e.ts)>=from;}).length;}
+  var stats=[{label:'Today',val:cnt(new Date(today+'T00:00:00'))},{label:'This week',val:cnt(weekAgo)},{label:'This month',val:cnt(monthAgo)}];
+  el.innerHTML=stats.map(function(s){return '<div style="background:var(--surface2);border-radius:8px;padding:10px 14px;min-width:100px"><div style="font-size:20px;font-weight:700;color:var(--cyan)">'+s.val+'</div><div style="font-size:11px;color:var(--text3)">'+s.label+'</div></div>';}).join('');
+  // 14-day bar chart
+  var bars='';var maxVal=1;var dayCounts=[];
+  for(var i=13;i>=0;i--){var d=new Date(now-i*864e5);var ds=d.toISOString().slice(0,10);var c=emailEvents.filter(function(e){return(e.ts||'').slice(0,10)===ds;}).length;dayCounts.push({ds:ds,c:c});if(c>maxVal)maxVal=c;}
+  bars=dayCounts.map(function(x){var pct=Math.max(4,Math.round(x.c/maxVal*100));return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px" title="'+x.ds+': '+x.c+' emails"><div style="flex:1;width:100%;background:var(--surface2);border-radius:2px 2px 0 0;position:relative"><div style="position:absolute;bottom:0;width:100%;height:'+pct+'%;background:var(--cyan);border-radius:2px 2px 0 0"></div></div><div style="font-size:8px;color:var(--text3)">'+x.ds.slice(5)+'</div></div>';}).join('');
+  chartEl.innerHTML=bars;
+}
+
+// ── Stripe Page (D5) ─────────────────────────────────────────────────────────
+var _stripeData = {overview:null, customers:[], charges:[], subscriptions:[], chargesPage:1, subsFilter:'all'};
+
+function switchStripTab(el){
+  document.querySelectorAll('#stripeSubTabs .tb').forEach(function(t){t.classList.remove('on');});
+  el.classList.add('on');
+  ['overview','vip','charges','subs'].forEach(function(t){var e=G('stripe-tab-'+t);if(e)e.style.display='none';});
+  var tab=el.dataset.st;var tabEl=G('stripe-tab-'+tab);if(tabEl)tabEl.style.display='';
+  if(tab==='overview')renderStripeOverview();
+  else if(tab==='vip')renderStripeVip();
+  else if(tab==='charges')renderStripeCharges();
+  else if(tab==='subs')renderStripeSubs();
+}
+function checkStripeConnections(){
+  var tapmap=!!(getIntegration('rails-api'));var direct=!!(getIntegration('stripe-key')||localStorage.getItem('twwp_integrations_v1')&&(JSON.parse(localStorage.getItem('twwp_integrations_v1')||'{}')||{})['stripe-secret']);
+  var tm=G('stripe-badge-tapmap');var d=G('stripe-badge-direct');
+  if(tm){tm.textContent='Tap-Map DB: '+(tapmap?'✓ Connected':'Not connected');tm.style.background=tapmap?'rgba(0,229,255,.12)':'rgba(255,255,255,.05)';tm.style.color=tapmap?'var(--cyan)':'var(--text3)';}
+  if(d){d.textContent='Direct Stripe API: '+(direct?'✓ Key set':'Not set');d.style.background=direct?'rgba(46,204,113,.12)':'rgba(255,255,255,.05)';d.style.color=direct?'var(--green)':'var(--text3)';}
+}
+async function loadStripeData(){
+  checkStripeConnections();
+  var railsUrl=getIntegration('rails-api');if(!railsUrl)return;
+  var jwt=localStorage.getItem('twwp_rails_jwt')||'';
+  var hdr={Authorization:'Bearer '+jwt};
+  try{
+    var [ov, cu, ch, su]=await Promise.all([
+      fetch(railsUrl+'/api/tap_map/stripe_overview',{headers:hdr}).then(function(r){return r.json();}),
+      fetch(railsUrl+'/api/tap_map/stripe_customers',{headers:hdr}).then(function(r){return r.json();}),
+      fetch(railsUrl+'/api/tap_map/stripe_charges',{headers:hdr}).then(function(r){return r.json();}),
+      fetch(railsUrl+'/api/tap_map/stripe_subscriptions',{headers:hdr}).then(function(r){return r.json();})
+    ]);
+    _stripeData.overview=ov;_stripeData.customers=cu.customers||[];_stripeData.charges=ch.charges||[];_stripeData.subscriptions=su.subscriptions||[];
+    renderStripeOverview();
+  }catch(e){console.warn('Stripe load error',e.message);}
+}
+function renderStripeOverview(){
+  var d=_stripeData.overview||{};
+  var stats=[
+    {label:'MRR (NZD)',val:'$'+((d.mrr_nzd||0).toFixed(2)),col:'var(--cyan)'},
+    {label:'Total Revenue',val:'$'+((d.total_revenue_nzd||0).toFixed(2)),col:'var(--green)'},
+    {label:'Active Subscribers',val:d.active_subscribers||0,col:'var(--purple)'},
+    {label:'Total Customers',val:d.total_customers||0,col:'var(--text1)'}
+  ];
+  var el=G('stripe-overview-stats');if(el)el.innerHTML=stats.map(function(s){return '<div style="background:var(--surface2);border-radius:8px;padding:12px 16px"><div style="font-size:22px;font-weight:700;color:'+s.col+'">'+s.val+'</div><div style="font-size:11px;color:var(--text3);margin-top:2px">'+s.label+'</div></div>';}).join('');
+  // Bar chart
+  var weekly=(d.weekly_revenue||[]);var max=Math.max(1,Math.max.apply(null,weekly.map(function(x){return x.revenue_nzd||0;})));
+  var chart=G('stripe-revenue-chart');
+  if(chart&&weekly.length)chart.innerHTML=weekly.map(function(x){var pct=Math.max(4,Math.round((x.revenue_nzd||0)/max*100));return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px" title="'+x.week+': $'+x.revenue_nzd+'"><div style="flex:1;width:100%;background:var(--surface2);border-radius:2px 2px 0 0;position:relative"><div style="position:absolute;bottom:0;width:100%;height:'+pct+'%;background:var(--green);border-radius:2px 2px 0 0"></div></div><div style="font-size:8px;color:var(--text3)">'+x.week.slice(5)+'</div></div>';}).join('');
+}
+function renderStripeVip(){
+  var el=G('stripe-vip-table');if(!el)return;
+  var customers=_stripeData.customers.slice().sort(function(a,b){return (b.total_paid_nzd||0)-(a.total_paid_nzd||0);});
+  if(!customers.length){el.innerHTML='<div style="color:var(--text3);font-size:12px;padding:20px 0">No VIP data. Check Rails API connection and Tap-Map DB.</div>';return;}
+  el.innerHTML='<table style="width:100%;border-collapse:collapse"><thead><tr>'+['#','Email','$/wk','Status','Since','Total Paid',''].map(function(h){return '<th style="padding:8px;text-align:left;font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;border-bottom:1px solid var(--border)">'+h+'</th>';}).join('')+'</tr></thead><tbody>'+customers.slice(0,50).map(function(c,i){return '<tr><td style="padding:8px;font-size:11px;color:var(--text3)">'+(i<3?['🥇','🥈','🥉'][i]:'#'+(i+1))+'</td><td style="padding:8px;font-size:12px;color:var(--text1)">'+escH(c.email||'—')+(i<5?' 💎':'')+'</td><td style="padding:8px;font-size:12px;color:var(--green)">$'+(c.amount_per_week||'?')+'/wk</td><td style="padding:8px"><span style="font-size:10px;color:'+(c.status==='active'?'var(--green)':'var(--text3)')+'">'+escH(c.status||'—')+'</span></td><td style="padding:8px;font-size:11px;color:var(--text3)">'+(c.member_since?fmtDate(c.member_since):'—')+'</td><td style="padding:8px;font-size:12px;font-weight:600;color:var(--cyan)">$'+((c.total_paid_nzd||0).toFixed(2))+'</td><td style="padding:8px"><button class="btn btn-g btn-xs" onclick="vipSyncContact(\''+escH(c.email||'')+'\',\''+escH(c.stripe_customer_id||'')+'\',\''+escH(c.status||'')+'\','+((c.total_paid_nzd||0).toFixed(2))+')">Sync</button></td></tr>';}).join('')+'</tbody></table>';
+}
+function renderStripeCharges(){
+  var el=G('stripe-charges-table');if(!el)return;
+  var search=(G('stripe-charges-search')||{}).value?.toLowerCase()||'';
+  var charges=_stripeData.charges.filter(function(c){return !search||(c.email||'').toLowerCase().includes(search);});
+  var page=_stripeData.chargesPage;var pp=20;var total=charges.length;var items=charges.slice((page-1)*pp,page*pp);
+  if(!items.length){el.innerHTML='<div style="color:var(--text3);font-size:12px;padding:20px 0">No charges found.</div>';}
+  else el.innerHTML='<table style="width:100%;border-collapse:collapse"><thead><tr>'+['Date','Amount','Email','Receipt',''].map(function(h){return '<th style="padding:8px;text-align:left;font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;border-bottom:1px solid var(--border)">'+h+'</th>';}).join('')+'</tr></thead><tbody>'+items.map(function(c){return '<tr><td style="padding:8px;font-size:11px;color:var(--text2)">'+(c.date?fmtDate(c.date):'—')+'</td><td style="padding:8px;font-size:12px;font-weight:600;color:var(--green)">$'+((c.amount_nzd||0).toFixed(2))+'</td><td style="padding:8px;font-size:12px;color:var(--text1)">'+escH(c.email||'—')+'</td><td style="padding:8px">'+(c.receipt_url?'<a href="'+escH(c.receipt_url)+'" target="_blank" class="btn btn-g btn-xs">Receipt ↗</a>':'—')+'</td><td></td></tr>';}).join('')+'</tbody></table>';
+  var pag=G('stripe-charges-pagination');if(pag){pag.innerHTML=(page>1?'<button class="btn btn-g btn-xs" onclick="_stripeData.chargesPage--;renderStripeCharges()">← Prev</button>':'')+'<span style="font-size:11px;color:var(--text3)">Page '+page+' of '+Math.ceil(total/pp)+'</span>'+(page*pp<total?'<button class="btn btn-g btn-xs" onclick="_stripeData.chargesPage++;renderStripeCharges()">Next →</button>':'');}
+}
+function renderStripeSubs(){
+  var el=G('stripe-subs-table');if(!el)return;
+  var filter=_stripeData.subsFilter||'all';
+  var subs=_stripeData.subscriptions.filter(function(s){if(filter==='all')return true;if(filter==='cancelled')return s.status==='canceled'||s.status==='cancelled';return s.status===filter;});
+  // Plan breakdown
+  var plans={};subs.filter(function(s){return s.status==='active';}).forEach(function(s){var k='$'+((s.amount_nzd||0).toFixed(2))+'/wk';plans[k]=(plans[k]||0)+1;});
+  var bd=G('stripe-plan-breakdown');if(bd)bd.innerHTML=Object.entries(plans).map(function(e){return '<div style="background:var(--surface2);border-radius:6px;padding:6px 12px;font-size:11px"><span style="font-weight:700;color:var(--cyan)">'+e[0]+'</span> <span style="color:var(--text3)">× '+e[1]+'</span></div>';}).join('');
+  if(!subs.length){el.innerHTML='<div style="color:var(--text3);font-size:12px;padding:20px 0">No subscriptions found.</div>';return;}
+  el.innerHTML='<table style="width:100%;border-collapse:collapse"><thead><tr>'+['Email','$/wk','Status','Since'].map(function(h){return '<th style="padding:8px;text-align:left;font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;border-bottom:1px solid var(--border)">'+h+'</th>';}).join('')+'</tr></thead><tbody>'+subs.slice(0,100).map(function(s){return '<tr><td style="padding:8px;font-size:12px;color:var(--text1)">'+escH(s.email||'—')+'</td><td style="padding:8px;font-size:12px;color:var(--green)">$'+((s.amount_nzd||0).toFixed(2))+'</td><td style="padding:8px"><span style="font-size:10px;color:'+(s.status==='active'?'var(--green)':'var(--text3)')+'">'+escH(s.status||'—')+'</span></td><td style="padding:8px;font-size:11px;color:var(--text3)">'+(s.created_at?fmtDate(s.created_at):'—')+'</td></tr>';}).join('')+'</tbody></table>';
+}
+function setStripeSubFilter(el){
+  document.querySelectorAll('#stripe-tab-subs .pill').forEach(function(p){p.classList.remove('on');});
+  el.classList.add('on');_stripeData.subsFilter=el.dataset.ss||'all';renderStripeSubs();
+}
+function exportStripeChargesCsv(){
+  var charges=_stripeData.charges;if(!charges.length){showDbToast('No charges to export');return;}
+  var csv=['Date,Amount NZD,Email,Receipt URL'].concat(charges.map(function(c){return [c.date?c.date.slice(0,10):'',c.amount_nzd||0,c.email||'',c.receipt_url||''].join(',');})).join('\n');
+  var blob=new Blob([csv],{type:'text/csv'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='stripe_charges.csv';a.click();
+}
+async function stripeSyncToContacts(){
+  var customers=_stripeData.customers;var synced=0;
+  customers.forEach(function(c){if(!c.email)return;var existing=S.get('contacts').find(function(x){return(x.email||'').toLowerCase()===c.email.toLowerCase();});if(existing){existing.is_vip=c.status==='active';existing.total_contributed_nzd=c.total_paid_nzd;existing.stripe_customer_id=c.stripe_customer_id;existing.subscription_status=c.status;if(c.status==='active')existing.vip_since=existing.vip_since||c.member_since;S.upsert('contacts',existing);synced++;}});
+  showDbToast(synced+' contacts synced with VIP data');
+}
+function vipSyncContact(email, stripeId, status, totalPaid){
+  if(!email)return;var c=S.get('contacts').find(function(x){return(x.email||'').toLowerCase()===email.toLowerCase();});
+  if(c){c.is_vip=status==='active';c.stripe_customer_id=stripeId;c.total_contributed_nzd=totalPaid;c.subscription_status=status;S.upsert('contacts',c);showDbToast('Synced '+email);}
+  else showDbToast('No contact found for '+email+' — pull Tap-Map contacts first');
+}
+
+// ── Waitlist Page (D7) ───────────────────────────────────────────────────────
+var _wlEntries = [];
+var _wlFilter = '';
+
+async function pullWaitlist(btn){
+  var railsUrl=getIntegration('rails-api');
+  if(!railsUrl){showDbToast('Rails API not configured',true);return;}
+  if(btn)btn.textContent='Loading…';
+  try{
+    var jwt=localStorage.getItem('twwp_rails_jwt')||'';
+    var r=await fetch(railsUrl+'/api/tap_map/waitlist',{headers:{Authorization:'Bearer '+jwt}});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    var d=await r.json();
+    _wlEntries=d.entries||[];
+    localStorage.setItem('twwp_waitlist_v1',JSON.stringify(_wlEntries));
+    renderWaitlistStats();renderWaitlist();
+    showDbToast(_wlEntries.length+' waitlist entries loaded');
+  }catch(e){showDbToast('Waitlist pull failed: '+e.message,true);}
+  finally{if(btn)btn.textContent='↓ Waitlist';}
+}
+function loadWaitlistPage(){
+  var cached=localStorage.getItem('twwp_waitlist_v1');
+  if(cached){try{_wlEntries=JSON.parse(cached);}catch{_wlEntries=[];}}
+  renderWaitlistStats();renderWaitlist();
+}
+function setWlFilter(el){
+  document.querySelectorAll('#wl-filter-pills .pill').forEach(function(p){p.classList.remove('on');});
+  el.classList.add('on');_wlFilter=el.dataset.wf||'';renderWaitlist();
+}
+function renderWaitlistStats(){
+  var el=G('wl-stats');if(!el)return;
+  var total=_wlEntries.length;
+  var gw=_wlEntries.filter(function(e){return e.get_water;}).length;
+  var ht=_wlEntries.filter(function(e){return e.host_tap;}).length;
+  var fac=_wlEntries.filter(function(e){return e.facilitator;}).length;
+  var sb=_wlEntries.filter(function(e){return e.share_buy;}).length;
+  var cards=[
+    {label:'Total Entries',val:total,col:'var(--text1)'},
+    {label:'💧 Get Water',val:gw,col:'var(--blue)'},
+    {label:'🏠 Host Tap',val:ht,col:'var(--green)'},
+    {label:'🤝 Facilitator',val:fac,col:'var(--purple)'},
+    {label:'💰 Share Buy',val:sb,col:'var(--amber)'}
+  ];
+  el.innerHTML=cards.map(function(c){return '<div style="background:var(--surface2);border-radius:8px;padding:12px 16px;flex:1;min-width:100px;border-left:3px solid '+c.col+'"><div style="font-size:22px;font-weight:700;color:'+c.col+'">'+c.val+'</div><div style="font-size:11px;color:var(--text3);margin-top:2px">'+c.label+'</div></div>';}).join('');
+}
+function renderWaitlist(){
+  var wrap=G('wl-table-wrap');if(!wrap)return;
+  var q=(G('wl-search')||{}).value?.toLowerCase()||'';
+  var entries=_wlEntries.filter(function(e){
+    if(q&&!(e.name||'').toLowerCase().includes(q)&&!(e.email||'').toLowerCase().includes(q))return false;
+    if(_wlFilter==='get_water')return !!e.get_water;
+    if(_wlFilter==='host_tap')return !!e.host_tap;
+    if(_wlFilter==='facilitator')return !!e.facilitator;
+    if(_wlFilter==='share_buy')return !!e.share_buy;
+    return true;
+  });
+  if(!entries.length){wrap.innerHTML='<div style="color:var(--text3);font-size:12px;padding:20px 0">'+(total===0?'No entries. Click ↓ Waitlist to pull data.':'No entries match filter.')+'</div>';return;}
+  var rows=entries.map(function(e){
+    var interests=['get_water','host_tap','facilitator','share_buy'].filter(function(k){return e[k];});
+    var badges={'get_water':'💧','host_tap':'🏠','facilitator':'🤝','share_buy':'💰'};
+    var colors={'get_water':'var(--blue)','host_tap':'var(--green)','facilitator':'var(--purple)','share_buy':'var(--amber)'};
+    var iBadges=interests.map(function(k){return '<span style="font-size:10px;color:'+colors[k]+';padding:2px 6px;border-radius:99px;background:rgba(255,255,255,.05);border:1px solid '+colors[k]+'44">'+badges[k]+' '+k.replace('_',' ')+'</span>';}).join('');
+    return '<tr><td style="padding:8px;font-size:12px;color:var(--text1)">'+escH(e.name||'—')+'</td><td style="padding:8px;font-size:12px;color:var(--text2)">'+escH(e.email||'—')+'</td><td style="padding:8px;font-size:11px;color:var(--text3)">'+escH(e.phone||'—')+'</td><td style="padding:8px"><div style="display:flex;gap:4px;flex-wrap:wrap">'+iBadges+'</div></td><td style="padding:8px;font-size:11px;color:var(--text3)">'+(e.created_at?fmtDate(e.created_at):'—')+'</td><td style="padding:8px"><button class="btn btn-g btn-xs" onclick="wlAddToContacts('+e.id+')">+ Contact</button></td></tr>';
+  }).join('');
+  wrap.innerHTML='<table style="width:100%;border-collapse:collapse"><thead><tr>'+['Name','Email','Phone','Interests','Signed Up',''].map(function(h){return '<th style="padding:8px;text-align:left;font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;border-bottom:1px solid var(--border)">'+h+'</th>';}).join('')+'</tr></thead><tbody>'+rows+'</tbody></table>';
+}
+function wlAddToContacts(id){
+  var e=_wlEntries.find(function(x){return x.id===id;});if(!e||!e.email)return;
+  var existing=S.get('contacts').find(function(c){return(c.email||'').toLowerCase()===(e.email||'').toLowerCase();});
+  if(existing){showDbToast(e.email+' already in Contacts');return;}
+  var tags=['Waitlist'];
+  if(e.get_water)tags.push('get_water');if(e.host_tap)tags.push('host_tap');if(e.facilitator)tags.push('facilitator');if(e.share_buy)tags.push('share_buy');
+  S.upsert('contacts',{id:uid(),name:e.name||e.email.split('@')[0],email:e.email,phone:e.phone||'',type:'member',status:'Active',tags:tags.join(','),source:'waitlist',created:e.created_at||new Date().toISOString(),updated:new Date().toISOString()});
+  logEvent('contact','create','Added waitlist entry to contacts: '+(e.name||e.email));
+  showDbToast('Added '+escH(e.name||e.email)+' to Contacts');
+}
+function createWaitlistCampaign(){
+  var filtered=_wlEntries.filter(function(e){return !_wlFilter||e[_wlFilter];});
+  if(!filtered.length){showDbToast('No entries match current filter');return;}
+  var label=_wlFilter?_wlFilter.replace('_',' '):' (all interests)';
+  var camp={id:uid(),name:'Waitlist Campaign — '+label,stage:'Lead',contacts_count:filtered.length,source:'waitlist',filter:_wlFilter||'all',created:new Date().toISOString(),updated:new Date().toISOString()};
+  S.upsert('campaigns',camp);showDbToast('Campaign created from '+filtered.length+' waitlist entries');
+  go('campaigns',G('ni-campaigns'));
+}
+function exportWaitlistCsv(){
+  if(!_wlEntries.length){showDbToast('No entries to export');return;}
+  var csv=['Name,Email,Phone,Get Water,Host Tap,Facilitator,Share Buy,Signed Up'].concat(_wlEntries.map(function(e){return [e.name||'',e.email||'',e.phone||'',e.get_water?'Y':'',e.host_tap?'Y':'',e.facilitator?'Y':'',e.share_buy?'Y':'',e.created_at?e.created_at.slice(0,10):''].join(',');})).join('\n');
+  var blob=new Blob([csv],{type:'text/csv'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='waitlist.csv';a.click();
+}
+
+// ── Blog Page (D8) ───────────────────────────────────────────────────────────
+var _blogPosts = [];
+var _blogFilter = '';
+var _blogEditId = null;
+
+function renderBlogPage(){
+  loadBlogPosts();
+  switchBlogTab('posts', G('blog-tab-posts'));
+}
+
+async function loadBlogPosts(btn){
+  if(btn){btn.disabled=true;btn.textContent='...';}
+  try {
+    var jwt = localStorage.getItem('twwp_rails_jwt');
+    var r = await fetch(RAILS_API+'/api/content/blog_posts', {headers:{'Authorization':'Bearer '+jwt}});
+    var d = await r.json();
+    if(d.posts){ _blogPosts = d.posts; renderBlogPostsTable(); }
+    else showDbToast(d.error||'Failed to load posts');
+  } catch(e){ showDbToast('Error: '+e.message); }
+  finally { if(btn){btn.disabled=false;btn.textContent='↻ Refresh';} }
+}
+
+function switchBlogTab(tab, el){
+  ['posts','editor','news'].forEach(function(t){
+    var c = G('blog-tab-content-'+t);
+    var b = G('blog-tab-'+t);
+    if(c) c.style.display = t===tab ? '' : 'none';
+    if(b) b.classList.toggle('on', t===tab);
+  });
+  if(tab==='news') renderBlogNewsTab();
+}
+
+function setBlogFilter(el, val){
+  _blogFilter = val;
+  document.querySelectorAll('[data-bp]').forEach(function(p){ p.classList.toggle('on', p.getAttribute('data-bp')===val); });
+  renderBlogPostsTable();
+}
+
+function renderBlogPostsTable(){
+  var el = G('blogPostsTable');
+  if(!el) return;
+  var rows = _blogPosts.filter(function(p){ return !_blogFilter || p.status===_blogFilter; });
+  if(!rows.length){
+    el.innerHTML = '<div style="color:var(--text3);font-size:13px;padding:20px 0">No posts found.</div>';
+    return;
+  }
+  var STATUS_COL = {draft:'var(--amber)',published:'var(--green)',archived:'var(--text3)'};
+  el.innerHTML = '<table class="data-table"><thead><tr>'
+    +'<th>Title</th><th>Status</th><th>Author</th><th>Words</th><th>Updated</th><th></th>'
+    +'</tr></thead><tbody>'
+    + rows.map(function(p){
+      var words = (p.body||'').replace(/<[^>]+>/g,'').trim().split(/\s+/).filter(Boolean).length;
+      return '<tr>'
+        +'<td><strong>'+esc(p.title||'Untitled')+'</strong>'
+        +(p.excerpt?'<br><span style="font-size:11px;color:var(--text3)">'+esc(p.excerpt)+'</span>':'')
+        +'</td>'
+        +'<td><span style="color:'+(STATUS_COL[p.status]||'var(--text2)')+'">'+esc(p.status||'draft')+'</span></td>'
+        +'<td>'+esc(p.author||'')+'</td>'
+        +'<td>'+words+'</td>'
+        +'<td style="font-size:11px">'+(p.updated_at?p.updated_at.slice(0,10):'')+'</td>'
+        +'<td style="white-space:nowrap">'
+        +'<button class="btn btn-g btn-xs" onclick="blogOpenEditor('+JSON.stringify(p)+')" data-tip="Edit post">Edit</button> '
+        +(p.status!=='published'?'<button class="btn btn-p btn-xs" onclick="blogPublish('+p.id+')" data-tip="Publish">Publish</button> ':'')
+        +'<button class="btn btn-xs" style="background:var(--red10);color:var(--red)" onclick="blogArchive('+p.id+')" data-tip="Archive">Archive</button>'
+        +'</td></tr>';
+    }).join('')
+    +'</tbody></table>';
+}
+
+function blogOpenEditor(post){
+  _blogEditId = post.id;
+  G('blogEdTitle').value = post.title || '';
+  G('blogEdExcerpt').value = post.excerpt || '';
+  G('blogEdBody').innerHTML = post.body || '';
+  G('blogEdStatus').value = post.status || 'draft';
+  G('blogEdStatus2').textContent = '';
+  updateBlogWordCount();
+  switchBlogTab('editor', G('blog-tab-editor'));
+}
+
+function blogNewPost(){
+  _blogEditId = null;
+  G('blogEdTitle').value = '';
+  G('blogEdExcerpt').value = '';
+  G('blogEdBody').innerHTML = '';
+  G('blogEdStatus').value = 'draft';
+  G('blogEdStatus2').textContent = '';
+  updateBlogWordCount();
+  switchBlogTab('editor', G('blog-tab-editor'));
+}
+
+function blogClearEditor(){
+  if(!confirm('Clear editor? Unsaved changes will be lost.')) return;
+  blogNewPost();
+}
+
+function blogFmt(cmd, val){
+  document.execCommand(cmd, false, val || null);
+  G('blogEdBody').focus();
+  updateBlogWordCount();
+}
+
+function blogFmtLink(){
+  var url = prompt('Enter URL:');
+  if(url) document.execCommand('createLink', false, url);
+  G('blogEdBody').focus();
+}
+
+function updateBlogWordCount(){
+  var wc = G('blogWordCount');
+  if(!wc) return;
+  var text = (G('blogEdBody').innerText || '').trim();
+  var count = text ? text.split(/\s+/).filter(Boolean).length : 0;
+  wc.textContent = count+' word'+(count!==1?'s':'');
+}
+
+async function saveBlogPost(publish){
+  var title = (G('blogEdTitle').value||'').trim();
+  if(!title){ showDbToast('Title is required'); return; }
+  var status = publish ? 'published' : G('blogEdStatus').value;
+  var payload = {
+    title:   title,
+    excerpt: G('blogEdExcerpt').value,
+    body:    G('blogEdBody').innerHTML,
+    status:  status
+  };
+  var jwt = localStorage.getItem('twwp_rails_jwt');
+  var statusEl = G('blogEdStatus2');
+  statusEl.textContent = 'Saving...';
+  try {
+    var url = _blogEditId
+      ? RAILS_API+'/api/content/blog_posts/'+_blogEditId
+      : RAILS_API+'/api/content/blog_posts';
+    var method = _blogEditId ? 'PATCH' : 'POST';
+    var r = await fetch(url, {
+      method: method,
+      headers: {'Content-Type':'application/json','Authorization':'Bearer '+jwt},
+      body: JSON.stringify(payload)
+    });
+    var d = await r.json();
+    if(d.post){
+      _blogEditId = d.post.id;
+      G('blogEdStatus').value = d.post.status;
+      statusEl.textContent = 'Saved ✓';
+      // Update local cache
+      var idx = _blogPosts.findIndex(function(p){ return p.id===d.post.id; });
+      if(idx>=0) _blogPosts[idx]=d.post; else _blogPosts.unshift(d.post);
+      logEvent('blog','save',title,{id:d.post.id,status:status});
+    } else {
+      statusEl.style.color='var(--red)';
+      statusEl.textContent = d.error||'Save failed';
+    }
+  } catch(e){
+    statusEl.style.color='var(--red)';
+    statusEl.textContent = 'Error: '+e.message;
+  }
+}
+
+async function blogPublish(id){
+  var post = _blogPosts.find(function(p){ return p.id===id; });
+  if(!post || !confirm('Publish "'+post.title+'"?')) return;
+  var jwt = localStorage.getItem('twwp_rails_jwt');
+  try {
+    var r = await fetch(RAILS_API+'/api/content/blog_posts/'+id, {
+      method:'PATCH',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+jwt},
+      body: JSON.stringify({status:'published'})
+    });
+    var d = await r.json();
+    if(d.post){
+      var idx = _blogPosts.findIndex(function(p){ return p.id===id; });
+      if(idx>=0) _blogPosts[idx]=d.post;
+      renderBlogPostsTable();
+      showDbToast('Published ✓');
+    } else showDbToast(d.error||'Failed');
+  } catch(e){ showDbToast('Error: '+e.message); }
+}
+
+async function blogArchive(id){
+  var post = _blogPosts.find(function(p){ return p.id===id; });
+  if(!post || !confirm('Archive "'+post.title+'"?')) return;
+  var jwt = localStorage.getItem('twwp_rails_jwt');
+  try {
+    var r = await fetch(RAILS_API+'/api/content/blog_posts/'+id, {
+      method:'PATCH',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+jwt},
+      body: JSON.stringify({status:'archived'})
+    });
+    var d = await r.json();
+    if(d.post){
+      var idx = _blogPosts.findIndex(function(p){ return p.id===id; });
+      if(idx>=0) _blogPosts[idx]=d.post;
+      renderBlogPostsTable();
+      showDbToast('Archived');
+    } else showDbToast(d.error||'Failed');
+  } catch(e){ showDbToast('Error: '+e.message); }
+}
+
+// ── AI News Scraper (D9) ──────────────────────────────────────────────────────
+var NEWS_CFG_KEY = 'twwp_blog_news_v1';
+var DEFAULT_SOURCES = [
+  {id:'who-water',    name:'WHO — Water Quality',    url:'https://www.who.int/news-room/fact-sheets/detail/drinking-water', active:true},
+  {id:'waternz',      name:'Water New Zealand',       url:'https://www.waternz.org.nz/news',                                active:true},
+  {id:'nzwater',      name:'NZ Water Journal',        url:'https://www.waternz.org.nz/water-nz-publication',                active:true}
+];
+var _newsItems = [];  // [{id, title, summary, url, source, date, selected}]
+var _newsFetching = false;
+
+function getNewsCfg(){
+  try { return JSON.parse(localStorage.getItem(NEWS_CFG_KEY)||'{}'); } catch { return {}; }
+}
+function saveNewsCfg(c){ localStorage.setItem(NEWS_CFG_KEY, JSON.stringify(c)); }
+function getNewsSources(){
+  var cfg = getNewsCfg();
+  return cfg.sources || DEFAULT_SOURCES.map(function(s){ return Object.assign({},s); });
+}
+function saveNewsSources(sources){ var c=getNewsCfg(); c.sources=sources; saveNewsCfg(c); }
+
+function renderBlogNewsTab(){
+  var el = G('blogNewsContent');
+  if(!el) return;
+  var sources = getNewsSources();
+  var proxyUrl = (getIntegration('proxy-url')||'').replace(/\/$/,'');
+  var hasProxy = !!proxyUrl;
+  var hasSaved = _newsItems.length > 0;
+
+  el.innerHTML =
+    '<div style="display:grid;grid-template-columns:280px 1fr;gap:20px;align-items:start;max-width:1100px">'
+
+    // ── Sources panel ──
+    +'<div>'
+      +'<div style="font-size:12px;font-weight:700;color:var(--text2);letter-spacing:.05em;margin-bottom:8px;text-transform:uppercase">Sources</div>'
+      +'<div id="newsSourcesList">'
+      + sources.map(function(s){
+          return '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--bdr)">'
+            +'<input type="checkbox" '+(s.active?'checked':'')
+            +' onchange="newsToggleSource(\''+s.id+'\',this.checked)" style="margin:0">'
+            +'<div style="flex:1;min-width:0">'
+              +'<div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+esc(s.url)+'">'+esc(s.name)+'</div>'
+              +'<div style="font-size:10px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(s.url)+'</div>'
+            +'</div>'
+            +'<button class="btn btn-xs" style="color:var(--red);background:var(--red10)" onclick="newsRemoveSource(\''+s.id+'\')" title="Remove">&#215;</button>'
+          +'</div>';
+        }).join('')
+      +'</div>'
+      +'<div style="margin-top:10px;display:flex;gap:6px">'
+        +'<input type="url" id="newsAddUrl" placeholder="https://..." style="flex:1;font-size:12px;border:1px solid var(--bdr);border-radius:4px;padding:5px 8px;background:var(--bg2);color:var(--text1)">'
+        +'<button class="btn btn-g btn-xs" onclick="newsAddSource()" title="Add source">+</button>'
+      +'</div>'
+      +(hasProxy
+        ? '<button class="btn btn-p btn-sm" style="margin-top:14px;width:100%" id="newsFetchBtn" onclick="fetchAllNews(this)">'
+            +'&#128269; Fetch News</button>'
+        : '<div style="background:var(--amber10);border:1px solid var(--amber);border-radius:6px;padding:8px 10px;font-size:11px;margin-top:10px">'
+            +'&#9888; Add your Cloudflare Worker URL in AI &amp; Integrations to enable news fetching.</div>'
+      )
+    +'</div>'
+
+    // ── Articles panel ──
+    +'<div>'
+      +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">'
+        +'<div style="font-size:12px;font-weight:700;color:var(--text2);letter-spacing:.05em;text-transform:uppercase">Articles</div>'
+        +(hasSaved
+          ? '<button class="btn btn-s btn-xs" onclick="newsSelectAll(true)">All</button>'
+            +'<button class="btn btn-g btn-xs" onclick="newsSelectAll(false)">None</button>'
+            +'<button class="btn btn-p btn-xs" onclick="newsWeeklyDigest()" data-tip="Draft a weekly digest post from selected articles">Weekly Digest</button>'
+            +'<span style="font-size:11px;color:var(--text3);margin-left:auto" id="newsSelectedCount"></span>'
+          : ''
+        )
+      +'</div>'
+      +'<div id="newsArticlesGrid">'
+      +(_newsFetching
+        ? '<div style="color:var(--text3);font-size:13px">Fetching news...</div>'
+        : hasSaved
+          ? renderNewsArticleCards()
+          : '<div style="color:var(--text3);font-size:13px">No articles yet — click <em>Fetch News</em> to pull from active sources.</div>'
+      )
+      +'</div>'
+    +'</div>'
+    +'</div>';
+
+  updateNewsSelectedCount();
+}
+
+function renderNewsArticleCards(){
+  if(!_newsItems.length) return '<div style="color:var(--text3);font-size:13px">No articles found.</div>';
+  return '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">'
+    + _newsItems.map(function(a,i){
+        return '<div style="background:var(--bg2);border:1px solid '+(a.selected?'var(--cyan)':'var(--bdr)')+';border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:8px">'
+          +'<div style="display:flex;gap:8px;align-items:flex-start">'
+            +'<input type="checkbox" '+(a.selected?'checked':'')+' onchange="newsToggleArticle('+i+',this.checked)" style="margin-top:2px">'
+            +'<div>'
+              +'<div style="font-size:13px;font-weight:600;line-height:1.4">'+esc(a.title)+'</div>'
+              +'<div style="font-size:10px;color:var(--text3);margin-top:2px">'+esc(a.source)+(a.date?' · '+a.date.slice(0,10):'')+'</div>'
+            +'</div>'
+          +'</div>'
+          +'<div style="font-size:12px;color:var(--text2);line-height:1.5">'+esc(a.summary)+'</div>'
+          +'<div style="display:flex;gap:6px;margin-top:auto">'
+            +(a.url?'<a href="'+esc(a.url)+'" target="_blank" class="btn btn-g btn-xs">Read</a>':'')
+            +'<button class="btn btn-s btn-xs" onclick="newsDraftOne('+i+')" data-tip="Draft a blog post from this article">Draft Post</button>'
+          +'</div>'
+        +'</div>';
+      }).join('')
+    +'</div>';
+}
+
+function newsToggleSource(id, active){
+  var sources = getNewsSources();
+  var s = sources.find(function(x){ return x.id===id; });
+  if(s) s.active = active;
+  saveNewsSources(sources);
+}
+
+function newsRemoveSource(id){
+  var sources = getNewsSources().filter(function(s){ return s.id!==id; });
+  saveNewsSources(sources);
+  renderBlogNewsTab();
+}
+
+function newsAddSource(){
+  var input = G('newsAddUrl');
+  var url = (input&&input.value||'').trim();
+  if(!url || !url.startsWith('http')){ showDbToast('Enter a valid URL'); return; }
+  var sources = getNewsSources();
+  var id = 'custom-'+Date.now();
+  var name = url.replace(/^https?:\/\/(www\.)?/,'').split('/')[0];
+  sources.push({id:id, name:name, url:url, active:true});
+  saveNewsSources(sources);
+  renderBlogNewsTab();
+}
+
+async function fetchAllNews(btn){
+  var proxyUrl = (getIntegration('proxy-url')||'').replace(/\/$/,'');
+  if(!proxyUrl){ showDbToast('No proxy URL configured'); return; }
+  var cfg = getAiCfg();
+  var provider = cfg.provider||'gemini';
+  var apiKey = (cfg.keys&&cfg.keys[provider])||'';
+  if(!apiKey){ showDbToast('No AI API key — configure in AI & Integrations'); return; }
+
+  var sources = getNewsSources().filter(function(s){ return s.active; });
+  if(!sources.length){ showDbToast('No active sources'); return; }
+
+  _newsFetching = true;
+  _newsItems = [];
+  if(btn){ btn.disabled=true; btn.textContent='Fetching...'; }
+  renderBlogNewsTab();
+
+  for(var i=0; i<sources.length; i++){
+    var src = sources[i];
+    try {
+      var proxyRes = await fetch(proxyUrl+'/?url='+encodeURIComponent(src.url));
+      var proxyData = await proxyRes.json();
+      var pageText = (proxyData.text||proxyData.body||proxyData.content||'').slice(0,4000);
+      if(!pageText){ continue; }
+
+      var prompt = 'Extract the 3 most recent/notable news article summaries from this webpage content. '
+        +'Respond ONLY with a JSON array (no markdown, no extra text):\n'
+        +'[{"title":"article title","summary":"2-3 sentence summary","url":"article url or empty string","date":"YYYY-MM-DD or empty string"}]\n'
+        +'Source: '+src.name+'\nContent:\n'+pageText;
+
+      var articles = await aiCallJSON(prompt, null, null, 'news_scraper');
+      if(Array.isArray(articles)){
+        articles.forEach(function(a){
+          _newsItems.push({
+            id: 'news-'+Date.now()+'-'+Math.random().toString(36).slice(2,6),
+            title:   a.title||'',
+            summary: a.summary||'',
+            url:     a.url||src.url,
+            source:  src.name,
+            date:    a.date||new Date().toISOString().slice(0,10),
+            selected: false
+          });
+        });
+      }
+    } catch(e){
+      console.warn('News fetch failed for '+src.name+': '+e.message);
+    }
+  }
+
+  _newsFetching = false;
+  renderBlogNewsTab();
+  showDbToast('Fetched '+_newsItems.length+' articles from '+sources.length+' sources');
+}
+
+function newsToggleArticle(idx, selected){
+  if(_newsItems[idx]) _newsItems[idx].selected = selected;
+  // Update card border without full re-render
+  updateNewsSelectedCount();
+  var cards = document.querySelectorAll('#newsArticlesGrid > div > div');
+  if(cards[idx]) cards[idx].style.borderColor = selected ? 'var(--cyan)' : 'var(--bdr)';
+}
+
+function newsSelectAll(sel){
+  _newsItems.forEach(function(a){ a.selected = sel; });
+  renderBlogNewsTab();
+}
+
+function updateNewsSelectedCount(){
+  var el = G('newsSelectedCount');
+  if(!el) return;
+  var n = _newsItems.filter(function(a){ return a.selected; }).length;
+  el.textContent = n ? n+' selected' : '';
+}
+
+async function newsWeeklyDigest(){
+  var selected = _newsItems.filter(function(a){ return a.selected; });
+  if(!selected.length){ showDbToast('Select at least one article'); return; }
+  var cfg = getAiCfg();
+  var provider = cfg.provider||'gemini';
+  var apiKey = (cfg.keys&&cfg.keys[provider])||'';
+  if(!apiKey){ showDbToast('No AI API key configured'); return; }
+
+  showDbToast('Drafting weekly digest...');
+  var articleList = selected.map(function(a,i){
+    return (i+1)+'. '+a.title+'\nSource: '+a.source+'\nSummary: '+a.summary;
+  }).join('\n\n');
+
+  var today = new Date().toISOString().slice(0,10);
+  var prompt = 'Write a weekly water quality news digest blog post for The Wholey Water Project. '
+    +'Tone: informative, community-focused, positive. '
+    +'Include an intro paragraph, one section per article, and a closing paragraph encouraging action. '
+    +'Return ONLY JSON (no markdown): {"title":"post title","body":"full HTML body using <h2>, <p>, <ul> tags"}\n\n'
+    +'Date: '+today+'\nArticles:\n'+articleList;
+
+  try {
+    var result = await aiCallJSON(prompt, null, null, 'news_digest');
+    _blogEditId = null;
+    G('blogEdTitle').value = result.title || 'Weekly Water Quality Digest — '+today;
+    G('blogEdExcerpt').value = 'A roundup of the latest water quality news from '+selected.length+' sources.';
+    G('blogEdBody').innerHTML = result.body || '';
+    G('blogEdStatus').value = 'draft';
+    G('blogEdStatus2').textContent = 'Generated from '+selected.length+' articles';
+    updateBlogWordCount();
+    switchBlogTab('editor', G('blog-tab-editor'));
+    logEvent('blog','digest','Weekly digest drafted', {count: selected.length});
+  } catch(e){
+    showDbToast('AI error: '+e.message);
+  }
+}
+
+async function newsDraftOne(idx){
+  var article = _newsItems[idx];
+  if(!article) return;
+  var cfg = getAiCfg();
+  var provider = cfg.provider||'gemini';
+  var apiKey = (cfg.keys&&cfg.keys[provider])||'';
+  if(!apiKey){ showDbToast('No AI API key configured'); return; }
+
+  showDbToast('Drafting post...');
+  var prompt = 'Write a short blog post for The Wholey Water Project inspired by this news article. '
+    +'Relate it back to the community\'s mission of providing clean water access. '
+    +'Return ONLY JSON (no markdown): {"title":"post title","body":"HTML body using <h2>,<p> tags","excerpt":"1 sentence summary"}\n\n'
+    +'Article title: '+article.title+'\nSummary: '+article.summary+'\nSource: '+article.source;
+
+  try {
+    var result = await aiCallJSON(prompt, null, null, 'news_draft_one');
+    _blogEditId = null;
+    G('blogEdTitle').value = result.title || article.title;
+    G('blogEdExcerpt').value = result.excerpt || article.summary.slice(0,120);
+    G('blogEdBody').innerHTML = result.body || '<p>'+esc(article.summary)+'</p>';
+    G('blogEdStatus').value = 'draft';
+    G('blogEdStatus2').textContent = 'Draft from '+article.source;
+    updateBlogWordCount();
+    switchBlogTab('editor', G('blog-tab-editor'));
+    logEvent('blog','draft_one','Draft from article: '+article.title);
+  } catch(e){
+    showDbToast('AI error: '+e.message);
+  }
+}
 
 // ── Token Usage Tracking ────────────────────────────────────────────────────
 var TOKEN_RATES={

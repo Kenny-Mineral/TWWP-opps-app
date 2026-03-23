@@ -1,6 +1,6 @@
 # TWWP Ops App — Current State
 
-**Last updated:** 2026-03-24 (Token usage tracking: in-app capture, Usage tab, resource bar, AI modal summary, backup/restore, sprint_template.rb)
+**Last updated:** 2026-03-24 (Sprint D complete — D1–D9: onboarding, user management, email service, email providers, Stripe, VIP contacts, waitlist, blog management, AI news scraper)
 
 ---
 
@@ -8,6 +8,129 @@
 
 Single-file app at `index.html` deployed on GitHub Pages.
 Rails API at `https://twwp-ops-api.fly.dev`.
+
+---
+
+## Sprint D (2026-03-24)
+
+### D1 — Onboarding Wizard enhancements
+- Step 1: Added org_type dropdown (Water Network / Community Trust / Tool Library / Cooperative / Other) → `org_config.org_type`
+- Step 2: Live preview panel (sidebar branding with selected color/logo) via `owUpdateBrandPreview()`; default color changed to `#00e5ff`; color/logo picker get `oninput` live update triggers
+- Step 3: Added guardian email field + location type label (→ `org_config.terminology.location_type`); `owPullTapMapTap()` button calls `GET /api/tap_map/taps?per_page=1` to pre-fill fields; modal widens to 740px for branding step via `owWrap` id
+- Step 4: Provider selector (`owSwitchAiProvider()`) + single key input per provider + async `owTestAiKey()` button; sets `setupStatus.ai_key = true` on success
+- Step 5: 4 status cards (Rails API, Google, Email, Tap-Map) with Configure buttons → `owConfigIntegration()` opens AI & Integrations modal to relevant tab
+- Step 6: `owSendInvite()` calls `POST /api/users/invite` if Rails configured; "Skip for now" button
+- Step 7: Sets `org_config.setup_complete = true`, `org_config.org_id = 'twwp'`; fires `logEvent('standard','onboarding_complete',...)`; "Take me to Dashboard" button text
+- `skipOnboarding()` now saves `org_config.wizard_step` for resume on reopen
+- `openOnboarding()` resumes from `org_config.wizard_step` if set
+- `checkRunOnboarding()` checks `org_config.setup_complete` (not just localStorage)
+- "Redo Setup Wizard" button in AI Models tab clears both localStorage and `org_config.setup_complete/wizard_step`
+
+### D2 — User Management
+- Rails: `GET /api/users`, `POST /api/users/invite`, `PATCH /api/users/:id`, `POST /api/users/:id/reset_password`, `DELETE /api/users/:id` (soft deactivate toggle)
+- Migration `20260324000001_add_user_fields`: adds `name`, `last_seen_at`, `invited_by`, `temp_password` columns to users
+- `ApplicationController#authenticate_request!`: sets `last_seen_at` via `update_column` on each user-based JWT request
+- `UsersController`: admin-gated (`require_admin!` checks `@current_user.role == 'admin'`)
+- Frontend: "User Management" sidebar item under Settings (`data-admin-only`)
+- `page-usermgmt`: stats row (total/active/admins/last login), search + role/status filter bar, user table with role badges, actions column (Edit Role modal, Reset PW, Deactivate/Reactivate, View Contact)
+- Current user row highlighted, cannot deactivate self
+- "Invite User" modal with name/email/role fields
+- `loadUsers()` fired on `go('usermgmt', ...)`
+
+### D3 — Email Service Infrastructure
+- `email_service.rb`: added class-method routing via `EmailService.send_email()` → Resend / SendGrid / Brevo / Mailtrap based on `EmailConfig.last.provider || ENV['EMAIL_PROVIDER']`
+- Resend: POST `https://api.resend.com/emails` with Bearer RESEND_API_KEY
+- SendGrid: POST `https://api.sendgrid.com/v3/mail/send` with Bearer SENDGRID_API_KEY
+- Brevo: POST `https://api.brevo.com/v3/smtp/email` with api-key BREVO_API_KEY
+- Mailtrap: Net::SMTP via MAILTRAP_HOST/PORT/USER/PASS (also used for test_mode)
+- `EmailService.active_provider` returns `EmailConfig.last.provider || ENV['EMAIL_PROVIDER']`
+- Test mode: if `EmailConfig.last.test_mode` or `EMAIL_TEST_MODE=true` → routes to Mailtrap
+- Migration `20260324000002_create_email_configs`: `email_configs` table (provider, from_address, test_mode, timestamps)
+- `EmailConfig` model with provider validation
+- `POST /api/email/test`: sends test to authenticated user, returns provider/message_id/timestamp
+- `PATCH /api/email/config`: updates EmailConfig (provider, from_address, test_mode)
+
+### D4 — Email Providers Page
+- New "Communications" sidebar section with "Email Providers" item (`ni-emailproviders` → `page-emailproviders`)
+- Also added "Content" sidebar section with "Blog" item and "Waitlist" item under People (stubs for D7/D8)
+- 6 sections: provider cards (Resend/SendGrid/Brevo/Mailtrap) — click to select active, cyan border when active
+- Provider config section shows fields for selected provider only (API key + provider-specific fields)
+- Resend: loads verified domains via `GET https://api.resend.com/domains` if key saved
+- Mailtrap: amber "Test mode" banner shown inline
+- From-address manager: pre-loaded with 3 TWWP addresses; add custom, set default, remove
+- Send mode toggle: Live / Test Mode — saves to `org_config.email_test_mode`, patches `PATCH /api/email/config`
+- Test Mode: site-wide amber floating badge + amber banner on page
+- Test Send: POST `/api/email/test`, shows provider/message_id/timestamp inline + logs `email_sent` event
+- Sending stats: Today/Week/Month counts from eventLedger + 14-day CSS bar chart
+- Keys stored in `twwp_integrations_v1` (consistent with existing pattern)
+
+### D5 — Stripe Page in Financials
+- New "Stripe" tab in Financials tab bar (&#128179; icon)
+- Two connection badges: "Tap-Map DB" (green if Rails API configured) and "Direct Stripe API" (green if stripe-secret set)
+- Four sub-tabs: Overview, 💎 VIP Members, Charges, Subscriptions
+- Rails endpoints added to `TapMapController` (all use TapMapRecord connection, wrapped in `safe_query`):
+  - `GET /api/tap_map/stripe_overview`: MRR, total revenue, active/total counts, 12-week revenue groups
+  - `GET /api/tap_map/stripe_customers`: pay_customers JOIN tap_map_users by owner_id, total_paid per customer
+  - `GET /api/tap_map/stripe_charges`: paginated (20/page), parses receipt_url from data JSON column
+  - `GET /api/tap_map/stripe_subscriptions`: with status filter, plan breakdown
+  - `GET /api/tap_map/waitlist`: TapMapWaitListEntry records (for D7)
+- Models: `PayCustomer`, `PayCharge`, `PaySubscription`, `TapMapWaitListEntry`, `TapMapBlogPost` (all inherit TapMapRecord)
+- Overview: stat cards (MRR/total revenue/active subscribers/total customers) + weekly bar chart
+- VIP Members: leaderboard by total_paid with 💎 badges, "Sync to Contacts" button
+- Charges: paginated table with receipt URL links, CSV export
+- Subscriptions: Active/Cancelled/All filter pills, plan breakdown, churn table
+- Deployed to Fly.io (no migration — read-only Tap-Map tables)
+
+### D6 — VIP Member Tagging in Contacts
+- Contact data model extended: `is_vip`, `vip_since`, `total_contributed_nzd`, `subscription_status`, `stripe_customer_id` fields
+- `pullTapMapContacts()`: now also calls `GET /api/tap_map/stripe_customers` and cross-references by email — active subscribers tagged `is_vip: true`
+- Contact card: 💎 badge in name heading when `is_vip=true`; gold border highlight on VIP cards
+- Contact card: Stripe section (subscription status, total paid, link to `https://dashboard.stripe.com/customers/{id}`) when `is_vip || stripe_customer_id`
+- "💎 VIP" filter pill in CRM type pills bar (filters via `is_vip` field)
+- `renderContacts()`: VIP filter uses `c.is_vip` check
+- Dashboard VIP card: shows count of VIP contacts with gold styling, navigates to VIP-filtered contacts
+
+### D7 — Waitlist Page
+- Rails: `GET /api/tap_map/waitlist` endpoint (already in TapMapController) returns TapMapWaitListEntry records
+- Frontend: `page-waitlist` with header actions (Pull Waitlist, Export CSV, Create Campaign)
+- Stats row: Total / Get Water / Host Tap / Facilitator / Share Buy counts
+- Filter pills: All / Get Water / Host Tap / Facilitator / Share Buy (each toggles `_wlFilter`)
+- Table with Name, Email, Phone, interest badges, date, Add to Contacts + Add to Campaign actions
+- `pullWaitlist()` calls Rails endpoint, `loadWaitlistPage()` renders stats + table
+- `exportWaitlistCsv()` exports all entries to CSV; `wlAddToContacts()` upserts contact by email
+- `go('waitlist', ...)` triggers `loadWaitlistPage()`
+
+### D8 — Blog Management Page
+- Rails: `TapMapWriteRecord` base class connecting to `tap_map_write` DB (uses `TAP_MAP_POOLER_URL || TAP_MAP_DATABASE_URL`)
+- `database.yml`: added `tap_map_write` entry (no `replica: true`)
+- `TapMapBlogPost` model now inherits from `TapMapWriteRecord` (writable); validates title + status
+- New `ContentController` with `before_action :require_admin!`; actions: `blog_posts` (list), `create_blog_post`, `update_blog_post`
+- Routes: `GET/POST /api/content/blog_posts`, `PATCH /api/content/blog_posts/:id`
+- Frontend: `page-blog` with 3 tabs (Posts / Editor / News & Sources)
+- Posts tab: filter pills (All/Drafts/Published/Archived), table with word count, Edit/Publish/Archive actions
+- Editor tab: contenteditable area with toolbar (Bold/Italic/H2/H3/Blockquote/Link/Bullet/Numbered), live word count, Save/Publish buttons, status dropdown
+- `_blogEditId` tracks current post; `blogNewPost()` / `blogOpenEditor()` / `blogClearEditor()` manage state
+- `saveBlogPost(publish)` does POST or PATCH depending on whether editing existing post
+- `go('blog', ...)` triggers `renderBlogPage()` which calls `loadBlogPosts()` and opens Posts tab
+
+### D9 — AI News Scraper
+- News & Sources tab on Blog page (third tab, `blog-tab-content-news`)
+- 3 default sources pre-seeded: WHO Water Quality, Water New Zealand, NZ Water Journal
+- Sources stored in `twwp_blog_news_v1` localStorage; add/remove/toggle active per source
+- `fetchAllNews()`: for each active source, calls CF Worker (`GET {proxy}/?url={encoded_url}`) to scrape page content, then calls `aiCallJSON()` to extract 3 articles as `[{title, summary, url, date}]`
+- Requires CF Worker (proxy-url) + AI API key; amber warning shown if proxy not configured
+- `_newsItems` array: `{id, title, summary, url, source, date, selected}`
+- Article cards: checkbox selection, cyan border when selected, Read link, Draft Post button
+- `newsWeeklyDigest()`: passes selected articles to AI → generates full HTML weekly digest post, opens in Editor tab
+- `newsDraftOne(idx)`: passes single article to AI → generates focused blog post, opens in Editor tab
+- "Weekly Digest" + "All/None" select buttons appear when articles loaded
+- `logEvent('blog',...)` fired on save, digest, draft actions
+
+### Sprint D Infrastructure
+- **Fly secrets set**: `RESEND_API_KEY`, `SENDGRID_API_KEY`, `BREVO_API_KEY`, `MAILTRAP_HOST`, `MAILTRAP_PORT`, `MAILTRAP_USER`, `MAILTRAP_PASS`, `EMAIL_PROVIDER`, `TAP_MAP_POOLER_URL`
+- **Neon database**: `blog_posts` and `wait_list_entries` tables added to same Neon DB as Tap-Map; accessed via `TapMapBlogPost` and `TapMapWaitListEntry` models
+- **Write operations**: `TapMapWriteRecord` base class uses `TAP_MAP_POOLER_URL` (Fly Postgres pooler) for cost-efficient connection pooling on write operations
+- **fly.toml fixed**: `[http_service]` now has `min_machines_running = 1` and `auto_stop_machines = false` to prevent machine suspension
 
 ---
 
