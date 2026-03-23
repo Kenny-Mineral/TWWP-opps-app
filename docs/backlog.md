@@ -1,6 +1,6 @@
 # TWWP Ops App — Build Backlog
 
-**Last updated:** 2026-03-24 (Sprint C)
+**Last updated:** 2026-03-24 (Token usage tracking)
 
 **Labels:** `[EXPLICIT]` `[IMPLIED]` `[FIX]` `[OPEN]` ✅ done
 
@@ -318,3 +318,17 @@ branding, users and config — without touching the code.
 - ✅ `[EXPLICIT]` C6: getTerm() on page titles + Guardian labels; module toggles (Campaigns/Trustees/DocBuilder/R&D); logo + org_name in sidebar on load — DONE Sprint C
 - ✅ `[EXPLICIT]` C7.2: Jira connect (Save & Connect, project dropdown, Pull Issues, Push to Jira, status badge) — DONE Sprint C
 - ✅ `[EXPLICIT]` C8.2: scripts/sprint_c.rb created; fix_sprint_b_tasks.rb run successfully — DONE Sprint C
+
+---
+
+## Token Usage Tracking (2026-03-24)
+
+- ✅ `[EXPLICIT]` Part 1: Token capture in callModelForFeature(), sendAIHelperMsg(), aiCallJSON() — DONE
+- ✅ `[EXPLICIT]` Part 2: logTokenUsage() + calculateTokenCost() + helper query functions — DONE
+- ✅ `[EXPLICIT]` Part 3: Resource bar token indicator (rb-tokens, goToUsageTab()) — DONE
+- ✅ `[EXPLICIT]` Part 4: Developer → Usage tab (summary cards, bar charts, last 50 calls, sprint tokens table, CSV export) — DONE
+- ✅ `[EXPLICIT]` Part 5: org_config.current_sprint field + sprint selector in Usage tab — DONE
+- ✅ `[EXPLICIT]` Part 6: scripts/sprint_template.rb — Claude Code token capture (ENV or prompt), CLAUDE_COST_USD, growth entry + sprint_tokens payload — DONE
+- ✅ `[EXPLICIT]` Part 7: AI Models tab → Usage Summary collapsible section (renderAiUsageSummary, toggleAiUsageSummary) — DONE
+- ✅ `[EXPLICIT]` Backup/restore: tokenUsage + sprintTokens in expAll() and impBackup() — DONE
+- ✅ `[EXPLICIT]` Demo seed: 4 demo token entries in seedDemoData() — DONE

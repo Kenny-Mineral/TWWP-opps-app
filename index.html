@@ -634,6 +634,21 @@ tbody tr:hover{background:var(--surface2);}
               <button class="btn btn-g btn-sm" onclick="localStorage.removeItem('twwp_setup_complete');localStorage.removeItem('twwp_onboarding_skip');openOnboarding()" data-tip="Reset and re-run the setup wizard from scratch">Redo Setup</button>
             </div>
           </div>
+          <div style="border-top:1px solid var(--border);padding-top:16px;margin-top:4px">
+            <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none" onclick="toggleAiUsageSummary()" data-tip="Token usage summary for in-app AI calls">
+              <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;cursor:pointer">Usage Summary</label>
+              <span id="aiUsageSummaryChevron" style="font-size:11px;color:var(--text3);transition:transform .2s">&#9660;</span>
+            </div>
+            <div id="aiUsageSummaryBody" style="display:none;margin-top:10px">
+              <div id="aiUsageSummaryContent" style="display:flex;flex-direction:column;gap:8px;font-size:12px;color:var(--text2)">
+                <div style="color:var(--text3);font-size:11px">Loading...</div>
+              </div>
+              <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+                <button class="btn btn-g btn-sm" onclick="goToUsageTab()" data-tip="Open the full token usage dashboard in Developer">View full usage stats</button>
+                <button class="btn btn-d btn-sm" onclick="if(confirm('Reset all token usage data?'))resetTokenData()" data-tip="Clear all token usage data">Reset usage stats</button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -2742,6 +2757,7 @@ tbody tr:hover{background:var(--surface2);}
       <div class="tb" data-t="tasks" onclick="switchDevTab(this)">Dev Tasks</div>
       <div class="tb" data-t="captures" onclick="switchDevTab(this)">Captures</div>
       <div class="tb" data-t="backlog" onclick="switchDevTab(this)">Backlog</div>
+      <div class="tb" data-t="usage" onclick="switchDevTab(this)">Usage</div>
       <div class="tb" data-t="spec" onclick="switchDevTab(this)">Platform Spec</div>
       <div class="tb" data-t="kb" onclick="switchDevTab(this)">Knowledge Base</div>
     </div>
@@ -2811,6 +2827,25 @@ tbody tr:hover{background:var(--surface2);}
     </div>
 
     <!-- KNOWLEDGE BASE tab -->
+    <!-- USAGE tab -->
+    <div id="dev-tab-usage" style="display:none">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+        <div style="flex:1">
+          <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em">Current Sprint</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+            <select id="usageSprintSel" onchange="setCurrentSprint(this.value)" style="min-width:160px;font-size:12px"></select>
+            <button class="btn btn-g btn-sm" onclick="openStartSprintModal()">+ Start New Sprint</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-s btn-sm" onclick="exportTokenUsageCSV()">Export CSV</button>
+          <button class="btn btn-g btn-sm" onclick="clearOldTokenData()">Clear Old (&gt;90d)</button>
+          <button class="btn btn-g btn-sm" style="color:var(--red)" onclick="resetTokenData()">Reset All</button>
+        </div>
+      </div>
+      <div id="usageTabContent"></div>
+    </div>
+
     <div id="dev-tab-kb" style="display:none">
       <div class="helper-bubble" style="margin-bottom:16px"><div class="hb-icon">&#128218;</div><div><strong>Knowledge Base</strong> is a living staff handbook fed into every AI call. Write SOPs, FAQs, glossary entries, and procedures here. Toggle <strong>Always Inject</strong> to include an entry in every AI request automatically — the AI will read it before answering anything.</div></div>
       <div style="margin-bottom:16px;display:flex;gap:8px">
@@ -3234,6 +3269,7 @@ tbody tr:hover{background:var(--surface2);}
   <div class="rb-item" id="rb-tasks-today" data-tip="Tasks completed today" title="Tasks completed today"></div>
   <div class="rb-item" id="rb-captures-today" data-tip="Captures submitted today" title="Captures today"></div>
   <div class="rb-item" id="rb-ai" data-tip="AI calls today" title="AI calls today"></div>
+  <div class="rb-item" id="rb-tokens" data-tip="Tokens used today — click to view usage stats" title="Tokens today" style="cursor:pointer" onclick="goToUsageTab()"></div>
   <div class="rb-item" id="rb-ledger" data-tip="Ledger events today (dot = recording status)" title="Ledger events today"></div>
   <div style="flex:1"></div>
   <div class="rb-item" id="rb-svc-dots" style="gap:4px"></div>
@@ -3418,7 +3454,9 @@ const KS={
   emailRegistry:'twwp_email_v1',
   campaigns:'twwp_campaigns_v1',
   eventLedger:'twwp_ledger_v1',
-  org_config:'twwp_org_config_v1'
+  org_config:'twwp_org_config_v1',
+  tokenUsage:'twwp_token_usage_v1',
+  sprintTokens:'twwp_sprint_tokens_v1'
 };
 const S={
   get:k=>{try{return JSON.parse(localStorage.getItem(KS[k])||'[]');}catch{return[];}},
@@ -3827,8 +3865,8 @@ function clearProc(){if(!confirm('Remove all imported and skipped?'))return;S.se
 
 // BACKUP / EXPORT
 function dlCSV(csv,fname){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=fname;a.click();}
-function expAll(){const data={exported:new Date().toISOString(),version:'4.2',items:S.get('items'),accounts:S.get('accounts'),locations:S.get('locations'),inbox:S.get('inbox'),kits:S.get('kits'),deps:S.get('deps'),maintJobs:S.get('maintJobs'),calEvents:S.get('calEvents'),monitorData:S.get('monitorData'),contacts:S.get('contacts'),projects:S.get('projects'),rd:S.get('rd'),legal:S.get('legal'),financials:S.get('financials'),captures:S.get('captures')};const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));a.download='twwp-backup-v4.2-'+today()+'.json';a.click();}
-function impBackup(input){const file=input.files[0];if(!file)return;const reader=new FileReader();reader.onload=ev=>{try{const data=JSON.parse(ev.target.result);let count=0;['items','accounts','locations','inbox','kits','deps','maintJobs','calEvents','monitorData','contacts','projects','rd','legal','financials','captures'].forEach(k=>{if(Array.isArray(data[k])){const ex=new Set(S.get(k).map(r=>r.id));const nw=data[k].filter(r=>r.id&&!ex.has(r.id));S.set(k,[...nw,...S.get(k)]);count+=nw.length;}});alert('Imported '+count+' new records.');location.reload();}catch(e){alert('Invalid backup file.');}};reader.readAsText(file);input.value='';}
+function expAll(){const data={exported:new Date().toISOString(),version:'4.2',items:S.get('items'),accounts:S.get('accounts'),locations:S.get('locations'),inbox:S.get('inbox'),kits:S.get('kits'),deps:S.get('deps'),maintJobs:S.get('maintJobs'),calEvents:S.get('calEvents'),monitorData:S.get('monitorData'),contacts:S.get('contacts'),projects:S.get('projects'),rd:S.get('rd'),legal:S.get('legal'),financials:S.get('financials'),captures:S.get('captures'),tokenUsage:JSON.parse(localStorage.getItem('twwp_token_usage_v1')||'[]'),sprintTokens:JSON.parse(localStorage.getItem('twwp_sprint_tokens_v1')||'[]')};const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));a.download='twwp-backup-v4.2-'+today()+'.json';a.click();}
+function impBackup(input){const file=input.files[0];if(!file)return;const reader=new FileReader();reader.onload=ev=>{try{const data=JSON.parse(ev.target.result);let count=0;['items','accounts','locations','inbox','kits','deps','maintJobs','calEvents','monitorData','contacts','projects','rd','legal','financials','captures'].forEach(k=>{if(Array.isArray(data[k])){const ex=new Set(S.get(k).map(r=>r.id));const nw=data[k].filter(r=>r.id&&!ex.has(r.id));S.set(k,[...nw,...S.get(k)]);count+=nw.length;}});['tokenUsage','sprintTokens'].forEach(k=>{const lsKey=k==='tokenUsage'?'twwp_token_usage_v1':'twwp_sprint_tokens_v1';if(Array.isArray(data[k])){const ex=new Set(JSON.parse(localStorage.getItem(lsKey)||'[]').map(r=>r.id));const nw=data[k].filter(r=>r.id&&!ex.has(r.id));localStorage.setItem(lsKey,JSON.stringify([...nw,...JSON.parse(localStorage.getItem(lsKey)||'[]')]));count+=nw.length;}});alert('Imported '+count+' new records.');location.reload();}catch(e){alert('Invalid backup file.');}};reader.readAsText(file);input.value='';}
 function expWoo(){const items=S.get('items').filter(i=>i.status==='Approved');const kits=S.get('kits').filter(k=>k.status==='Active');const rows=[['ID','Type','SKU','Name','Short description','Regular price','Sale price','Categories','Stock','Published']];items.forEach(item=>{rows.push(['','simple','TWWP-'+item.id.toUpperCase().slice(0,8),item.name,item.notes||'',item.sell_price||item.price||'','',item.component_type||'',item.qty_stock||0,1]);});kits.forEach(kit=>{const baseCost=calcKitCost(kit);rows.push(['','simple','KIT-'+kit.id.toUpperCase().slice(0,8),kit.name,kit.description||'',(parseFloat(kit.sell_price)||baseCost).toFixed(2),'',kit.kit_type,'',1]);});dlCSV(rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n'),'twwp-woocommerce-v4.2-'+today()+'.csv');}
 
 // MULTISELECT
@@ -5396,10 +5434,11 @@ async function sendAIHelperMsg(){
   const baseSystem='You are the Ops App assistant for TWWP (The Wholey Water Project), a decentralised community RO water network in New Zealand. The user is on the '+activePage+' page. Answer helpfully and concisely. If the user says "save as feedback" or describes an app improvement, classify it into one of: bug, backlog, ui, workflow, integration, automation, other.'+(kbCtx?'\n\n'+kbCtx:'');
   const prompt=baseSystem+'\n\nUser message: '+msg;
   try{
-    let text='';
-    if(provider==='anthropic'){const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:500,system:baseSystem,messages:[{role:'user',content:msg}]})});const d=await res.json();text=d.content?.[0]?.text||'No response.';}
-    else if(provider==='gemini'){const res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key='+apiKey,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})});const d=await res.json();if(d.error)throw new Error('Gemini error '+d.error.code+': '+d.error.message);text=d.candidates?.[0]?.content?.parts?.[0]?.text||'No response.';}
-    else if(provider==='openai'){const res=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+apiKey},body:JSON.stringify({model:'gpt-4o-mini',max_tokens:500,messages:[{role:'user',content:prompt}]})});const d=await res.json();text=d.choices?.[0]?.message?.content||'No response.';}
+    let text='';let _inp=0;let _out=0;
+    if(provider==='anthropic'){const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:500,system:baseSystem,messages:[{role:'user',content:msg}]})});const d=await res.json();text=d.content?.[0]?.text||'No response.';_inp=d.usage?.input_tokens||0;_out=d.usage?.output_tokens||0;}
+    else if(provider==='gemini'){const res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key='+apiKey,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})});const d=await res.json();if(d.error)throw new Error('Gemini error '+d.error.code+': '+d.error.message);text=d.candidates?.[0]?.content?.parts?.[0]?.text||'No response.';_inp=d.usageMetadata?.promptTokenCount||0;_out=d.usageMetadata?.candidatesTokenCount||0;}
+    else if(provider==='openai'){const res=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+apiKey},body:JSON.stringify({model:'gpt-4o-mini',max_tokens:500,messages:[{role:'user',content:prompt}]})});const d=await res.json();text=d.choices?.[0]?.message?.content||'No response.';_inp=d.usage?.prompt_tokens||0;_out=d.usage?.completion_tokens||0;}
+    logTokenUsage(provider,cfg.keys&&cfg.keys[provider]?'current-model':'unknown','ai_helper',_inp,_out);
     addAIMsg(text,'bot');
     // Auto-save if it looks like feedback
     if(msg.toLowerCase().includes('bug')||msg.toLowerCase().includes('not working')||msg.toLowerCase().includes('broken')){S.upsert('captures',{id:uid(),type:'feedback',bucket:'bug',title:msg.slice(0,80),body:text.slice(0,200),status:'',created:new Date().toISOString()});}
@@ -5459,7 +5498,9 @@ function initIntegrationsTabs(){
     if(tb){if(tc.api_key&&tc.token){tb.textContent='Connected';tb.className='b b-gr';}else{tb.textContent='Not connected';tb.className='b b-gy';}}
   }catch(e){}
 }
-function openApiMo(){const cfg=getAiCfg();const provider=cfg.provider||'gemini';const keys=cfg.keys||{};selectProvider(provider,true);['gemini','anthropic','openai','openrouter'].forEach(p=>{const el=G('ak-'+p);if(el)el.value=keys[p]||'';});if(G('ak-stripe-pub'))G('ak-stripe-pub').value=keys['stripe-pub']||'';if(G('ak-stripe-secret'))G('ak-stripe-secret').value=keys['stripe-secret']||'';if(G('af-autofill'))G('af-autofill').checked=cfg.features?cfg.features.autofill!==false:true;if(G('af-reports'))G('af-reports').checked=cfg.features?cfg.features.reports!==false:true;if(G('af-helper'))G('af-helper').checked=cfg.features?cfg.features.helper!==false:true;if(G('af-devnotes'))G('af-devnotes').checked=cfg.devNotes!==false;loadIntegrations();renderFeatureModelRows();updateOAuthUI();renderTerminologyEditor();renderModuleToggles();initIntegrationsTabs();updateJiraStatusBadge();OM('apiMo');}
+function openApiMo(){const cfg=getAiCfg();const provider=cfg.provider||'gemini';const keys=cfg.keys||{};selectProvider(provider,true);['gemini','anthropic','openai','openrouter'].forEach(p=>{const el=G('ak-'+p);if(el)el.value=keys[p]||'';});if(G('ak-stripe-pub'))G('ak-stripe-pub').value=keys['stripe-pub']||'';if(G('ak-stripe-secret'))G('ak-stripe-secret').value=keys['stripe-secret']||'';if(G('af-autofill'))G('af-autofill').checked=cfg.features?cfg.features.autofill!==false:true;if(G('af-reports'))G('af-reports').checked=cfg.features?cfg.features.reports!==false:true;if(G('af-helper'))G('af-helper').checked=cfg.features?cfg.features.helper!==false:true;if(G('af-devnotes'))G('af-devnotes').checked=cfg.devNotes!==false;loadIntegrations();renderFeatureModelRows();updateOAuthUI();renderTerminologyEditor();renderModuleToggles();initIntegrationsTabs();updateJiraStatusBadge();renderAiUsageSummary();OM('apiMo');}
+function toggleAiUsageSummary(){var body=G('aiUsageSummaryBody');var chev=G('aiUsageSummaryChevron');if(!body)return;var open=body.style.display==='block';body.style.display=open?'none':'block';if(chev)chev.style.transform=open?'':'rotate(180deg)';if(!open)renderAiUsageSummary();}
+function renderAiUsageSummary(){var el=G('aiUsageSummaryContent');if(!el)return;var td=getTokensToday();var tw=getTokensByPeriod(7);var tm=getTokensByPeriod(30);var rows=[['Today',td.total,td.cost],['This week',tw.total,tw.cost],['This month',tm.total,tm.cost]];var fmtTok=function(n){return n>=1000?(n/1000).toFixed(1)+'k':n;};var fmtUSD=function(c){return '$'+c.toFixed(4)+' USD (~$'+(c*1.63).toFixed(3)+' NZD)';};var html='<div style="display:grid;grid-template-columns:80px 1fr 1fr;gap:4px 12px;font-size:11px"><span style="color:var(--text3);font-weight:700">Period</span><span style="color:var(--text3);font-weight:700">Tokens</span><span style="color:var(--text3);font-weight:700">Est. cost</span>';rows.forEach(function(r){html+='<span style="color:var(--text2)">'+r[0]+'</span><span>'+fmtTok(r[1])+'</span><span style="color:var(--text3)">'+fmtUSD(r[2])+'</span>';});html+='</div>';if(td.total===0&&tw.total===0){html='<div style="font-size:11px;color:var(--text3)">No in-app AI calls recorded yet. Token usage is tracked automatically when AI features are used.</div>';}el.innerHTML=html;}
 function saveApiKey(){const cfg=getAiCfg();const selectedBtn=document.querySelector('.provider-btn.on');cfg.provider=selectedBtn?selectedBtn.dataset.p:'gemini';cfg.keys=cfg.keys||{};['gemini','anthropic','openai','openrouter'].forEach(p=>{const el=G('ak-'+p);if(!el)return;const v=el.value.trim();if(v)cfg.keys[p]=v;else delete cfg.keys[p];});if(G('ak-stripe-pub')?.value)cfg.keys['stripe-pub']=G('ak-stripe-pub').value;if(G('ak-stripe-secret')?.value)cfg.keys['stripe-secret']=G('ak-stripe-secret').value;cfg.features={autofill:G('af-autofill')?G('af-autofill').checked!==false:true,reports:G('af-reports')?G('af-reports').checked!==false:true,helper:G('af-helper')?G('af-helper').checked!==false:true};cfg.devNotes=G('af-devnotes')?G('af-devnotes').checked:true;saveFeatureModels();saveAiCfgToStore(cfg);saveIntegrations();var sb=G('intSaveBtn');if(sb){var orig=sb.textContent;sb.textContent='Saved \u2713';sb.style.background='var(--green)';sb.style.color='#000';setTimeout(function(){sb.textContent=orig;sb.style.background='';sb.style.color='';CM('apiMo');},900);}else{CM('apiMo');}}
 function selectProvider(p,silent){document.querySelectorAll('.provider-btn').forEach(b=>{b.classList.toggle('on',b.dataset.p===p);});['gemini','anthropic','openai','openrouter'].forEach(id=>{const row=G('akr-'+id);if(row)row.style.display=id===p?'block':'none';});const orModel=G('akr-openrouter-model');if(orModel)orModel.style.display=p==='openrouter'?'block':'none';}
 
@@ -5570,6 +5611,19 @@ function seedDemoData(){
   S.upsert('captures',{id:'dc_l2',type:'legal',title:'PMA Member Agreement Review',body:'Annual review of member agreement terms. Ensure reimbursement and liability clauses are current.',status:'open',created:new Date(2025,6,1).toISOString()});
   // App feedback
   S.upsert('captures',{id:'dc_fb1',type:'feedback',bucket:'ui',title:'Calendar ledger column spacing on mobile',body:'Columns overlap on small screens. Need responsive table or card view for mobile.',status:'',created:new Date(2025,8,1).toISOString()});
+  // Demo token usage entries
+  var demoTokenBase=JSON.parse(localStorage.getItem('twwp_token_usage_v1')||'[]');
+  if(!demoTokenBase.some(function(t){return t.id&&t.id.startsWith('dtok_');})){
+    var demoNow=Date.now();
+    var demoToks=[
+      {id:'dtok_1',ts:new Date(demoNow-3600000).toISOString(),date:todayStr(),provider:'gemini',model:'gemini-2.5-flash',feature:'autofill',input:1240,output:312,cost:0.0001},
+      {id:'dtok_2',ts:new Date(demoNow-7200000).toISOString(),date:todayStr(),provider:'gemini',model:'gemini-2.5-flash',feature:'ai_helper',input:880,output:244,cost:0.00007},
+      {id:'dtok_3',ts:new Date(demoNow-86400000).toISOString(),date:addDays(todayStr(),-1),provider:'gemini',model:'gemini-2.5-flash',feature:'doc_extract',input:2100,output:580,cost:0.00017},
+      {id:'dtok_4',ts:new Date(demoNow-172800000).toISOString(),date:addDays(todayStr(),-2),provider:'anthropic',model:'claude-sonnet-4-6',feature:'autofill',input:950,output:210,cost:0.006},
+    ];
+    demoToks.forEach(function(t){demoTokenBase.push(t);});
+    localStorage.setItem('twwp_token_usage_v1',JSON.stringify(demoTokenBase));
+  }
   localStorage.setItem('twwp_demo_seeded_v3','1');
 }
 function clearDemoData(){if(!confirm('Remove ALL demo data? Cannot be undone.'))return;['items','locations','kits','deps','calEvents','maintJobs','monitorData','contacts','projects','captures','financials'].forEach(k=>{const cleaned=S.get(k).filter(r=>{const n=(r.name||r.title||r.wh_name||r.desc||'');return !n.includes('[DEMO]')&&!(r.id||'').startsWith('d');});S.set(k,cleaned);});localStorage.removeItem('twwp_demo_seeded_v3');alert('Demo data cleared.');location.reload();}
@@ -6282,13 +6336,14 @@ function renderDevPage(){
 function switchDevTab(el){
   document.querySelectorAll('#devPageTabs .tb').forEach(function(t){t.classList.remove('on');});
   el.classList.add('on');
-  ['history','tasks','captures','backlog','spec','kb'].forEach(function(t){
+  ['history','tasks','captures','backlog','usage','spec','kb'].forEach(function(t){
     var e=G('dev-tab-'+t);if(e)e.style.display=t===el.dataset.t?'block':'none';
   });
   if(el.dataset.t==='history'){renderDevHistory();updateDevPageActions('history');}
   if(el.dataset.t==='tasks')renderDevTasks();
   if(el.dataset.t==='captures')renderCapTypeCards();
   if(el.dataset.t==='backlog')renderDevBacklog();
+  if(el.dataset.t==='usage')renderUsageTab();
   if(el.dataset.t==='spec'){renderSpecPage();}
   if(el.dataset.t==='kb'){renderKB();updateDevPageActions('kb');}
 }
@@ -6794,7 +6849,7 @@ async function classifyCapture(id){
   if(!key)return; // silent — no key configured
   var prompt='Classify this capture item for a community water project ops app.\nTitle: '+item.title+'\nBody: '+(item.body||'')+'\n\nReturn ONLY valid JSON with these fields:\n{"suggested_type":"task|note|feedback|rd|legal|campaign|lead","priority":"urgent|high|normal|low","tags":["tag1","tag2"],"summary":"one sentence","suggested_action":"short next step"}';
   try{
-    var result=await aiCallJSON(prompt);
+    var result=await aiCallJSON(prompt,null,null,'classify');
     if(result&&result.suggested_type){
       var updated=S.find('captures',id);if(!updated)return;
       updated.ai_suggested_type=result.suggested_type;
@@ -6855,6 +6910,216 @@ function discardCapture(id){
 
 // ── Backlog viewer ─────────────────────────────────────────
 var _backlogFilter='all';
+// ── Usage Tab ─────────────────────────────────────────────────────────────
+function renderUsageTab(){
+  var el=G('usageTabContent');if(!el)return;
+  var usage=JSON.parse(localStorage.getItem('twwp_token_usage_v1')||'[]');
+  var sprints=JSON.parse(localStorage.getItem('twwp_sprint_tokens_v1')||'[]');
+  var today=getTokensToday();var week=getTokensByPeriod(7);var month=getTokensByPeriod(30);
+  var allTime={total:usage.reduce(function(a,e){return a+e.total_tokens;},0),cost:usage.reduce(function(a,e){return a+e.estimated_cost_usd;},0)};
+
+  // Populate sprint selector
+  var sel=G('usageSprintSel');
+  if(sel){
+    var cfg=getOrgCfg();var current=cfg.current_sprint||'untracked';
+    // Derive sprint list from devtasks groups + sprintTokens entries
+    var knownSprints=['sprint_a','sprint_b','sprint_c','sprint_d','untracked'];
+    sprints.forEach(function(s){if(!knownSprints.includes(s.sprint_id))knownSprints.push(s.sprint_id);});
+    sel.innerHTML=knownSprints.map(function(s){return '<option value="'+escH(s)+'" '+(s===current?'selected':'')+'>'+escH(s)+'</option>';}).join('');
+  }
+
+  function fmtCost(usd){return '$'+(usd).toFixed(4)+' USD (~$'+(usd*1.63).toFixed(3)+' NZD)';}
+  function fmtNum(n){return n>=1000?(n/1000).toFixed(1)+'k':String(n);}
+
+  // Section 1: Summary cards
+  var cardsHtml='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px">'+
+    [['Today',today.total,today.cost],['This Week',week.total,week.cost],['This Month',month.total,month.cost],['All Time',allTime.total,allTime.cost]].map(function(c){
+      return '<div style="background:var(--surface2);border-radius:10px;padding:14px;text-align:center">'+
+        '<div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">'+c[0]+'</div>'+
+        '<div style="font-size:20px;font-weight:700;color:var(--cyan);margin-bottom:2px">'+fmtNum(c[1])+'</div>'+
+        '<div style="font-size:10px;color:var(--text2)">tokens</div>'+
+        '<div style="font-size:11px;color:var(--amber);margin-top:4px">'+fmtCost(c[2])+'</div>'+
+      '</div>';
+    }).join('')+
+  '</div>';
+
+  // Section 2a: Bar chart by feature (last 30d)
+  var byFeature=getTokensByFeature(30);
+  var maxFeat=byFeature.length?byFeature[0].total:1;
+  var featChart='<div style="background:var(--surface2);border-radius:10px;padding:16px;margin-bottom:16px">'+
+    '<div style="font-weight:700;font-size:13px;color:var(--text1);margin-bottom:12px">Tokens by Feature (last 30 days)</div>'+
+    (byFeature.length?byFeature.map(function(f){
+      var pct=Math.round(f.total/maxFeat*100);
+      return '<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:3px"><span>'+escH(f.feature)+'</span><span>'+fmtNum(f.total)+' ('+Math.round(f.total/(month.total||1)*100)+'%)</span></div>'+
+        '<div style="background:var(--surface3,#1a1f2e);border-radius:3px;height:8px"><div style="width:'+pct+'%;height:100%;background:var(--cyan);border-radius:3px"></div></div></div>';
+    }).join(''):'<div style="color:var(--text3);font-size:12px">No data yet — make some AI calls to see usage here.</div>')+
+  '</div>';
+
+  // Section 2b: Bar chart by provider (last 30d)
+  var byProv={};
+  usage.filter(function(e){return e.session_date>=new Date(Date.now()-30*86400000).toISOString().slice(0,10);}).forEach(function(e){
+    if(!byProv[e.provider])byProv[e.provider]={total:0,cost:0};
+    byProv[e.provider].total+=e.total_tokens;byProv[e.provider].cost+=e.estimated_cost_usd;
+  });
+  var provArr=Object.entries(byProv).sort(function(a,b){return b[1].total-a[1].total;});
+  var maxProv=provArr.length?provArr[0][1].total:1;
+  var provChart='<div style="background:var(--surface2);border-radius:10px;padding:16px;margin-bottom:16px">'+
+    '<div style="font-weight:700;font-size:13px;color:var(--text1);margin-bottom:12px">Tokens by Provider (last 30 days)</div>'+
+    (provArr.length?provArr.map(function(p){
+      var pct=Math.round(p[1].total/maxProv*100);
+      return '<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:3px"><span>'+escH(p[0])+'</span><span>'+fmtNum(p[1].total)+' — '+fmtCost(p[1].cost)+'</span></div>'+
+        '<div style="background:var(--surface3,#1a1f2e);border-radius:3px;height:8px"><div style="width:'+pct+'%;height:100%;background:var(--purple,#b06aff);border-radius:3px"></div></div></div>';
+    }).join(''):'<div style="color:var(--text3);font-size:12px">No provider data yet.</div>')+
+  '</div>';
+
+  // Section 2c: Last 50 calls table
+  var recent=usage.slice(0,50);
+  var USD_FMT=function(v){return '$'+(v||0).toFixed(5);};
+  var callTable='<div style="background:var(--surface2);border-radius:10px;padding:16px;margin-bottom:24px">'+
+    '<div style="font-weight:700;font-size:13px;color:var(--text1);margin-bottom:12px">Last 50 AI Calls</div>'+
+    (recent.length?
+    '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:11px">'+
+    '<thead><tr style="color:var(--text3);text-transform:uppercase;font-size:9px;letter-spacing:.06em;border-bottom:1px solid var(--border)">'+
+    '<th style="padding:6px 8px;text-align:left">Time</th><th style="padding:6px 8px;text-align:left">Feature</th>'+
+    '<th style="padding:6px 8px;text-align:left">Provider</th><th style="padding:6px 8px;text-align:left">In</th>'+
+    '<th style="padding:6px 8px;text-align:left">Out</th><th style="padding:6px 8px;text-align:left">Total</th>'+
+    '<th style="padding:6px 8px;text-align:left">Cost (USD)</th><th style="padding:6px 8px;text-align:left">Sprint</th></tr></thead>'+
+    '<tbody>'+recent.map(function(e){
+      var t=new Date(e.ts);var timeStr=t.toLocaleDateString()+' '+t.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
+      return '<tr style="border-bottom:1px solid var(--border)">'+
+        '<td style="padding:5px 8px;color:var(--text3)">'+timeStr+'</td>'+
+        '<td style="padding:5px 8px"><span class="b b-cy" style="font-size:9px">'+escH(e.feature)+'</span></td>'+
+        '<td style="padding:5px 8px;color:var(--text2)">'+escH(e.provider)+'</td>'+
+        '<td style="padding:5px 8px">'+fmtNum(e.input_tokens||0)+'</td>'+
+        '<td style="padding:5px 8px">'+fmtNum(e.output_tokens||0)+'</td>'+
+        '<td style="padding:5px 8px;font-weight:700;color:var(--cyan)">'+fmtNum(e.total_tokens||0)+'</td>'+
+        '<td style="padding:5px 8px;color:var(--amber)">'+USD_FMT(e.estimated_cost_usd)+'</td>'+
+        '<td style="padding:5px 8px;color:var(--text3)">'+escH(e.sprint_id||'—')+'</td></tr>';
+    }).join('')+'</tbody></table></div>'
+    :'<div style="color:var(--text3);font-size:12px">No AI calls recorded yet.</div>')+
+  '</div>';
+
+  // Section 3: Sprint token table
+  var sprintRows=sprints.length?sprints.map(function(s){
+    var inApp=getTokensBySprint(s.sprint_id);
+    var combined=(s.claude_code_total||0)+inApp.total;
+    var combinedCost=(s.claude_code_cost_usd||0)+inApp.cost;
+    return '<tr style="border-bottom:1px solid var(--border)">'+
+      '<td style="padding:6px 8px;font-weight:700;color:var(--text)">'+escH(s.sprint_id)+'</td>'+
+      '<td style="padding:6px 8px;color:var(--text3)">'+escH(s.date||'—')+'</td>'+
+      '<td style="padding:6px 8px">'+fmtNum(s.claude_code_input||0)+'</td>'+
+      '<td style="padding:6px 8px">'+fmtNum(s.claude_code_output||0)+'</td>'+
+      '<td style="padding:6px 8px;font-weight:700;color:var(--cyan)">'+fmtNum(s.claude_code_total||0)+'</td>'+
+      '<td style="padding:6px 8px;color:var(--amber)">'+USD_FMT(s.claude_code_cost_usd||0)+'</td>'+
+      '<td style="padding:6px 8px;color:var(--text2)">'+fmtNum(inApp.total)+'</td>'+
+      '<td style="padding:6px 8px;font-weight:700">'+fmtNum(combined)+'</td>'+
+      '<td style="padding:6px 8px;color:var(--amber)">'+USD_FMT(combinedCost)+'</td>'+
+    '</tr>';
+  }).join(''):
+    '<tr><td colspan="9" style="padding:12px 8px;color:var(--text3);text-align:center">No sprint token data yet. Use the "Log sprint tokens" button or run sprint_c.rb to add entries.</td></tr>';
+
+  var sprintTable='<div style="background:var(--surface2);border-radius:10px;padding:16px;margin-bottom:24px">'+
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'+
+    '<div style="font-weight:700;font-size:13px;color:var(--text1)">Claude Code Sprint Tokens</div>'+
+    '<button class="btn btn-g btn-sm" onclick="openLogSprintTokensModal()">Log sprint tokens manually</button></div>'+
+    '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:11px">'+
+    '<thead><tr style="color:var(--text3);text-transform:uppercase;font-size:9px;letter-spacing:.06em;border-bottom:1px solid var(--border)">'+
+    '<th style="padding:6px 8px;text-align:left">Sprint</th><th style="padding:6px 8px;text-align:left">Date</th>'+
+    '<th style="padding:6px 8px;text-align:left">CC Input</th><th style="padding:6px 8px;text-align:left">CC Output</th>'+
+    '<th style="padding:6px 8px;text-align:left">CC Total</th><th style="padding:6px 8px;text-align:left">CC Cost</th>'+
+    '<th style="padding:6px 8px;text-align:left">In-App</th><th style="padding:6px 8px;text-align:left">Combined</th>'+
+    '<th style="padding:6px 8px;text-align:left">Combined Cost</th></tr></thead>'+
+    '<tbody>'+sprintRows+'</tbody></table></div></div>';
+
+  // Section 4: Combined totals
+  var totalCC=sprints.reduce(function(a,s){return a+(s.claude_code_total||0);},0);
+  var totalCCCost=sprints.reduce(function(a,s){return a+(s.claude_code_cost_usd||0);},0);
+  var combinedGrand=totalCC+allTime.total;
+  var combinedCostGrand=totalCCCost+allTime.cost;
+  var avgPerSprint=sprints.length?Math.round(combinedGrand/sprints.length):0;
+  var mostExpFeat=byFeature.length?byFeature[0].feature:'—';
+  var mostExpSprint='—';var maxSprintCost=0;
+  sprints.forEach(function(s){var inApp=getTokensBySprint(s.sprint_id);var c=(s.claude_code_cost_usd||0)+inApp.cost;if(c>maxSprintCost){maxSprintCost=c;mostExpSprint=s.sprint_id;}});
+
+  var totals='<div style="background:var(--surface2);border-radius:10px;padding:16px">'+
+    '<div style="font-weight:700;font-size:13px;color:var(--text1);margin-bottom:12px">Combined Totals (In-App + Claude Code)</div>'+
+    '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;font-size:12px">'+
+    '<div style="color:var(--text3)">Total tokens all time</div><div style="color:var(--cyan);font-weight:700">'+fmtNum(combinedGrand)+'</div>'+
+    '<div style="color:var(--text3)">Estimated cost all time</div><div style="color:var(--amber)">'+fmtCost(combinedCostGrand)+'</div>'+
+    '<div style="color:var(--text3)">Average per sprint</div><div style="color:var(--text)">'+fmtNum(avgPerSprint)+'</div>'+
+    '<div style="color:var(--text3)">Most expensive feature</div><div style="color:var(--text)">'+escH(mostExpFeat)+'</div>'+
+    '<div style="color:var(--text3)">Most expensive sprint</div><div style="color:var(--text)">'+escH(mostExpSprint)+'</div>'+
+    '</div><div style="font-size:10px;color:var(--text3);margin-top:10px">* NZD conversion at ~1.63 (approximate). Costs are estimates based on public pricing.</div></div>';
+
+  el.innerHTML=cardsHtml+featChart+provChart+callTable+sprintTable+totals;
+}
+
+function setCurrentSprint(sprintId){
+  var c=getOrgCfg();c.current_sprint=sprintId;saveOrgCfg(c);
+  showDbToast('Current sprint set to '+sprintId);
+}
+
+function openStartSprintModal(){
+  var id=prompt('New sprint ID (e.g. sprint_d):','');
+  if(!id||!id.trim())return;
+  id=id.trim().toLowerCase().replace(/\s+/g,'_');
+  var sprints=JSON.parse(localStorage.getItem('twwp_sprint_tokens_v1')||'[]');
+  if(sprints.find(function(s){return s.sprint_id===id;})){showDbToast('Sprint "'+id+'" already exists',true);return;}
+  sprints.unshift({id:uid(),sprint_id:id,date:todayStr(),claude_code_input:0,claude_code_output:0,claude_code_total:0,claude_code_cost_usd:0,created:new Date().toISOString()});
+  localStorage.setItem('twwp_sprint_tokens_v1',JSON.stringify(sprints));
+  setCurrentSprint(id);
+  renderUsageTab();
+}
+
+function openLogSprintTokensModal(){
+  var cfg=getOrgCfg();
+  var sprintId=prompt('Sprint ID (e.g. sprint_c):',cfg.current_sprint||'sprint_c');
+  if(!sprintId)return;
+  var inp=parseInt(prompt('Claude Code INPUT tokens for this sprint (from VS Code terminal):','0')||'0',10);
+  var out=parseInt(prompt('Claude Code OUTPUT tokens for this sprint (from VS Code terminal):','0')||'0',10);
+  var cost=(inp*0.000003)+(out*0.000015);
+  var sprints=JSON.parse(localStorage.getItem('twwp_sprint_tokens_v1')||'[]');
+  var existing=sprints.find(function(s){return s.sprint_id===sprintId;});
+  if(existing){
+    existing.claude_code_input=(existing.claude_code_input||0)+inp;
+    existing.claude_code_output=(existing.claude_code_output||0)+out;
+    existing.claude_code_total=(existing.claude_code_total||0)+inp+out;
+    existing.claude_code_cost_usd=(existing.claude_code_cost_usd||0)+cost;
+  } else {
+    sprints.unshift({id:uid(),sprint_id:sprintId,date:todayStr(),claude_code_input:inp,claude_code_output:out,claude_code_total:inp+out,claude_code_cost_usd:cost,created:new Date().toISOString()});
+  }
+  localStorage.setItem('twwp_sprint_tokens_v1',JSON.stringify(sprints));
+  showDbToast('Sprint tokens logged: '+(inp+out)+' tokens (~$'+cost.toFixed(4)+' USD)');
+  renderUsageTab();
+}
+
+function exportTokenUsageCSV(){
+  var usage=JSON.parse(localStorage.getItem('twwp_token_usage_v1')||'[]');
+  if(!usage.length){showDbToast('No token usage data to export',true);return;}
+  var headers=['id','ts','provider','model','feature','input_tokens','output_tokens','total_tokens','estimated_cost_usd','sprint_id','session_date'];
+  var rows=[headers.join(',')].concat(usage.map(function(e){return headers.map(function(k){return JSON.stringify(e[k]||'');}).join(',');}));
+  var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([rows.join('\n')],{type:'text/csv'}));
+  a.download='twwp-token-usage-'+todayStr()+'.csv';a.click();
+}
+
+function clearOldTokenData(){
+  if(!confirm('Delete token usage entries older than 90 days?'))return;
+  var cutoff=new Date(Date.now()-90*86400000).toISOString().slice(0,10);
+  var usage=JSON.parse(localStorage.getItem('twwp_token_usage_v1')||'[]');
+  var kept=usage.filter(function(e){return e.session_date>=cutoff;});
+  localStorage.setItem('twwp_token_usage_v1',JSON.stringify(kept));
+  showDbToast('Removed '+(usage.length-kept.length)+' old entries');
+  renderUsageTab();
+}
+
+function resetTokenData(){
+  if(!confirm('Delete ALL token usage data? This cannot be undone.'))return;
+  localStorage.removeItem('twwp_token_usage_v1');
+  showDbToast('Token usage data cleared');
+  renderUsageTab();
+  updateResourceBar();
+}
+
 function renderDevBacklog(){
   var el=G('devBacklogList');if(!el)return;
   var progress=JSON.parse(localStorage.getItem('twwp_backlog_progress_v1')||'{}');
@@ -8408,6 +8673,7 @@ var RB_ITEMS_DEF = [
   {key:'tasks-today', label:'Tasks Today'},
   {key:'captures-today', label:'Captures Today'},
   {key:'ai',       label:'AI Calls'},
+  {key:'tokens',   label:'Tokens Today'},
   {key:'ledger',   label:'Ledger Events'},
   {key:'svc-dots', label:'Service Dots'},
 ];
@@ -8498,6 +8764,17 @@ function updateResourceBar(){
     }
   }
 
+  // Tokens today
+  if(rbItemVisible('tokens')){
+    var tokEl=G('rb-tokens');
+    if(tokEl){
+      var td=getTokensToday();
+      var tokTxt=td.total>=1000?(td.total/1000).toFixed(1)+'k':td.total;
+      var costNZD=(td.cost*1.63);
+      tokEl.innerHTML='&#128308; '+tokTxt+' tok (~$'+costNZD.toFixed(3)+' NZD)';
+    }
+  }
+
   // Ledger events today
   if(rbItemVisible('ledger')){
     var ledEl=G('rb-ledger');
@@ -8529,6 +8806,14 @@ function updateResourceBar(){
       }).join('');
     }
   }
+}
+
+function goToUsageTab(){
+  go('developer',G('ni-developer'));
+  setTimeout(function(){
+    var tab=document.querySelector('#devPageTabs .tb[data-t="usage"]');
+    if(tab)switchDevTab(tab);
+  },100);
 }
 
 function toggleResourceBar(){
@@ -10508,46 +10793,50 @@ async function importWizStep1Receipt(){
 
 // ── AI extraction helpers ──────────────────────────────────
 
-async function aiCallJSON(prompt,imageB64,mediaType){
+async function aiCallJSON(prompt,imageB64,mediaType,feature){
   var cfg=getAiCfg();var provider=cfg.provider||'gemini';var key=(cfg.keys&&cfg.keys[provider])||'';
   if(!key)throw new Error('No API key configured. Set one in AI & Integrations.');
   var kbCtx=getKBContext();if(kbCtx)prompt=kbCtx+'\n\n'+prompt;
-  var raw='';
+  var raw='';var _inp=0;var _out=0;
   if(provider==='anthropic'){
     var msgs=[{role:'user',content:imageB64?[{type:'image',source:{type:'base64',media_type:mediaType,data:imageB64}},{type:'text',text:prompt}]:[{type:'text',text:prompt}]}];
     var res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:1500,messages:msgs})});
     var d=await res.json();raw=d.content?.map(function(b){return b.text||'';}).join('').trim();
+    _inp=d.usage?.input_tokens||0;_out=d.usage?.output_tokens||0;
   } else if(provider==='gemini'){
     var parts=[{text:prompt}];
     if(imageB64)parts.unshift({inline_data:{mime_type:mediaType,data:imageB64}});
     var res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key='+key,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:parts}]})});
     var d=await res.json();raw=d.candidates?.[0]?.content?.parts?.map(function(p){return p.text||'';}).join('').trim()||'';
+    _inp=d.usageMetadata?.promptTokenCount||0;_out=d.usageMetadata?.candidatesTokenCount||0;
   } else if(provider==='openai'){
     var msgs=[{role:'user',content:imageB64?[{type:'image_url',image_url:{url:'data:'+mediaType+';base64,'+imageB64}},{type:'text',text:prompt}]:prompt}];
     var res=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify({model:'gpt-4o-mini',max_tokens:1500,messages:msgs})});
     var d=await res.json();raw=d.choices?.[0]?.message?.content?.trim()||'';
+    _inp=d.usage?.prompt_tokens||0;_out=d.usage?.completion_tokens||0;
   }
   var parsed = JSON.parse(raw.replace(/^```json\n?|```$/g,'').trim());
+  logTokenUsage(provider,'current-model',feature||'autofill',_inp,_out);
   logEvent('ai','ai_call','AI call via '+provider+' ('+prompt.slice(0,60).replace(/\n/g,' ')+'…)', {provider: provider});
   return parsed;
 }
 
 async function aiExtractFromUrl(url){
   var prompt='Extract product details from this URL and respond ONLY with this JSON (no markdown, no extra text):\n{"name":"product name","price":12.50,"component_type":"Electronics","notes":"key specs under 150 chars","url":"'+url+'"}\ncomponent_type must be one of: Electronics, Sensors, Filtration, Power/Solar, Construction, Labour, Consumables, Other\nURL: '+url;
-  var result=await aiCallJSON(prompt,null,null);
+  var result=await aiCallJSON(prompt,null,null,'autofill');
   result.qty=1;result._skip=false;
   return result;
 }
 
 async function aiExtractFromText(text,source){
   var prompt='Extract all purchasable items from this '+source+' text. Respond ONLY with a JSON array (no markdown):\n[{"name":"item name","price":12.50,"qty":1,"component_type":"Other","notes":"any relevant specs"}]\ncomponent_type must be one of: Electronics, Sensors, Filtration, Power/Solar, Construction, Labour, Consumables, Other\nIf no price is found, use 0. If no qty, use 1.\n\nText:\n'+text.slice(0,3000);
-  var result=await aiCallJSON(prompt,null,null);
+  var result=await aiCallJSON(prompt,null,null,'doc_extract');
   return (Array.isArray(result)?result:[result]).map(function(i){i._skip=false;return i;});
 }
 
 async function aiExtractFromFile(b64,mediaType){
   var prompt='Extract all purchasable items from this receipt or invoice image. Respond ONLY with a JSON array (no markdown):\n[{"name":"item name","price":12.50,"qty":1,"component_type":"Other","notes":"any relevant detail"}]\ncomponent_type must be one of: Electronics, Sensors, Filtration, Power/Solar, Construction, Labour, Consumables, Other\nIf no price is found, use 0. If no qty, use 1.';
-  var result=await aiCallJSON(prompt,b64,mediaType);
+  var result=await aiCallJSON(prompt,b64,mediaType,'receipt_parse');
   return (Array.isArray(result)?result:[result]).map(function(i){i._skip=false;return i;});
 }
 
@@ -10646,7 +10935,7 @@ async function importWizStep1Donation(){
       var mediaType=photo.type||'image/jpeg';
       var prompt='Look at this donated item photo. The person described it as: "'+desc+'". Respond ONLY with JSON:\n{"name":"improved descriptive name","component_type":"Other","notes":"brief condition and specs note under 100 chars"}\ncomponent_type must be one of: Electronics, Sensors, Filtration, Power/Solar, Construction, Labour, Consumables, Other';
       try{
-        var ai=await aiCallJSON(prompt,b64,mediaType);
+        var ai=await aiCallJSON(prompt,b64,mediaType,'autofill');
         if(ai.name&&ai.name.length>desc.length)item.name=ai.name;
         if(ai.component_type)item.component_type=ai.component_type;
         if(ai.notes)item.notes=item.notes+(item.notes?' — ':'')+ai.notes;
@@ -11668,7 +11957,7 @@ async function handleDocFile(input){
       var b64=reader.result.split(',')[1];
       var mediaType=file.type||'application/pdf';
       var prompt='Read this document and respond ONLY with JSON (no markdown):\n{"title":"document title","type":"document type e.g. Constitution, Policy, Contract, Agreement, Deed, Minutes, Procedure, Report, Waiver, Other","desc":"2-3 sentence summary of what this document covers","tags":"comma-separated relevant tags","entity":"organisation this belongs to if mentioned"}\nIf you cannot read the document clearly, use the filename as a guide.';
-      var result=await aiCallJSON(prompt,b64,mediaType);
+      var result=await aiCallJSON(prompt,b64,mediaType,'doc_extract');
       populateDocFromAI(result,file.name);
       if(statusEl)statusEl.textContent='✓ AI extracted document details — review and adjust before saving.';
     } else if(isText){
@@ -11676,7 +11965,7 @@ async function handleDocFile(input){
       await new Promise(function(res){reader.onload=res;reader.readAsText(file,'UTF-8');});
       var text=reader.result.slice(0,4000);
       var prompt='Read this document text and respond ONLY with JSON (no markdown):\n{"title":"document title","type":"document type e.g. Constitution, Policy, Contract, Agreement, Deed, Minutes, Procedure, Report, Waiver, Other","desc":"2-3 sentence summary of what this document covers","tags":"comma-separated relevant tags","entity":"organisation this belongs to if mentioned"}\n\nDocument text:\n'+text;
-      var result=await aiCallJSON(prompt,null,null);
+      var result=await aiCallJSON(prompt,null,null,'doc_extract');
       populateDocFromAI(result,file.name);
       if(statusEl)statusEl.textContent='✓ AI extracted document details — review and adjust before saving.';
     } else if(file.name.toLowerCase().endsWith('.docx')||file.type==='application/vnd.openxmlformats-officedocument.wordprocessingml.document'){
@@ -11700,7 +11989,7 @@ async function handleDocFile(input){
       }
       if(statusEl)statusEl.textContent='AI is reading Word document...';
       var prompt='Read this document text and respond ONLY with JSON (no markdown):\n{"title":"document title","type":"document type e.g. Constitution, Policy, Contract, Agreement, Deed, Minutes, Procedure, Report, Waiver, Other","desc":"2-3 sentence summary of what this document covers","tags":"comma-separated relevant tags","entity":"organisation this belongs to if mentioned"}\n\nDocument text:\n'+text;
-      var aiResult=await aiCallJSON(prompt,null,null);
+      var aiResult=await aiCallJSON(prompt,null,null,'doc_extract');
       populateDocFromAI(aiResult,file.name);
       if(statusEl)statusEl.textContent='✓ AI extracted document details from Word file — review and adjust before saving.';
     } else {
@@ -12216,7 +12505,7 @@ async function classifyFiles(files){
     'Files to classify:\n'+fileList;
 
   try{
-    var result=await aiCallJSON(prompt,null,null);
+    var result=await aiCallJSON(prompt,null,null,'classify');
     if(!Array.isArray(result))throw new Error('AI returned unexpected format');
     classifyState.classified=files.map(function(f,i){
       var ai=result[i]||{};
@@ -12631,7 +12920,7 @@ async function callModelForFeature(feature, prompt, imageB64, mediaType){
   // Prepend knowledge base context to every AI call
   var kbCtx=getKBContext();
   if(kbCtx)prompt=kbCtx+'\n\n'+prompt;
-  var raw='';
+  var raw='';var _inp=0;var _out=0;
   if(spec.provider==='gemini'){
     var parts=[{text:prompt}];
     if(imageB64)parts.unshift({inline_data:{mime_type:mediaType,data:imageB64}});
@@ -12639,25 +12928,30 @@ async function callModelForFeature(feature, prompt, imageB64, mediaType){
     var d=await res.json();
     if(d.error)throw new Error('Gemini '+d.error.code+': '+d.error.message);
     raw=d.candidates?.[0]?.content?.parts?.map(function(p){return p.text||'';}).join('').trim()||'';
+    _inp=d.usageMetadata?.promptTokenCount||0;_out=d.usageMetadata?.candidatesTokenCount||0;
   } else if(spec.provider==='anthropic'){
     var msgs=[{role:'user',content:imageB64?[{type:'image',source:{type:'base64',media_type:mediaType,data:imageB64}},{type:'text',text:prompt}]:[{type:'text',text:prompt}]}];
     var res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':spec.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:spec.model,max_tokens:1500,messages:msgs})});
     var d=await res.json();
     if(d.error)throw new Error('Anthropic: '+d.error.message);
     raw=d.content?.map(function(b){return b.text||'';}).join('').trim()||'';
+    _inp=d.usage?.input_tokens||0;_out=d.usage?.output_tokens||0;
   } else if(spec.provider==='openai'){
     var msgs=[{role:'user',content:imageB64?[{type:'image_url',image_url:{url:'data:'+mediaType+';base64,'+imageB64}},{type:'text',text:prompt}]:prompt}];
     var res=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+spec.key},body:JSON.stringify({model:spec.model,max_tokens:1500,messages:msgs})});
     var d=await res.json();
     if(d.error)throw new Error('OpenAI: '+d.error.message);
     raw=d.choices?.[0]?.message?.content?.trim()||'';
+    _inp=d.usage?.prompt_tokens||0;_out=d.usage?.completion_tokens||0;
   } else if(spec.provider==='openrouter'){
     var msgs=[{role:'user',content:imageB64?[{type:'image_url',image_url:{url:'data:'+mediaType+';base64,'+imageB64}},{type:'text',text:prompt}]:prompt}];
     var res=await fetch('https://openrouter.ai/api/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+spec.key},body:JSON.stringify({model:spec.model,max_tokens:1500,messages:msgs})});
     var d=await res.json();
     if(d.error)throw new Error('OpenRouter: '+(d.error.message||JSON.stringify(d.error)));
     raw=d.choices?.[0]?.message?.content?.trim()||'';
+    _inp=d.usage?.prompt_tokens||0;_out=d.usage?.completion_tokens||0;
   }
+  logTokenUsage(spec.provider,spec.model,feature,_inp,_out);
   return raw;
 }
 
@@ -14529,6 +14823,66 @@ function renderSetupStatusCard(){
   el.style.display='';
 }
 function updateSetupStatusCard(){renderSetupStatusCard();}
+
+// ── Token Usage Tracking ────────────────────────────────────────────────────
+var TOKEN_RATES={
+  anthropic:{input:0.000003,output:0.000015},
+  gemini:{input:0.000000075,output:0.0000003},
+  openai:{input:0.0000025,output:0.00001},
+  openrouter:{input:0.0000025,output:0.00001}
+};
+function calculateTokenCost(provider,inputTokens,outputTokens){
+  var r=TOKEN_RATES[provider]||TOKEN_RATES.openai;
+  return (inputTokens||0)*r.input+(outputTokens||0)*r.output;
+}
+function logTokenUsage(provider,model,feature,inputTokens,outputTokens){
+  if(!inputTokens&&!outputTokens)return;
+  var c=getOrgCfg();
+  var entry={
+    id:uid(),ts:new Date().toISOString(),provider:provider,model:model,feature:feature||'unknown',
+    input_tokens:inputTokens||0,output_tokens:outputTokens||0,
+    total_tokens:(inputTokens||0)+(outputTokens||0),
+    estimated_cost_usd:calculateTokenCost(provider,inputTokens,outputTokens),
+    sprint_id:c.current_sprint||'untracked',
+    session_date:todayStr()
+  };
+  var usage=JSON.parse(localStorage.getItem('twwp_token_usage_v1')||'[]');
+  usage.unshift(entry);
+  // Cap at 5000 entries
+  if(usage.length>5000)usage=usage.slice(0,5000);
+  localStorage.setItem('twwp_token_usage_v1',JSON.stringify(usage));
+  updateResourceBar();
+}
+function getTokensToday(){
+  var today=todayStr();
+  var usage=JSON.parse(localStorage.getItem('twwp_token_usage_v1')||'[]');
+  var entries=usage.filter(function(e){return e.session_date===today;});
+  return{total:entries.reduce(function(a,e){return a+e.total_tokens;},0),input:entries.reduce(function(a,e){return a+e.input_tokens;},0),output:entries.reduce(function(a,e){return a+e.output_tokens;},0),cost:entries.reduce(function(a,e){return a+e.estimated_cost_usd;},0),count:entries.length};
+}
+function getTokensByPeriod(days){
+  var cutoff=new Date(Date.now()-days*86400000).toISOString().slice(0,10);
+  var usage=JSON.parse(localStorage.getItem('twwp_token_usage_v1')||'[]');
+  var entries=usage.filter(function(e){return e.session_date>=cutoff;});
+  return{total:entries.reduce(function(a,e){return a+e.total_tokens;},0),cost:entries.reduce(function(a,e){return a+e.estimated_cost_usd;},0),count:entries.length};
+}
+function getTokensBySprint(sprintId){
+  var usage=JSON.parse(localStorage.getItem('twwp_token_usage_v1')||'[]');
+  var entries=usage.filter(function(e){return e.sprint_id===sprintId;});
+  return{total:entries.reduce(function(a,e){return a+e.total_tokens;},0),cost:entries.reduce(function(a,e){return a+e.estimated_cost_usd;},0),count:entries.length};
+}
+function getTokensByFeature(days){
+  var cutoff=new Date(Date.now()-days*86400000).toISOString().slice(0,10);
+  var usage=JSON.parse(localStorage.getItem('twwp_token_usage_v1')||'[]');
+  var entries=usage.filter(function(e){return e.session_date>=cutoff;});
+  var byFeature={};
+  entries.forEach(function(e){
+    if(!byFeature[e.feature])byFeature[e.feature]={feature:e.feature,total:0,cost:0,count:0};
+    byFeature[e.feature].total+=e.total_tokens;
+    byFeature[e.feature].cost+=e.estimated_cost_usd;
+    byFeature[e.feature].count++;
+  });
+  return Object.values(byFeature).sort(function(a,b){return b.total-a.total;});
+}
 
 // ── requiresSetup (Task 8) ───────────────────────────────────────────────────
 function requiresSetup(featureName, setupKey, wizardStep){

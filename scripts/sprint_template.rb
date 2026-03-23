@@ -18,6 +18,24 @@ TODAY      = Time.now.strftime('%Y-%m-%d').freeze
 NOW_ISO    = Time.now.utc.iso8601.freeze
 TOKEN_FILE = File.join(__dir__, '.ops_token')
 
+# ── Claude Code session token usage ──────────────────────────────────────────
+claude_input_tokens  = ENV['CLAUDE_INPUT_TOKENS']&.to_i  || 0
+claude_output_tokens = ENV['CLAUDE_OUTPUT_TOKENS']&.to_i || 0
+if claude_input_tokens.zero?
+  puts "\n📊 Claude Code Token Usage"
+  puts "Enter total INPUT tokens for this sprint (or 0 to skip):"
+  claude_input_tokens = gets.chomp.to_i
+  unless claude_input_tokens.zero?
+    puts "Enter total OUTPUT tokens for this sprint:"
+    claude_output_tokens = gets.chomp.to_i
+  end
+end
+CLAUDE_INPUT_TOKENS  = claude_input_tokens.freeze
+CLAUDE_OUTPUT_TOKENS = claude_output_tokens.freeze
+# Cost at Sonnet 4.x rates: input $0.000003/tok, output $0.000015/tok
+CLAUDE_COST_USD = ((CLAUDE_INPUT_TOKENS * 0.000003) + (CLAUDE_OUTPUT_TOKENS * 0.000015)).round(4).freeze
+# ── END token capture ─────────────────────────────────────────────────────────
+
 # ── SPRINT-SPECIFIC: Update these for each new sprint ──────────────────────
 SPRINT_ID = 'C'  # Change to next sprint letter/number
 
@@ -72,8 +90,12 @@ def merge_sprint_data(state)
   state['devtasks'] = devtasks
 
   # Spec growth entry
+  growth_summary = SPRINT_SUMMARY.dup
+  if CLAUDE_INPUT_TOKENS > 0
+    growth_summary += " [#{CLAUDE_INPUT_TOKENS}i/#{CLAUDE_OUTPUT_TOKENS}o tok, ~$#{CLAUDE_COST_USD} USD]"
+  end
   (state['spec_growth_user'] ||= []).unshift(
-    { 'id' => uid, 'date' => TODAY, 'by' => 'Claude Code / Kenny', 'summary' => SPRINT_SUMMARY }
+    { 'id' => uid, 'date' => TODAY, 'by' => 'Claude Code / Kenny', 'summary' => growth_summary }
   )
 
   # Calendar event
@@ -105,6 +127,23 @@ begin
   puts 'Merging sprint data...'
   merged = merge_sprint_data(state)
 
+  # Attach Claude Code sprint token record to sync payload
+  if CLAUDE_INPUT_TOKENS > 0
+    sprint_tok = {
+      'id'           => uid,
+      'sprint_id'    => SPRINT_ID,
+      'date'         => TODAY,
+      'provider'     => 'anthropic',
+      'source'       => 'claude_code',
+      'input_tokens' => CLAUDE_INPUT_TOKENS,
+      'output_tokens'=> CLAUDE_OUTPUT_TOKENS,
+      'cost_usd'     => CLAUDE_COST_USD,
+      'created'      => NOW_ISO
+    }
+    (merged['sprint_tokens'] ||= []).unshift(sprint_tok)
+    puts "  Claude Code tokens: #{CLAUDE_INPUT_TOKENS}i / #{CLAUDE_OUTPUT_TOKENS}o — ~$#{CLAUDE_COST_USD} USD"
+  end
+
   puts "PUT #{RAILS_API}/api/sync ..."
   put = api_put('/api/sync', jwt, { data: merged })
   raise "PUT failed: #{put.code} #{put.body}" unless put.is_a?(Net::HTTPSuccess)
@@ -114,6 +153,11 @@ rescue => e
   warn "❌ #{e.message}"
   pending = File.join(__dir__, '..', 'docs', 'pending_sync.json')
   warn "Writing fallback to #{pending}"
-  File.write(pending, JSON.pretty_generate({ error: e.message, sprint: SPRINT_ID, ts: NOW_ISO }))
+  File.write(pending, JSON.pretty_generate({
+    error: e.message, sprint: SPRINT_ID, ts: NOW_ISO,
+    sprint_tokens: CLAUDE_INPUT_TOKENS > 0 ? {
+      input: CLAUDE_INPUT_TOKENS, output: CLAUDE_OUTPUT_TOKENS, cost_usd: CLAUDE_COST_USD
+    } : nil
+  }.compact))
   exit 1
 end

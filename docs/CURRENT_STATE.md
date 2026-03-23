@@ -1,6 +1,6 @@
 # TWWP Ops App — Current State
 
-**Last updated:** 2026-03-24 (Sprint C complete — C2 fuzzy sync, C5 requiresSetup wiring, C6 getTerm/modules/branding, C7.2 Jira connect, C8.2 sprint_c.rb)
+**Last updated:** 2026-03-24 (Token usage tracking: in-app capture, Usage tab, resource bar, AI modal summary, backup/restore, sprint_template.rb)
 
 ---
 
@@ -89,6 +89,52 @@ Rails API at `https://twwp-ops-api.fly.dev`.
 ### C8.2 — Sprint C sync scripts
 - `scripts/sprint_c.rb`: marks 7 Sprint C devtasks complete, adds growth entry, calendar event, ledger entry; writes `docs/pending_sync.json` as fallback
 - `scripts/fix_sprint_b_tasks.rb`: one-off Sprint B repair script (fuzzy match for PM tabs + board)
+
+---
+
+## Token Usage Tracking (2026-03-24)
+
+### Part 1–3 — Capture + store + resource bar
+- `TOKEN_RATES` constant (anthropic/gemini/openai/openrouter input+output rates)
+- `calculateTokenCost(provider, input, output)` — cost in USD from TOKEN_RATES
+- `logTokenUsage(provider, model, feature, input, output)` — appends to `twwp_token_usage_v1` (capped 5000 entries), calls `updateResourceBar()`
+- `callModelForFeature()` — captures `_inp`/`_out` per-provider block (usageMetadata for Gemini, usage.input/output_tokens for Anthropic, usage.prompt/completion_tokens for OpenAI/OpenRouter), calls `logTokenUsage()`
+- `sendAIHelperMsg()` — captures tokens, calls `logTokenUsage()` with feature `'ai_helper'`
+- `aiCallJSON(prompt, imageB64, mediaType, feature)` — 4th param added; captures tokens; call sites tagged: `autofill`, `doc_extract`, `receipt_parse`, `classify`
+- Resource bar: `rb-tokens` item shows `🔴 Xtok (~$Y NZD)`, click → `goToUsageTab()`
+- `RB_ITEMS_DEF`: `{key:'tokens', label:'Tokens Today'}` added
+
+### Part 4 — Developer → Usage tab
+- Tab added between Backlog and Platform Spec
+- `renderUsageTab()` — 4 sections: summary cards (Today/Week/Month/All Time with USD + NZD costs), in-app usage bar charts (by feature and provider), last 50 calls table, sprint token table + combined totals
+- `exportTokenUsageCSV()`, `clearOldTokenData()`, `resetTokenData()`
+- `setCurrentSprint(sprintId)`, `openStartSprintModal()`, `openLogSprintTokensModal()`
+- `getTokensToday()`, `getTokensByPeriod(days)`, `getTokensBySprint(sprintId)`, `getTokensByFeature(days)` helpers
+
+### Part 5 — Sprint selector in Usage tab
+- `org_config.current_sprint` field; "Set current sprint" dropdown + "Start new sprint" button in Usage tab header
+
+### Part 6 — scripts/sprint_template.rb token capture
+- New section at top: prompts for `claude_input_tokens`/`claude_output_tokens` (or reads from `CLAUDE_INPUT_TOKENS`/`CLAUDE_OUTPUT_TOKENS` env vars)
+- Calculates `CLAUDE_COST_USD` at Sonnet 4.x rates ($0.000003/$0.000015)
+- Appends token counts + cost to growth entry summary
+- Attaches `sprint_tokens` record to sync payload (id, sprint_id, date, provider, source, input/output, cost_usd, created)
+- Falls back with token data in `docs/pending_sync.json` on error
+
+### Part 7 — AI Models tab Usage Summary section
+- Collapsed "Usage Summary" section at bottom of `int-panel-ai`
+- `toggleAiUsageSummary()` / `renderAiUsageSummary()` — shows Today/Week/Month token counts + USD+NZD costs in a 3-column grid
+- "View full usage stats" → `goToUsageTab()`; "Reset usage stats" → `resetTokenData()`
+- Section renders on `openApiMo()` call
+
+### Backup/restore + demo seed
+- `expAll()` now includes `tokenUsage` + `sprintTokens` in JSON backup
+- `impBackup()` merges `tokenUsage` + `sprintTokens` from backup (deduplicates by id, writes to localStorage directly)
+- `seedDemoData()` seeds 4 demo token entries across past 2 days (gemini autofill, ai_helper, doc_extract + anthropic autofill)
+
+### KS stores
+- `KS.tokenUsage` → `'twwp_token_usage_v1'`
+- `KS.sprintTokens` → `'twwp_sprint_tokens_v1'`
 
 ---
 
