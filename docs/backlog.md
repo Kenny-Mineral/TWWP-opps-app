@@ -1,6 +1,6 @@
 # TWWP Ops App — Build Backlog
 
-**Last updated:** 2026-03-23 (session 14)
+**Last updated:** 2026-03-23 (session 15)
 
 **Labels:** `[EXPLICIT]` `[IMPLIED]` `[FIX]` `[OPEN]` ✅ done
 
@@ -240,6 +240,23 @@ branding, users and config — without touching the code.
 
 ---
 
+---
+
+## GROUP W — Onboarding & Multi-Org Setup
+
+- ✅ `[EXPLICIT]` Onboarding wizard (7 steps) — DONE (session 15): Welcome, Branding, First Location, AI Keys, Integrations, Team, Done
+- ✅ `[EXPLICIT]` Persistent setup status checklist — DONE (session 15): 9 SETUP_KEYS, Dashboard card (admin), `twwp_setup_status_v1`
+- ✅ `[EXPLICIT]` `requiresSetup()` contextual setup interrupts — DONE (session 15): wired into cal sync, Drive upload, email send, AI helper
+- ✅ `[EXPLICIT]` `org_config` store + `getTerm()` terminology system — DONE (session 15): 6-key DEFAULT_TERMINOLOGY, sidebar labels, brand colour, terminology editor in AI & Integrations
+- ⬜ User management page (admin only) — invite, deactivate, change role; needs `POST/PUT /api/users`
+- ⬜ Per-org feature flags — enable/disable modules per org
+- ⬜ White-label export — package a configured instance for a new org
+- ⬜ Onboarding analytics — track which steps are completed/skipped
+- ⬜ ESP32 config step in onboarding — firmware download link, pairing instructions
+- ⬜ Stripe config step in onboarding — publishable key, webhook secret
+
+---
+
 ## Recommended build sequence
 
 1. ✅ Rails API OAuth (GROUP N) — DONE
@@ -248,9 +265,10 @@ branding, users and config — without touching the code.
 4. Fix GROUP A bugs — CSV import, sendRptChatMsg, updateFinForm (duplicates already resolved)
 5. ✅ GitHub Actions auto-deploy (GROUP S) — DONE
 6. ✅ Security foundations (GROUP T) — users table, JWT login, admin user, frontend wired
-7. Multi-Organisation Architecture (GROUP U) — org_id everywhere, org switcher
-8. Email Registry + Document Creation tabs (GROUP Z)
-9. Campaigns page (GROUP H)
-10. Waterhouse digital twin (GROUP F)
-11. ESP32 firmware + sensor integration (GROUP O)
-12. Tap-Map sync (GROUP P)
+7. ✅ Onboarding wizard + setup status + org_config foundation (GROUP W, session 15) — DONE
+8. Multi-Organisation Architecture (GROUP U) — org_id everywhere, org switcher
+9. Email Registry + Document Creation tabs (GROUP Z)
+10. Campaigns page (GROUP H)
+11. Waterhouse digital twin (GROUP F)
+12. ESP32 firmware + sensor integration (GROUP O)
+13. Tap-Map sync (GROUP P)

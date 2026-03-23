@@ -499,6 +499,83 @@ Rails API at `https://twwp-ops-api.fly.dev`.
 
 ---
 
+---
+
+## Session 15 changes (2026-03-23) — SPEC_VERSION 4.5
+
+### Task 1 — Tooltip audit and sidebar data-tip pass
+- All 35 sidebar items now have `data-tip` attributes with descriptive tooltips
+- Tooltips cover: Overview/Dashboard, all operational pages, developer tools, admin pages
+- Format: `"PageName — one-line description of what the page does"`
+
+### Task 2 — Calendar +Event button wired; Add-to-Calendar in Dev Tasks
+- Calendar header "+ Event" button now uses `openDateWizard()` first, then `openCalEventMo(date)`
+- Dev Tasks list: each task row with a due date now shows a calendar icon button (📅) — calls `syncTaskToCalendar('devtask', id)` on click
+- One-time backfill on load: `backfillDevTasksToCalendar()` runs in `initApp()` via setTimeout — creates calendar events for all dev tasks that have due dates but no linked calendar event
+
+### Task 3 — Persistence banner in Growth Log / ADRs
+- `#growthPersistBanner` added to SPEC_GROWTH tab — shows count of localStorage-only entries
+- `#adrsPersistBanner` added to SPEC_ADRS tab — shows count of localStorage-only ADRs
+- "📋 Copy for Claude Code" button on each banner — formats user-added entries as JSON and copies to clipboard
+- `updatePersistBanners()` called from `switchSpecTab()` and on app init (800ms delay)
+- `copyGrowthForClaude()` / `copyAdrsForClaude()` helper functions
+
+### Task 4 — SPEC_GROWTH backfilled (sessions 1–3, date gaps fixed)
+- Sessions 1a, 1b, 2a, 2b, 3a added covering 2026-03-10 to 2026-03-12 (base build, spec planning, scaffolding)
+- Sessions 5, 6, 7 split into individual entries (were merged as one block)
+- Session 15 entry added at top: all 10 tasks summarised
+- Total SPEC_GROWTH: 16 entries (sessions 1a through 15)
+
+### Task 5 — Resource bar: tasks from stores + ↑X created-today indicator
+- Tasks-done count now reads directly from `tasks` + `devtasks` stores (checks `status==='complete'` + `completed_at` date match), falls back to ledger count
+- New ↑X indicator: shows count of tasks created today in cyan text beside the tasks-done count
+- `tasksCreatedToday` reads `created` field from both stores filtered to today's date
+
+### Task 6 — Onboarding Wizard (7-step first-run setup)
+- `#onboardingWizard` overlay: full-screen dark modal, progress bar, step label, content area, Back/Next buttons, ✕ skip
+- `OW_STEPS` array: 7 step objects each with `render()` and `save()` methods
+  - Step 1 Welcome: org name, admin name, purpose dropdown
+  - Step 2 Branding: app name, brand colour picker, logo URL
+  - Step 3 First Location: location name, address, type
+  - Step 4 AI Assistant: Gemini / Anthropic / OpenAI key fields with model selectors
+  - Step 5 Integrations: Rails API URL, Cloudflare proxy URL, Drive folder ID
+  - Step 6 Team: first team member name + email (creates contact record)
+  - Step 7 Done: summary of what was configured, "Launch App" button
+- `checkRunOnboarding()` fires if neither `twwp_setup_complete` nor `twwp_onboarding_skip` is set
+- `openOnboarding()`, `skipOnboarding()`, `renderOwStep()`, `owStep(dir)` — wizard lifecycle functions
+- Config saved to `twwp_org_config_v1`; completion flag set in `twwp_setup_complete`
+
+### Task 7 — Persistent setup status checklist (Dashboard card)
+- `SETUP_KEYS` map: 9 dimensions (org_name, branding, first_location, ai_key, google_calendar, google_drive, rails_api, first_team_member, esp32_config, stripe_config)
+- `getSetupStatus()` / `setSetupStatus(key, val)` — read/write `twwp_setup_status_v1` localStorage
+- `renderSetupStatusCard()` — renders progress bar + checklist into `#setupStatusCard`
+- Dashboard shows card only for admin users with incomplete setup (hides when all 9 complete)
+- `updateSetupStatusCard()` called from `updStats()` for live refresh
+
+### Task 8 — Contextual setup interrupts
+- `requiresSetup(featureName, setupKey, wizardStep)` — checks setup status; if missing, confirms with user then opens wizard at the relevant step
+- Wired into:
+  - `syncGoogleCal()` → checks `google_calendar` (wizard step 5)
+  - `uploadDocBuilderToDrive()` → checks `google_calendar` (wizard step 5)
+  - `sendEmail()` → checks `rails_api` (wizard step 5)
+  - `sendAIHelperMsg()` → checks `ai_key` (wizard step 4) if no key configured
+
+### Task 9 — Multi-org foundation: org_config + terminology
+- `org_config` store added to KS map (`twwp_org_config_v1`)
+- `DEFAULT_TERMINOLOGY` map: waterhouse, guardian, quencher, wh_id, locations_page, monitor_page
+- `getOrgCfg()` / `saveOrgCfg(c)` — read/write org config
+- `getTerm(key)` — returns terminology value from org_config, falling back to DEFAULT_TERMINOLOGY
+- `initOrgConfig()` — called from `initApp()`: applies brand colour + updates sidebar labels for Locations + WH Monitor
+- Terminology editor added to AI & Integrations modal — 6 fields, Save button
+- `renderTerminologyEditor()` / `saveTerminology()` functions
+
+### Task 10 — SPEC_VERSION 4.5 + SPEC_ADRS + BACKLOG_GROUPS GROUP W
+- `SPEC_VERSION` → `'4.5'`, `SPEC_LAST_UPDATED` → `'2026-03-23'`
+- 3 new ADRs: ADR-012 (Onboarding wizard as first-run flow), ADR-013 (Setup status checklist), ADR-014 (org_config as multi-tenancy stub)
+- BACKLOG_GROUPS GROUP W added: 10 items covering onboarding, setup checklist, requiresSetup, org_config, user management, feature flags, white-label export, onboarding analytics, ESP32 config, Stripe config steps
+
+---
+
 ## Next up
 
 1. **Re-authorise Google OAuth** — scope changed from `drive.file` → `drive`
@@ -508,5 +585,7 @@ Rails API at `https://twwp-ops-api.fly.dev`.
 5. **Wire `callModelForFeature()`** — into autofill and import wizard
 6. **Wire Receipt Inbox AI Parse tab**
 7. **Ledger Rails endpoint persistence** — add `ledger_entries` table to Rails (currently placeholder)
+8. **Activate Drive auto-backup on logout** — code written, unblocked by OAuth scope fix
+9. **Multi-device sync activation** — unblocked by OAuth fix
 
-See `docs/handoff/session-handoff-march23g.md` for session 14 full summary.
+See `docs/handoff/session-handoff-march23h.md` for session 15 full summary.

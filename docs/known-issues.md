@@ -1,6 +1,6 @@
 # Known Issues, Bugs, and Stubs
 
-Last updated: 2026-03-23 (session 14 — 20 tasks)
+Last updated: 2026-03-23 (session 15 — 10 tasks)
 
 ---
 

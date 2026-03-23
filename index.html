@@ -706,6 +706,15 @@ tbody tr:hover{background:var(--surface2);}
       </div>
       <div id="aiMoGCalSection"></div>
       <div id="aiMoHaSection"></div>
+      <!-- Terminology / Org Config -->
+      <div style="border-top:1px solid var(--border);padding-top:16px">
+        <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:block">Terminology &amp; Org Config</label>
+        <div id="terminologyEditor"></div>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-g btn-sm" onclick="openOnboarding()">&#9881; Run Setup Wizard</button>
+          <button class="btn btn-g btn-sm" onclick="localStorage.removeItem('twwp_setup_complete');localStorage.removeItem('twwp_onboarding_skip');openOnboarding()">Redo Setup</button>
+        </div>
+      </div>
       <div style="display:flex;gap:8px;justify-content:flex-end">
         <button class="btn btn-g btn-sm" onclick="CM('apiMo')">Cancel</button>
         <button class="btn btn-p btn-sm" onclick="saveApiKey()">Save Settings</button>
@@ -1240,50 +1249,50 @@ tbody tr:hover{background:var(--surface2);}
     <button class="sb-tog" id="sbTog" onclick="toggleSB()">&#60;</button>
   </div>
   <nav class="sb-nav">
-    <div class="sb-item" id="ni-dashboard" onclick="go('dashboard',this)"><span class="sb-icon">&#127968;</span><span class="sb-lbl">Dashboard</span></div>
+    <div class="sb-item" id="ni-dashboard" data-tip="Overview — live stats, upcoming tasks, recent activity" onclick="go('dashboard',this)"><span class="sb-icon">&#127968;</span><span class="sb-lbl">Dashboard</span></div>
     <div class="sb-sect">Operations</div>
-    <div class="sb-item" id="ni-approvalqueue" onclick="go('approvalqueue',this)"><span class="sb-icon">&#9989;</span><span class="sb-lbl">Approval Queue</span><span class="sb-badge hid" id="aqBadge">0</span></div>
-    <div class="sb-item" id="ni-maintenance" onclick="go('maintenance',this)"><span class="sb-icon">&#128295;</span><span class="sb-lbl">Maintenance</span><span class="sb-badge hid" id="mBadge">0</span></div>
-    <div class="sb-item" id="ni-calendar" onclick="go('calendar',this)"><span class="sb-icon">&#128197;</span><span class="sb-lbl">Calendar</span></div>
-    <div class="sb-item" id="ni-monitor" onclick="go('monitor',this)"><span class="sb-icon">&#128202;</span><span class="sb-lbl">WH Monitor</span></div>
-    <div class="sb-item" id="ni-member" onclick="go('member',this)"><span class="sb-icon">&#127754;</span><span class="sb-lbl">Member Display</span></div>
-    <div class="sb-item" id="ni-reports" onclick="go('reports',this)"><span class="sb-icon">&#128203;</span><span class="sb-lbl">Reports</span></div>
+    <div class="sb-item" id="ni-approvalqueue" data-tip="Approval Queue — review captures, financials, maintenance sign-offs" onclick="go('approvalqueue',this)"><span class="sb-icon">&#9989;</span><span class="sb-lbl">Approval Queue</span><span class="sb-badge hid" id="aqBadge">0</span></div>
+    <div class="sb-item" id="ni-maintenance" data-tip="Maintenance — log and schedule waterhouse maintenance jobs" onclick="go('maintenance',this)"><span class="sb-icon">&#128295;</span><span class="sb-lbl">Maintenance</span><span class="sb-badge hid" id="mBadge">0</span></div>
+    <div class="sb-item" id="ni-calendar" data-tip="Calendar — schedule events, view task due dates, sync Google Calendar" onclick="go('calendar',this)"><span class="sb-icon">&#128197;</span><span class="sb-lbl">Calendar</span></div>
+    <div class="sb-item" id="ni-monitor" data-tip="WH Monitor — per-waterhouse gauge readings, period history, reports" onclick="go('monitor',this)"><span class="sb-icon">&#128202;</span><span class="sb-lbl">WH Monitor</span></div>
+    <div class="sb-item" id="ni-member" data-tip="Member Display — public-facing tap-map widget preview and JSON export" onclick="go('member',this)"><span class="sb-icon">&#127754;</span><span class="sb-lbl">Member Display</span></div>
+    <div class="sb-item" id="ni-reports" data-tip="Reports — generate guardian reports, sponsor updates, technician summaries" onclick="go('reports',this)"><span class="sb-icon">&#128203;</span><span class="sb-lbl">Reports</span></div>
     <div class="sb-sect">People</div>
-    <div class="sb-item" id="ni-contacts" onclick="go('contacts',this)"><span class="sb-icon">&#128101;</span><span class="sb-lbl">Contacts / CRM</span><span class="sb-badge hid" id="crmBadge">0</span></div>
-    <div class="sb-item" id="ni-emailregistry" onclick="go('emailregistry',this)"><span class="sb-icon">&#9993;</span><span class="sb-lbl">Email Registry</span></div>
+    <div class="sb-item" id="ni-contacts" data-tip="Contacts / CRM — guardians, members, suppliers, trustees, sponsors, contractors" onclick="go('contacts',this)"><span class="sb-icon">&#128101;</span><span class="sb-lbl">Contacts / CRM</span><span class="sb-badge hid" id="crmBadge">0</span></div>
+    <div class="sb-item" id="ni-emailregistry" data-tip="Email Registry — track outgoing emails, use templates, send via Rails API" onclick="go('emailregistry',this)"><span class="sb-icon">&#9993;</span><span class="sb-lbl">Email Registry</span></div>
     <div class="sb-sect">Projects</div>
-    <div class="sb-item" id="ni-projects" onclick="go('projects',this)"><span class="sb-icon">&#127919;</span><span class="sb-lbl">Projects</span><span class="sb-badge hid" id="projBadge">0</span></div>
-    <div class="sb-item" id="ni-tasks" onclick="go('tasks',this)"><span class="sb-icon">&#9989;</span><span class="sb-lbl">Tasks</span></div>
-    <div class="sb-item" id="ni-rd" onclick="go('rd',this)"><span class="sb-icon">&#128300;</span><span class="sb-lbl">R&amp;D</span></div>
-    <div class="sb-item" id="ni-trustees" onclick="go('trustees',this)"><span class="sb-icon">&#9878;</span><span class="sb-lbl">Trustees / Legal</span><span class="sb-badge hid" id="trusteeBadge">0</span></div>
-    <div class="sb-item" id="ni-campaigns" onclick="go('campaigns',this)"><span class="sb-icon">&#127942;</span><span class="sb-lbl">Campaigns</span></div>
-    <div class="sb-item" id="ni-docbuilder" onclick="go('docbuilder',this)"><span class="sb-icon">&#128196;</span><span class="sb-lbl">Doc Builder</span></div>
+    <div class="sb-item" id="ni-projects" data-tip="Projects — track initiatives across WH upgrades, fundraising, outreach, R&D" onclick="go('projects',this)"><span class="sb-icon">&#127919;</span><span class="sb-lbl">Projects</span><span class="sb-badge hid" id="projBadge">0</span></div>
+    <div class="sb-item" id="ni-tasks" data-tip="Tasks — operational and dev tasks with priorities, due dates, calendar sync" onclick="go('tasks',this)"><span class="sb-icon">&#9989;</span><span class="sb-lbl">Tasks</span></div>
+    <div class="sb-item" id="ni-rd" data-tip="R&D — capture and track research ideas through idea→testing→validated→promoted" onclick="go('rd',this)"><span class="sb-icon">&#128300;</span><span class="sb-lbl">R&amp;D</span></div>
+    <div class="sb-item" id="ni-trustees" data-tip="Trustees / Legal — governance items, PPSR registrations, document library" onclick="go('trustees',this)"><span class="sb-icon">&#9878;</span><span class="sb-lbl">Trustees / Legal</span><span class="sb-badge hid" id="trusteeBadge">0</span></div>
+    <div class="sb-item" id="ni-campaigns" data-tip="Campaigns — manage community interest through to active tap deployment (6 stages)" onclick="go('campaigns',this)"><span class="sb-icon">&#127942;</span><span class="sb-lbl">Campaigns</span></div>
+    <div class="sb-item" id="ni-docbuilder" data-tip="Doc Builder — create Host Agreements, Reimbursement Receipts, Waterhouse Reports" onclick="go('docbuilder',this)"><span class="sb-icon">&#128196;</span><span class="sb-lbl">Doc Builder</span></div>
     <div class="sb-sect">Finance</div>
-    <div class="sb-item" id="ni-financials" onclick="go('financials',this)"><span class="sb-icon">&#128180;</span><span class="sb-lbl">Financials</span></div>
-    <div class="sb-item" id="ni-shops" onclick="go('shops',this)"><span class="sb-icon">&#127963;</span><span class="sb-lbl">Organisations</span></div>
+    <div class="sb-item" id="ni-financials" data-tip="Financials — expenses, donations, reimbursements, income with approval flow" onclick="go('financials',this)"><span class="sb-icon">&#128180;</span><span class="sb-lbl">Financials</span></div>
+    <div class="sb-item" id="ni-shops" data-tip="Organisations — partner orgs and shops, WooCommerce export, Stripe links" onclick="go('shops',this)"><span class="sb-icon">&#127963;</span><span class="sb-lbl">Organisations</span></div>
     <div class="sb-sect">Inventory</div>
-    <div class="sb-item" id="ni-catalogue" onclick="go('catalogue',this)"><span class="sb-icon">&#128230;</span><span class="sb-lbl">Catalogue</span></div>
-    <div class="sb-item" id="ni-kits" onclick="go('kits',this)"><span class="sb-icon">&#129521;</span><span class="sb-lbl">Kit Templates</span></div>
-    <div class="sb-item" id="ni-deployments" onclick="go('deployments',this)"><span class="sb-icon">&#128640;</span><span class="sb-lbl">Deployments</span><span class="sb-badge hid" id="depBadge">0</span></div>
-    <div class="sb-item" id="ni-inventory" onclick="go('inventory',this)"><span class="sb-icon">&#128218;</span><span class="sb-lbl">Inventory</span></div>
-    <div class="sb-item" id="ni-purchases" onclick="go('purchases',this)"><span class="sb-icon">&#128230;</span><span class="sb-lbl">Purchase Orders</span></div>
+    <div class="sb-item" id="ni-catalogue" data-tip="Catalogue — master list of components, products, parts with AI autofill" onclick="go('catalogue',this)"><span class="sb-icon">&#128230;</span><span class="sb-lbl">Catalogue</span></div>
+    <div class="sb-item" id="ni-kits" data-tip="Kit Templates — reusable Bill of Materials for waterhouse builds" onclick="go('kits',this)"><span class="sb-icon">&#129521;</span><span class="sb-lbl">Kit Templates</span></div>
+    <div class="sb-item" id="ni-deployments" data-tip="Deployments — track waterhouse deployments and trigger installation workflows" onclick="go('deployments',this)"><span class="sb-icon">&#128640;</span><span class="sb-lbl">Deployments</span><span class="sb-badge hid" id="depBadge">0</span></div>
+    <div class="sb-item" id="ni-inventory" data-tip="Inventory — stock levels, locations, purchase order fulfilment tracking" onclick="go('inventory',this)"><span class="sb-icon">&#128218;</span><span class="sb-lbl">Inventory</span></div>
+    <div class="sb-item" id="ni-purchases" data-tip="Purchase Orders — track orders from suppliers, link to catalogue items" onclick="go('purchases',this)"><span class="sb-icon">&#128230;</span><span class="sb-lbl">Purchase Orders</span></div>
     <div class="sb-sect">Locations</div>
-    <div class="sb-item" id="ni-locations" onclick="go('locations',this)"><span class="sb-icon">&#127968;</span><span class="sb-lbl">Locations</span></div>
+    <div class="sb-item" id="ni-locations" data-tip="Locations — registry of all waterhouses, storage sites, test benches" onclick="go('locations',this)"><span class="sb-icon">&#127968;</span><span class="sb-lbl">Locations</span></div>
     <div class="sb-sect">Procurement</div>
-    <div class="sb-item" id="ni-accounts" onclick="go('accounts',this)"><span class="sb-icon">&#128100;</span><span class="sb-lbl">Accounts</span></div>
-    <div class="sb-item" id="ni-inbox" onclick="go('inbox',this)"><span class="sb-icon">&#128089;</span><span class="sb-lbl">Receipt Inbox</span><span class="sb-badge hid" id="iBadge">0</span></div>
+    <div class="sb-item" id="ni-accounts" data-tip="Accounts — buyer accounts for AliExpress, Alibaba etc, linked to catalogue items" onclick="go('accounts',this)"><span class="sb-icon">&#128100;</span><span class="sb-lbl">Accounts</span></div>
+    <div class="sb-item" id="ni-inbox" data-tip="Receipt Inbox — pipeline for getting purchase records into the catalogue" onclick="go('inbox',this)"><span class="sb-icon">&#128089;</span><span class="sb-lbl">Receipt Inbox</span><span class="sb-badge hid" id="iBadge">0</span></div>
     <div class="sb-sect">AI</div>
-    <div class="sb-item" id="ni-aihelper" onclick="go('aihelper',this)"><span class="sb-icon">&#129302;</span><span class="sb-lbl">AI Helper / Notes</span></div>
+    <div class="sb-item" id="ni-aihelper" data-tip="AI Helper — multi-provider chat assistant with KB injection and feedback capture" onclick="go('aihelper',this)"><span class="sb-icon">&#129302;</span><span class="sb-lbl">AI Helper / Notes</span></div>
     <div class="sb-sect">Dev</div>
-    <div class="sb-item" id="ni-developer" onclick="go('developer',this)"><span class="sb-icon">&#128736;</span><span class="sb-lbl">Developer</span></div>
-    <div class="sb-item" id="ni-eventledger" onclick="go('eventledger',this)" data-admin-only><span class="sb-icon">&#128221;</span><span class="sb-lbl">Events Ledger</span></div>
+    <div class="sb-item" id="ni-developer" data-tip="Developer — Platform Spec, ADRs, Growth Log, Dev Tasks, Knowledge Base" onclick="go('developer',this)"><span class="sb-icon">&#128736;</span><span class="sb-lbl">Developer</span></div>
+    <div class="sb-item" id="ni-eventledger" data-tip="Events Ledger — full audit log of all app activity (admin only)" onclick="go('eventledger',this)" data-admin-only><span class="sb-icon">&#128221;</span><span class="sb-lbl">Events Ledger</span></div>
     <div class="sb-sect">Settings</div>
-    <div class="sb-item" id="ni-ai-integrations" onclick="openApiMo()"><span class="sb-icon">&#128273;</span><span class="sb-lbl">AI &amp; Integrations</span></div>
-    <div class="sb-item" onclick="openCP()"><span class="sb-icon">&#128274;</span><span class="sb-lbl">Change Password</span></div>
+    <div class="sb-item" id="ni-ai-integrations" data-tip="AI & Integrations — configure AI keys, Google OAuth, Rails API, Home Assistant" onclick="openApiMo()"><span class="sb-icon">&#128273;</span><span class="sb-lbl">AI &amp; Integrations</span></div>
+    <div class="sb-item" data-tip="Change your login password" onclick="openCP()"><span class="sb-icon">&#128274;</span><span class="sb-lbl">Change Password</span></div>
     <div class="sb-sect">Export</div>
-    <div class="sb-item" onclick="expAll()"><span class="sb-icon">&#128190;</span><span class="sb-lbl">Backup JSON</span></div>
-    <div class="sb-item" onclick="expWoo()"><span class="sb-icon">&#128722;</span><span class="sb-lbl">WooCommerce CSV</span></div>
-    <div class="sb-item" onclick="document.getElementById('restoreF').click()"><span class="sb-icon">&#8679;</span><span class="sb-lbl">Restore Backup</span></div>
+    <div class="sb-item" data-tip="Download all app data as a JSON backup file" onclick="expAll()"><span class="sb-icon">&#128190;</span><span class="sb-lbl">Backup JSON</span></div>
+    <div class="sb-item" data-tip="Export shop listings as WooCommerce CSV for import" onclick="expWoo()"><span class="sb-icon">&#128722;</span><span class="sb-lbl">WooCommerce CSV</span></div>
+    <div class="sb-item" data-tip="Restore app data from a previously downloaded JSON backup" onclick="document.getElementById('restoreF').click()"><span class="sb-icon">&#8679;</span><span class="sb-lbl">Restore Backup</span></div>
     <input type="file" id="restoreF" accept=".json" style="display:none" onchange="impBackup(this)">
   </nav>
   <div class="sb-foot">
@@ -1596,7 +1605,7 @@ tbody tr:hover{background:var(--surface2);}
       <select id="calWhFilter" onchange="renderCalendar();renderCalLedger()" style="min-width:150px"><option value="">All Waterhouses</option></select>
       <button class="btn btn-g btn-sm" id="calSyncBtn" data-tip="Sync with Google Calendar" onclick="doCalHeaderSync(this)">&#8635; Sync</button>
       <button class="btn btn-g btn-sm" id="calActivityBtn" data-tip="Toggle activity log overlay" onclick="toggleCalActivityLog()">&#128221; Activity</button>
-      <button class="btn btn-p btn-sm" data-tip="Create new calendar event" onclick="openCalEventMo()">+ Event</button>
+      <button class="btn btn-p btn-sm" data-tip="Create new calendar event — pick a date first" onclick="openDateWizard('When is this event?',function(d){openCalEventMo(d);})">+ Event</button>
       <button class="btn btn-g btn-sm" data-tip="Connect external calendar" onclick="openCalProviderPanel()">&#128279; Connect</button>
     </div>
   </div>
@@ -2675,6 +2684,26 @@ tbody tr:hover{background:var(--surface2);}
   </div>
 </div>
 
+<!-- ONBOARDING WIZARD -->
+<div id="onboardingWizard" style="display:none;position:fixed;inset:0;background:rgba(10,10,18,.97);z-index:99999;display:none;flex-direction:column;align-items:center;justify-content:center;padding:20px">
+  <div style="width:100%;max-width:560px;background:var(--panel);border:1px solid var(--border);border-radius:16px;overflow:hidden">
+    <!-- Progress bar -->
+    <div style="height:4px;background:var(--surface2)"><div id="owProgress" style="height:100%;background:var(--cyan);transition:width .3s;width:14%"></div></div>
+    <!-- Header -->
+    <div style="padding:20px 24px 0;display:flex;align-items:center;justify-content:space-between">
+      <div id="owStepLabel" style="font-size:11px;color:var(--text3);font-family:var(--mono)">STEP 1 OF 7</div>
+      <button style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:18px" onclick="skipOnboarding()" title="Skip setup">✕</button>
+    </div>
+    <!-- Step content -->
+    <div id="owContent" style="padding:24px;min-height:300px"></div>
+    <!-- Footer -->
+    <div style="padding:16px 24px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+      <button class="btn btn-g btn-sm" id="owBack" onclick="owStep(-1)" style="visibility:hidden">← Back</button>
+      <button class="btn btn-p btn-sm" id="owNext" onclick="owStep(1)">Next →</button>
+    </div>
+  </div>
+</div>
+
 <!-- FLOATING DEV PANEL TAB -->
 <div class="dev-tab-btn" id="devTabBtn" onclick="toggleDevPanel()" title="Dev Notes Panel">
   <span class="dtb-icon">&#128736;</span>
@@ -2728,6 +2757,14 @@ tbody tr:hover{background:var(--surface2);}
     <!-- ADRs tab -->
     <div id="spec-tab-adrs">
       <div class="helper-bubble" style="margin-bottom:16px"><div class="hb-icon">&#128220;</div><div><strong>Architecture Decision Records</strong> capture every significant choice made about how the platform is built — the problem, what was considered, what was decided, and why. Claude updates these automatically when decisions are made. Use <code>[REF:ADR-xxx]</code> to cross-reference from other entries or pages.</div></div>
+      <div id="adrPersistBanner" style="display:none;margin-bottom:14px;background:rgba(243,156,18,.12);border:1px solid var(--amber);border-radius:8px;padding:12px 16px;font-size:12px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <span style="color:var(--amber);font-size:16px">&#9888;</span>
+          <strong style="color:var(--amber)" id="adrPersistMsg">X ADRs are in localStorage only</strong>
+        </div>
+        <div style="color:var(--text2);margin-bottom:10px">These ADRs will be lost if the browser is cleared. Ask Claude Code to make them permanent.</div>
+        <button class="btn btn-g btn-sm" onclick="copyAdrsForClaude()">&#128203; Copy for Claude Code</button>
+      </div>
       <div id="specAdrList"></div>
     </div>
 
@@ -2740,6 +2777,14 @@ tbody tr:hover{background:var(--surface2);}
     <!-- Growth Log tab -->
     <div id="spec-tab-growth" style="display:none">
       <div class="helper-bubble" style="margin-bottom:16px"><div class="hb-icon">&#128220;</div><div><strong>Growth Log</strong> records what changed, when, and why. Claude adds an entry at the end of every session where decisions or features changed. This gives any future developer or Claude session a dated history of how the platform evolved.</div></div>
+      <div id="growthPersistBanner" style="display:none;margin-bottom:14px;background:rgba(243,156,18,.12);border:1px solid var(--amber);border-radius:8px;padding:12px 16px;font-size:12px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <span style="color:var(--amber);font-size:16px">&#9888;</span>
+          <strong style="color:var(--amber)" id="growthPersistMsg">X entries are in localStorage only</strong>
+        </div>
+        <div style="color:var(--text2);margin-bottom:10px">These entries will be lost if the browser is cleared. Ask Claude Code to make them permanent — paste the output below into your next session.</div>
+        <button class="btn btn-g btn-sm" onclick="copyGrowthForClaude()">&#128203; Copy for Claude Code</button>
+      </div>
       <div id="specGrowthList"></div>
     </div>
 
@@ -3011,7 +3056,8 @@ const KS={
   knowledgeBase:'twwp_kb_v1',
   emailRegistry:'twwp_email_v1',
   campaigns:'twwp_campaigns_v1',
-  eventLedger:'twwp_ledger_v1'
+  eventLedger:'twwp_ledger_v1',
+  org_config:'twwp_org_config_v1'
 };
 const S={
   get:k=>{try{return JSON.parse(localStorage.getItem(KS[k])||'[]');}catch{return[];}},
@@ -4214,7 +4260,10 @@ async function sendAIHelperMsg(){
   const msg=inp.value.trim();inp.value='';
   addAIMsg(msg,'user');
   const cfg=getAiCfg();const provider=cfg.provider||'gemini';const apiKey=(cfg.keys&&cfg.keys[provider])||'';
-  if(!apiKey){addAIMsg('[!] No API key configured. Go to AI & Integrations settings to add one.','bot');return;}
+  if(!apiKey){
+    if(requiresSetup('AI Assistant','ai_key',4)){addAIMsg('[!] Opening setup wizard — add an API key there.','bot');return;}
+    addAIMsg('[!] No API key configured. Go to AI & Integrations settings to add one.','bot');return;
+  }
   const activePage=document.querySelector('.page.on')?.id?.replace('page-','')||'unknown';
   const kbCtx=getKBContext();
   const baseSystem='You are the Ops App assistant for TWWP (The Wholey Water Project), a decentralised community RO water network in New Zealand. The user is on the '+activePage+' page. Answer helpfully and concisely. If the user says "save as feedback" or describes an app improvement, classify it into one of: bug, backlog, ui, workflow, integration, automation, other.'+(kbCtx?'\n\n'+kbCtx:'');
@@ -4258,7 +4307,7 @@ function renderAIFeedback(){
 function clearAIFeedback(){if(!confirm('Clear all captured feedback?'))return;S.set('captures',S.get('captures').filter(c=>c.type!=='feedback'));renderAIFeedback();}
 
 // AI SETTINGS
-function openApiMo(){const cfg=getAiCfg();const provider=cfg.provider||'gemini';const keys=cfg.keys||{};selectProvider(provider,true);['gemini','anthropic','openai','openrouter'].forEach(p=>{const el=G('ak-'+p);if(el)el.value=keys[p]||'';});if(G('ak-stripe-pub'))G('ak-stripe-pub').value=keys['stripe-pub']||'';if(G('ak-stripe-secret'))G('ak-stripe-secret').value=keys['stripe-secret']||'';if(G('af-autofill'))G('af-autofill').checked=cfg.features?cfg.features.autofill!==false:true;if(G('af-reports'))G('af-reports').checked=cfg.features?cfg.features.reports!==false:true;if(G('af-helper'))G('af-helper').checked=cfg.features?cfg.features.helper!==false:true;if(G('af-devnotes'))G('af-devnotes').checked=cfg.devNotes!==false;loadIntegrations();renderFeatureModelRows();updateOAuthUI();OM('apiMo');}
+function openApiMo(){const cfg=getAiCfg();const provider=cfg.provider||'gemini';const keys=cfg.keys||{};selectProvider(provider,true);['gemini','anthropic','openai','openrouter'].forEach(p=>{const el=G('ak-'+p);if(el)el.value=keys[p]||'';});if(G('ak-stripe-pub'))G('ak-stripe-pub').value=keys['stripe-pub']||'';if(G('ak-stripe-secret'))G('ak-stripe-secret').value=keys['stripe-secret']||'';if(G('af-autofill'))G('af-autofill').checked=cfg.features?cfg.features.autofill!==false:true;if(G('af-reports'))G('af-reports').checked=cfg.features?cfg.features.reports!==false:true;if(G('af-helper'))G('af-helper').checked=cfg.features?cfg.features.helper!==false:true;if(G('af-devnotes'))G('af-devnotes').checked=cfg.devNotes!==false;loadIntegrations();renderFeatureModelRows();updateOAuthUI();renderTerminologyEditor();OM('apiMo');}
 function saveApiKey(){const cfg=getAiCfg();const selectedBtn=document.querySelector('.provider-btn.on');cfg.provider=selectedBtn?selectedBtn.dataset.p:'gemini';cfg.keys=cfg.keys||{};['gemini','anthropic','openai','openrouter'].forEach(p=>{const el=G('ak-'+p);if(!el)return;const v=el.value.trim();if(v)cfg.keys[p]=v;else delete cfg.keys[p];});if(G('ak-stripe-pub')?.value)cfg.keys['stripe-pub']=G('ak-stripe-pub').value;if(G('ak-stripe-secret')?.value)cfg.keys['stripe-secret']=G('ak-stripe-secret').value;cfg.features={autofill:G('af-autofill')?G('af-autofill').checked!==false:true,reports:G('af-reports')?G('af-reports').checked!==false:true,helper:G('af-helper')?G('af-helper').checked!==false:true};cfg.devNotes=G('af-devnotes')?G('af-devnotes').checked:true;saveFeatureModels();saveAiCfgToStore(cfg);saveIntegrations();CM('apiMo');}
 function selectProvider(p,silent){document.querySelectorAll('.provider-btn').forEach(b=>{b.classList.toggle('on',b.dataset.p===p);});['gemini','anthropic','openai','openrouter'].forEach(id=>{const row=G('akr-'+id);if(row)row.style.display=id===p?'block':'none';});const orModel=G('akr-openrouter-model');if(orModel)orModel.style.display=p==='openrouter'?'block':'none';}
 
@@ -4396,7 +4445,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 // Format: update the constant, save the file, deploy.
 // localStorage stores user-added entries that supplement these.
 
-const SPEC_VERSION = '4.4';
+const SPEC_VERSION = '4.5';
 const SPEC_LAST_UPDATED = '2026-03-23';
 
 // ── Block Index ────────────────────────────────────────────────────────────
@@ -4536,6 +4585,27 @@ const SPEC_ADRS = [
    decision:'Local ledger (twwp_ledger_v1) with cap at 5000 entries (configurable). autoPurgeLedger() runs on init. Nav events excluded from activity overlay to reduce noise.',
    reasoning:'Local ledger allows offline audit and calendar activity dots without network. 5000 entries at ~200 bytes each = ~1MB, well within localStorage limits. Sync to Rails via POST /api/ledger/sync allows durable storage without relying on localStorage alone.',
    pages:['page-eventledger','page-calendar'],refs:['ADR-005']},
+  {id:'ADR-012',date:'2026-03-23',status:'Accepted',
+   title:'Onboarding wizard as first-run setup flow (not always-on config)',
+   problem:'New users land on the dashboard with no AI key, no location, and no context about what to configure first. Existing Settings modals are buried.',
+   options:['No wizard — rely on docs','Settings page with all fields','First-run full-screen modal wizard','Inline contextual prompts only'],
+   decision:'7-step full-screen modal wizard fires automatically on first load (when twwp_setup_complete is not set). Can be re-run from AI & Integrations. Steps: Welcome, Branding, First Location, AI Key, Integrations, Team, Done. Each step saves immediately to org_config (twwp_org_config_v1).',
+   reasoning:'A guided wizard dramatically reduces time-to-first-value for new orgs. The full-screen approach ensures focus. Skippable (✕ button) so power users can bypass. Redo Setup button in Settings for when config needs to change.',
+   pages:['page-dashboard'],refs:['ADR-010']},
+  {id:'ADR-013',date:'2026-03-23',status:'Accepted',
+   title:'Persistent setup status checklist tracking completion across 9 dimensions',
+   problem:'After onboarding, users may not know which integrations are still missing. No way to see at a glance what is configured vs what still needs attention.',
+   options:['No tracking','Status shown only in Settings','Dashboard card with checklist','Push notifications for incomplete setup'],
+   decision:'twwp_setup_status_v1 localStorage object tracks 9 keys: org_name, branding, first_location, ai_key, google_calendar, google_drive, rails_api, first_team_member, esp32_config, stripe_config. Dashboard card (admin only) shows % complete and per-item status with Continue Setup button. Disappears from Dashboard once 100% complete.',
+   reasoning:'Visible progress motivates completion. Storing in localStorage means it persists across sessions without a backend. Admin-only visibility prevents setup noise for regular staff.',
+   pages:['page-dashboard'],refs:['ADR-012']},
+  {id:'ADR-014',date:'2026-03-23',status:'Accepted',
+   title:'org_config store as multi-tenancy foundation (v1 stub)',
+   problem:'TWWP Ops App is being used by one org but may be white-labelled for others. Hardcoded strings like "Waterhouse", "Guardian", "WH Monitor" would need changing for each org.',
+   options:['Never support multi-org','Multi-org in v2 with no v1 prep','Stub org_config now with terminology map','Full multi-org in v1'],
+   decision:'org_config store (twwp_org_config_v1) added with: org_id (default twwp), org_name, logo, brand_colour, terminology object, modules feature flags, created/updated. DEFAULT_TERMINOLOGY map defines all overridable strings. getTerm(key) reads from org_config.terminology with fallback to DEFAULT_TERMINOLOGY. Sidebar labels for Locations and WH Monitor read from getTerm().',
+   reasoning:'This is a cheap v1 stub that lets us test the pattern without the full multi-org schema (see ADR-010 for why full multi-org is deferred). The terminology editor in AI & Integrations lets non-technical admins rebrand without code changes.',
+   pages:['page-devspec'],refs:['ADR-010','ADR-012']},
 ];
 // ── Growth Log ──────────────────────────────────────────────────────────────
 // Newest entries first. Claude adds an entry at the end of every session
@@ -4544,29 +4614,37 @@ const SPEC_ADRS = [
 // decisions changed, or bugs were fixed. Newest entries first. Keep entries concise but complete.
 const SPEC_GROWTH = [
   {date:'2026-03-23',by:'Claude / Kenny',
-   summary:'Session 14 (20 tasks): Calendar Sync button wired with Google OAuth feedback + toast; global tooltip system (data-tip, 800ms delay, overflow-safe positioning); tasks→calendar auto-sync on saveTask/saveDevTask/delete; Event Ledger multi-select category+action filter with localStorage persistence; SPEC_GROWTH and SPEC_ADRS fully populated; openDateWizard() reusable date picker modal; completion notes modal for tasks/devtasks/calendar events/backlog; backlog items → calendar scheduling with Scheduled/Overdue filter pills; seedDevTasks updated to seed ALL backlog groups A-V with re-sync button; addGrowthEntry()/Log Session modal/Import from Session Summary in Dev History; DEVNOTES populated for all 13+ pages; sprint session logger in Developer header; tooltip data-tip pass on all remaining pages; recurring event edit flow (this/future/all modes); Approval Queue expanded to pull contacts/R&D/DocBuilder/email/campaigns; Dashboard panels all wired to live data; resource bar expanded with session duration/tasks today/service dots; Ctrl+K global search across all stores; SPEC_VERSION→4.4.'},
+   summary:'Session 15 (10 tasks): Sidebar data-tip tooltips on all 35 nav items; +Event button now opens date wizard before modal; calendar icon on dev task rows for on-demand cal sync; persistence banner in Growth Log/ADRs tabs with Copy for Claude button; SPEC_GROWTH backfilled with correct session dates; resource bar reads both task+devtask stores for completions; Onboarding Wizard (7 steps: Welcome, Branding, First Location, AI Key, Integrations, Roles/Team, Done); Setup Status checklist Dashboard card; requiresSetup() contextual interrupts wired to Calendar/Drive/AI/Email; org_config store + terminology map + Locations/WH Monitor label swap; SPEC_VERSION→4.5.'},
   {date:'2026-03-23',by:'Claude / Kenny',
-   summary:'Session 13 (10 tasks): Fixed calendar CRUD — openCalEventMo/editCalEvent/saveCalEvent/deleteCalEvent fully defined. Calendar week/day views with view switcher pills and Today button. Calendar multi-provider connection panel (Google/iCloud/Proton/Outlook). Events Ledger store + global logEvent() wired into tasks/contacts/calendar/auth/ai/nav. Events Ledger admin page with stats bar, storage indicator, filters, pause/resume, export CSV. Resource usage bar (localStorage %, last sync age, AI calls, ledger events, Drive dot). Calendar + Ledger activity dot overlay with popover. Ledger auto-purge settings + syncLedgerToRails(). Recurring calendar events with daily/weekly/monthly/yearly expansion.'},
+   summary:'Session 14 (20 tasks): Calendar Sync button wired with Google OAuth feedback + toast; global tooltip system (data-tip, 800ms delay, overflow-safe positioning); tasks→calendar auto-sync on saveTask/saveDevTask/delete; Event Ledger multi-select category+action filter with localStorage persistence; SPEC_GROWTH and SPEC_ADRS fully populated; openDateWizard() reusable date picker modal; completion notes modal for tasks/devtasks; backlog items → calendar scheduling with Scheduled/Overdue filter pills; Dev Tasks re-sync seeds ALL backlog groups A-V; addGrowthEntry()/Log Session modal/Import from Session Summary in Dev History; DEVNOTES populated for all 13+ pages; sprint session logger in Developer header; tooltip data-tip pass on major buttons across all pages; recurring event edit flow (this/future/all modes); Approval Queue expanded to pull contacts/R&D/email drafts/campaigns; resource bar expanded with session duration/tasks today/service dots/⚙ settings; Ctrl+K global search across all stores. SPEC_VERSION→4.4.'},
   {date:'2026-03-23',by:'Claude / Kenny',
-   summary:'Session 12 (9 tasks): Capture routing — saveCapture() creates real records in tasks/contacts/campaigns/projects. AI auto-classify on capture (classifyCapture via aiCallJSON). Capture triage redesign with Accept/KB/Backlog/Discard actions. Capture Inbox card on Dashboard (Row 9). Global Approval Queue page aggregating captures/financials/maintenance with one-click actions. Calendar auto-events from workflows (maintenance schedules, approved reimbursements, active campaigns). Email Registry send via Rails API. R&D Promote to Project button.'},
+   summary:'Session 13 (10 tasks): Fixed calendar CRUD — openCalEventMo/editCalEvent/saveCalEvent/deleteCalEvent fully defined. Calendar week/day views with view switcher pills and Today button. Calendar multi-provider connection panel (Google/iCloud/Proton/Outlook — Google live). Events Ledger store + global logEvent() wired into tasks/contacts/calendar/auth/ai/nav. Events Ledger admin page with stats bar, storage indicator, filters, pause/resume, export CSV. Resource usage bar (localStorage %, last sync age, AI calls, ledger events, Drive dot). Calendar + Ledger activity dot overlay with popover. Ledger auto-purge settings + syncLedgerToRails() (Rails placeholder). Recurring calendar events with daily/weekly/monthly/yearly expansion.'},
+  {date:'2026-03-23',by:'Claude / Kenny',
+   summary:'Session 12 (9 tasks): Capture routing — saveCapture() creates real records in tasks/contacts/campaigns/projects. AI auto-classify on capture (classifyCapture via aiCallJSON). Capture triage redesign with Accept/KB/Backlog/Discard actions. Capture Inbox card on Dashboard (Row 9). Global Approval Queue page aggregating captures/financials/maintenance with one-click actions. Calendar auto-events from maintenance schedules, approved reimbursements, active campaigns. Email Registry send via Rails API. R&D Promote to Project button.'},
   {date:'2026-03-23',by:'Claude / Kenny',
    summary:'Session 11 (9 tasks): Fixed /api/drive/upload Rails endpoint (fields, mime_type, clean response). Fixed Google OAuth scope (drive.file → drive). Frontend drive upload fix (JSON not FormData, webViewLink). Maintenance → financial auto-create on completeMaintJob(). Email Registry store + page + compose modal + templates (Guardian Welcome, Maintenance Reminder, Reimbursement Approved). Campaigns store + page + 6-stage lifecycle. Dashboard campaign + inventory panels (Row 8). Contact multi-tag TWWP roles (9 roles with colour badges). Trustee-specific contact fields + governance tab with term expiry cards.'},
   {date:'2026-03-23',by:'Claude / Kenny',
-   summary:'Session 10 (4 tasks): Word doc .docx extraction via mammoth.js (CDN-loaded on first use, 4000-char AI parse). Doc Builder page with 3 templates (Host Agreement, Reimbursement Receipt, Waterhouse Report). Upload to Drive via Rails API. KB import from Document Library (multi-select checkbox, creates KB entries from doc descriptions).'},
+   summary:'Session 10 (4 tasks): Word doc .docx extraction via mammoth.js (CDN-loaded on first use, 4000-char AI parse). Doc Builder page with 3 templates (Host Agreement, Reimbursement Receipt, Waterhouse Report) with live data prefill. Upload to Drive via Rails API. KB import from Document Library (multi-select, creates KB entries from doc descriptions).'},
   {date:'2026-03-23',by:'Claude / Kenny',
-   summary:'Session 9 (5 tasks): Removed debug console.logs from doLogin(). Wired updateFinForm() — adapts financial entry form fields by type (expense/donation/reimbursement/income). Wired sendRptChatMsg() — AI chat on reports with multi-turn history and KB injection. Fixed Contacts CSV import — file picker, parseCsvText, dedup by email. Role-based UI enforcement — getUserRole()/isAdmin()/enforceRoleUI() — staff hides admin nav, read-only blocks writes.'},
+   summary:'Session 9 (5 tasks): Removed debug console.logs from doLogin(). Wired updateFinForm() — adapts financial entry form fields by type (expense/donation/reimbursement/income). Wired sendRptChatMsg() — AI chat on reports with multi-turn history and KB injection. Fixed Contacts CSV import — file picker, parseCsvText, dedup by email. Role-based UI enforcement — getUserRole()/isAdmin()/enforceRoleUI() — staff hides admin nav, read-only blocks all store writes.'},
   {date:'2026-03-23',by:'Claude / Kenny',
-   summary:'Session 8 (1 session combined): Knowledge Base store added. KB tab in Developer page with CRUD, always_inject toggle, tag badges. getKBContext() prepends injected entries into every AI call. sendAIHelperMsg() and callModelForFeature() updated. Health check fixes: doLogin() post-login sync delay, doLogout() async save, aiCallJSON() KB injection.'},
+   summary:'Session 8 (health check + KB): Knowledge Base store (twwp_kb_v1) added. KB tab in Developer page with CRUD, always_inject toggle, tag badges. getKBContext() prepends injected entries into every AI call path. sendAIHelperMsg() and callModelForFeature() updated. Health check fixes: doLogin() post-login sync delay (setTimeout 1s), doLogout() async save to Rails, aiCallJSON() KB injection for all AI paths.'},
   {date:'2026-03-23',by:'Claude / Kenny',
-   summary:'Sessions 5–7 (Rails auth, GitHub Actions, Cloudflare): Rails API JWT auth live (bcrypt, users table, SessionsController, 30-day JWT). Frontend doLogin() async with Rails fallback. GitHub Actions deploy.yml for GitHub Pages auto-deploy. Cloudflare proxy test button. Rails API sync wired on logout and every 30 minutes.'},
+   summary:'Session 7 (Rails auth sprint): Rails API JWT auth live — bcrypt gem, users table (email/password_digest/role/org_id/active), SessionsController returning 30-day JWT. Frontend doLogin() made async with Rails fallback. Role enforcement stubs added. Admin user created on Fly.io (thewholeywaterproject@gmail.com / twwp2024). Rails API sync wired on logout and every 30 minutes.'},
+  {date:'2026-03-23',by:'Claude / Kenny',
+   summary:'Session 6 (connection status + Drive Phase 1): Status dot fixed top-right, 5-min auto-check, 6-service status panel (AI, Drive, Cloudflare, Rails, HA, Local). Cloudflare Proxy test button. Google Drive Phase 1 read-only (API key + folder ID). Drive Sync button fetches file list, Classify Folder uses AI. Rails API deployed to Fly.io at twwp-ops-api.fly.dev. oauth_states table for PKCE (DB not session). Rails API OAuth confirmed working end-to-end.'},
+  {date:'2026-03-23',by:'Claude / Kenny',
+   summary:'Session 5 (GitHub Actions + Rails setup): GitHub Actions deploy.yml for GitHub Pages auto-deploy on push to main. Cloudflare Worker /token, /refresh, /health endpoints deployed. Rails API scaffolded with health check, OAuth flow, ops_sessions table. Frontend "Connect via Rails API" button in AI & Integrations.'},
   {date:'2026-03-19',by:'Claude / Kenny',
-   summary:'Session 4 (Dashboard + Dev foundations): Full dashboard build with SVG arc gauges (litres quenched, avg VIPs), mini bar chart (monthly reimbursements), dev progress bar, waterhouse health cards, tasks due, guardian reimbursements owed, recent activity feed, quick actions grid, upcoming calendar strip, organisation cards + 3-step org wizard. App renamed to Ops App. Sidebar 3-stage toggle (full/icons/hidden) with peek tab. syncBacklogToDevTasks and calSyncAll run on every login. 13 new dev tasks seeded from Groups D-T.'},
+   summary:'Session 4 (Dashboard + Dev foundations): Full dashboard build with SVG arc gauges (litres quenched, avg VIPs), mini bar chart (monthly reimbursements), dev progress bar, waterhouse health cards, tasks due, guardian reimbursements owed, recent activity feed, quick actions grid, upcoming calendar strip, organisation cards + 3-step org wizard. App renamed to TWWP Ops App. Sidebar 3-stage toggle (full/icons/hidden). syncBacklogToDevTasks and calSyncAll run on every login. Dev Tasks seeded from Groups D-T.'},
   {date:'2026-03-18',by:'Claude / Kenny',
-   summary:'Session 3: Platform Spec page (page-devspec) with ADR list, Block Index (30 system IDs), Growth Log, per-page Dev Notes. updateDevPanel() wired for all pages. Group T (Kit Builder/BOM system) added to backlog. docs/ folder with 6 reference files, backlog.md with Groups A-S (~85 items).'},
+   summary:'Session 3 (v4.3 — Platform Spec + Dev page): Platform Spec page (page-devspec) with ADR list, Block Index (30 system IDs), Growth Log, per-page Dev Notes. Developer page with KB tab, dev tasks, captures/triage, platform spec. updateDevPanel() wired for all pages. Group T (Kit Builder/BOM) added to backlog. docs/ folder with 6 reference files, backlog.md Groups A-S (~85 items).'},
   {date:'2026-03-17',by:'Claude / Kenny',
-   summary:'Session 2: v4.2 build — Contacts/CRM, Projects, R&D, Trustees/Legal, Financials, Shops, AI Helper, Capture Widget. Demo data seeded from real Raj WH1 report data (3 periods). All JS syntax errors resolved.'},
-  {date:'2026-03-16',by:'Claude / Kenny',
-   summary:'Session 1: v4.1 base — Catalogue, Kit Templates, Deployments, Locations, Accounts, Receipt Inbox, Maintenance wizard, Calendar, WH Monitor, Member Display, Reports all functional. localStorage architecture with versioned keys.'},
+   summary:'Session 2 (v4.2 — CRM + Finance + AI): Contacts/CRM page, Projects, R&D, Trustees/Legal, Financials (5 tabs), Shops/Orgs, AI Helper panel (floating + embedded chat, 4 providers). Capture Widget added. AI autofill on catalogue items. Demo data seeded from real Raj WH1 report data (3 periods). All JS syntax errors resolved.'},
+  {date:'2026-03-11',by:'Kenny / Claude',
+   summary:'Session 1b (v4.1 stabilisation): Receipt Inbox, Maintenance wizard (4-step guided flow), Calendar (month grid, event chips), WH Monitor (arc gauges, period table), Member Display, Reports (6 types, multi-turn chat). localStorage architecture solidified with versioned keys (KS map). All pages functional for first real demo.'},
+  {date:'2026-03-10',by:'Kenny / Claude',
+   summary:'Session 1a (v3.1 → v4.0 planning + base build): Project renamed from v3.1 to Ops App v4.0. Initial architecture: single HTML file, all data in localStorage, zero build tooling. First pages built: Catalogue (AI autofill from URL, CSV import), Kit Templates (BOM builder), Deployments (workflow trigger), Locations (waterhouse registry, Nominatim address autocomplete), Accounts (buyer accounts). Sidebar navigation with 3-stage toggle.'},
 ];
 
 // ── Per-Page Dev Notes ──────────────────────────────────────────────────────
@@ -4699,6 +4777,7 @@ function switchSpecTab(el){
   ['adrs','blocks','growth','devnotes'].forEach(function(t){
     var e=G('spec-tab-'+t);if(e)e.style.display=t===el.dataset.t?'block':'none';
   });
+  updatePersistBanners();
 }
 
 function switchSpecTabById(tabId){
@@ -4942,6 +5021,18 @@ const BACKLOG_GROUPS = [
     {id:'T4',title:'Purchase List generation',detail:'New store: purchase_lists. Frozen snapshot from kit instance. Validation before generate. Export: CSV/JSON/markdown.',label:'EXPLICIT'},
     {id:'T5',title:'Annual maintenance cost estimator',detail:'Kit instance calculates annual/monthly/first-year totals from item maintenance_profile data. Display alongside build cost.',label:'EXPLICIT'},
   ]},
+  {id:'W',title:'Onboarding & Multi-Org Setup',desc:'First-run setup wizard, persistent setup status tracking, contextual setup interrupts, and org_config foundation for white-labelling.',items:[
+    {id:'W1',title:'Onboarding wizard (7 steps)',detail:'Welcome, Branding, First Location, AI Key, Integrations, Roles/Team, Done. Auto-fires on first load. Re-run from Settings. ADR-012. DONE session 15.',label:'EXPLICIT'},
+    {id:'W2',title:'Setup status checklist Dashboard card',detail:'twwp_setup_status_v1 tracks 9 keys. Dashboard card (admin only) shows % complete + per-item status + Continue Setup. ADR-013. DONE session 15.',label:'EXPLICIT'},
+    {id:'W3',title:'requiresSetup() contextual interrupts',detail:'Intercept with confirm modal when user tries a feature before its required setup is done. Wired to: Google Calendar sync, Drive upload, AI helper, Email send. DONE session 15.',label:'EXPLICIT'},
+    {id:'W4',title:'org_config store + terminology map',detail:'twwp_org_config_v1 with org_id, org_name, logo, brand_colour, terminology, modules. getTerm(key) reads labels. Sidebar updates on init. ADR-014. DONE session 15.',label:'EXPLICIT'},
+    {id:'W5',title:'User management page (admin only)',detail:'Invite users, deactivate, change role. POST/PUT /api/users Rails endpoints needed. Integrates with onboarding Roles/Team step.',label:'EXPLICIT'},
+    {id:'W6',title:'Per-org feature flags (modules object)',detail:'Enable/disable modules per org (e.g. PPSR, Campaigns, Drive). Read from org_config.modules in renderSidebar(). Each module has: enabled, label, icon.',label:'IMPLIED'},
+    {id:'W7',title:'White-label export / org clone',detail:'Package a configured org_config + data snapshot as a ZIP for another org to import. Seeds new localStorage with custom branding and first location.',label:'IMPLIED'},
+    {id:'W8',title:'Onboarding analytics',detail:'Log each step completion to event ledger. Track time-to-complete wizard. Show in Events Ledger filtered by category=onboarding.',label:'IMPLIED'},
+    {id:'W9',title:'ESP32 / IoT config step in onboarding',detail:'Add a step for configuring the ESP32 sensor node: device ID, wifi SSID, HA URL. Generates firmware config JSON. Completes esp32_config setup status key.',label:'EXPLICIT'},
+    {id:'W10',title:'Stripe config step in onboarding',detail:'Add Stripe public key + payment link URL. Completes stripe_config setup status key. Links to Financials page Stripe section.',label:'EXPLICIT'},
+  ]},
 ];
 
 // ============================================================
@@ -5091,9 +5182,43 @@ function renderDevHistory(){
   var all=userGrowth.concat(SPEC_GROWTH);
   if(!all.length){el.innerHTML='<div class="cl cl-i"><span>i</span><div>No history entries yet.</div></div>';return;}
   el.innerHTML=all.map(function(g){
-    var userBadge=g._user?'<span style="font-size:9px;color:var(--amber);margin-left:6px">&#9888; user-added</span>':'';
+    var userBadge=g._user?'<span style="font-size:9px;color:var(--amber);margin-left:6px">&#9888; localStorage only</span>':'';
     return '<div class="dh-row"><div class="dh-date">'+fmtDate(g.date)+'</div><div class="dh-by">'+esc(g.by||'')+userBadge+'</div><div class="dh-summary">'+esc(g.summary)+'</div></div>';
   }).join('');
+}
+
+// ── Persistence helpers (Task 3) ───────────────────────────────────────────
+function updatePersistBanners(){
+  var userGrowth=JSON.parse(localStorage.getItem('twwp_spec_growth_v1')||'[]');
+  var userAdrs=JSON.parse(localStorage.getItem('twwp_spec_adrs_v1')||'[]');
+  var gb=G('growthPersistBanner'),gm=G('growthPersistMsg');
+  if(gb&&gm){
+    if(userGrowth.length){gb.style.display='';gm.textContent=userGrowth.length+' growth entr'+(userGrowth.length===1?'y':'ies')+' in localStorage only — not permanent';}
+    else{gb.style.display='none';}
+  }
+  var ab=G('adrPersistBanner'),am=G('adrPersistMsg');
+  if(ab&&am){
+    if(userAdrs.length){ab.style.display='';am.textContent=userAdrs.length+' ADR'+(userAdrs.length===1?'':'s')+' in localStorage only — not permanent';}
+    else{ab.style.display='none';}
+  }
+}
+function copyGrowthForClaude(){
+  var userGrowth=JSON.parse(localStorage.getItem('twwp_spec_growth_v1')||'[]');
+  if(!userGrowth.length){showDbToast('No localStorage-only growth entries.');return;}
+  var out='// ADD THESE ENTRIES TO SPEC_GROWTH CONSTANT in index.html (newest first):\n\n';
+  userGrowth.forEach(function(g){
+    out+='{date:\''+g.date+'\',by:\''+g.by+'\',\n summary:\''+g.summary.replace(/'/g,"\\'")+'\'}'+(g===userGrowth[userGrowth.length-1]?'':',"')+'\n';
+  });
+  navigator.clipboard.writeText(out).then(function(){showDbToast('Copied! Paste into Claude Code session.');}).catch(function(){prompt('Copy this:',out);});
+}
+function copyAdrsForClaude(){
+  var userAdrs=JSON.parse(localStorage.getItem('twwp_spec_adrs_v1')||'[]');
+  if(!userAdrs.length){showDbToast('No localStorage-only ADRs.');return;}
+  var out='// ADD THESE TO SPEC_ADRS CONSTANT in index.html:\n\n';
+  userAdrs.forEach(function(a){
+    out+='{id:\''+a.id+'\',title:\''+a.title.replace(/'/g,"\\'")+'\',status:\''+a.status+'\',\n context:\''+a.context.replace(/'/g,"\\'")+'\',decision:\''+a.decision.replace(/'/g,"\\'")+'\',consequences:\''+a.consequences.replace(/'/g,"\\'")+'\'},\n';
+  });
+  navigator.clipboard.writeText(out).then(function(){showDbToast('Copied! Paste into Claude Code session.');}).catch(function(){prompt('Copy this:',out);});
 }
 
 function openSessionLogModal(){
@@ -5177,6 +5302,7 @@ function renderDevTasks(){
       (t.desc?'<div style="font-size:11px;color:var(--text2);margin-top:3px">'+esc(t.desc)+'</div>':'')+
       '</div>'+
       '<div style="display:flex;gap:4px;flex-shrink:0">'+
+      (t.due?'<button class="btn btn-g btn-xs" data-tip="Add/update this task on the Calendar" data-xid="'+esc(t.id)+'" onclick="syncTaskToCalendar(\'devtask\',this.dataset.xid);showDbToast(\'Calendar updated ✓\')">&#128197;</button>':'')+
       '<button class="btn btn-g btn-xs" data-xid="'+esc(t.id)+'" onclick="editDevTask(this.dataset.xid)">Edit</button>'+
       '<button class="btn btn-d btn-xs" data-xid="'+esc(t.id)+'" onclick="delDevTask(this.dataset.xid)">Del</button>'+
       '</div></div>';
@@ -6475,6 +6601,7 @@ function connectGoogleCal(){
 }
 
 function syncGoogleCal(){
+  if(requiresSetup('Google Calendar sync','google_calendar',5))return;
   var token = localStorage.getItem('twwp_google_access_token');
   if(!token){showDbToast('No Google token. Please reconnect.',true);return;}
   var now = new Date();
@@ -6965,12 +7092,20 @@ function updateResourceBar(){
     }
   }
 
-  // Tasks completed today
+  // Tasks completed today — read from both ledger AND task stores directly
   if(rbItemVisible('tasks-today')){
     var ttEl=G('rb-tasks-today');
     if(ttEl){
-      var tasksDone=ledger.filter(function(e){return e.category==='task'&&e.action==='complete'&&e.date===today;}).length;
-      ttEl.innerHTML='&#9989; '+tasksDone+' done';
+      // Count from stores (completed_at field matches today) — most reliable
+      var storeTasksDone=S.get('tasks').filter(function(t){return t.status==='complete'&&t.completed_at&&t.completed_at.slice(0,10)===today;}).length;
+      var storeDevDone=S.get('devtasks').filter(function(t){return t.status==='complete'&&t.completed_at&&t.completed_at.slice(0,10)===today;}).length;
+      var tasksDone=storeTasksDone+storeDevDone;
+      // Also count tasks created today for ↑X indicator
+      var tasksCreatedToday=S.get('tasks').filter(function(t){return t.created&&t.created.slice(0,10)===today;}).length;
+      var devCreatedToday=S.get('devtasks').filter(function(t){return t.created&&t.created.slice(0,10)===today;}).length;
+      var createdToday=tasksCreatedToday+devCreatedToday;
+      var upInd=createdToday>0?'<span style="color:var(--cyan);font-size:9px"> &#8593;'+createdToday+'</span>':'';
+      ttEl.innerHTML='&#9989; '+tasksDone+' done'+upInd;
     }
   }
 
@@ -7562,7 +7697,19 @@ function renderDashboard(){
   }
   html+='</div>';
 
+  // Row 10 — Setup Status (admin only)
+  if(isAdmin()){
+    var ss=getSetupStatus();var ssKeys=Object.keys(SETUP_KEYS);var ssDone=ssKeys.filter(function(k){return ss[k];}).length;
+    if(ssDone<ssKeys.length){
+      html+='<div id="setupStatusCard" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:14px"></div>';
+    }
+  }
+
   el.innerHTML=html;
+  // Render setup card after innerHTML so element exists
+  renderSetupStatusCard();
+
+  var luEl=G('dashLastUpdated');if(luEl)luEl.textContent='Updated '+new Date().toLocaleTimeString();
 }
 
 function deleteOrg(id){
@@ -11957,6 +12104,7 @@ function saveDocBuilderToDocs(){
 }
 
 async function uploadDocBuilderToDrive(btn){
+  if(requiresSetup('Google Drive upload','google_calendar',5))return;
   if(!isRailsConnected()){
     alert('Not connected to Rails API.\n\nTo enable Drive upload:\n1. Add your Rails API URL in AI & Integrations\n2. Log in — this stores your Bearer token\n3. The Rails API will forward the file to Google Drive');
     return;
@@ -12149,6 +12297,7 @@ function saveEmail(){
 }
 
 async function sendEmail(id){
+  if(requiresSetup('Email sending','rails_api',5))return;
   var email=S.find('emailRegistry',id);if(!email)return;
   var railsUrl=getIntegration('rails-api-url')||localStorage.getItem('twwp_rails_api_url')||'';
   if(!railsUrl){showDbToast('Rails API not configured. Set URL in AI & Integrations.',true);return;}
@@ -12307,6 +12456,8 @@ function initApp(){
   },600);
   initGlobalTooltip();
   initGlobalSearch();
+  initOrgConfig();
+  setTimeout(function(){checkRunOnboarding();updateSetupStatusCard();updatePersistBanners();},800);
 }
 
 // ── Global Search (Ctrl+K) ─────────────────────────────────────────────────
@@ -12435,6 +12586,165 @@ var _gsActions=[];
 function _gsRunAction(idx){if(_gsActions[idx])_gsActions[idx]();}
 
 function escH(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// ── Onboarding Wizard ────────────────────────────────────────────────────────
+var _owStep = 1;
+var _owTotal = 7;
+var _owData = {};
+
+function getOrgCfg(){try{return JSON.parse(localStorage.getItem('twwp_org_config_v1')||'{}');}catch{return{};}}
+function saveOrgCfg(c){localStorage.setItem('twwp_org_config_v1',JSON.stringify(Object.assign({updated:new Date().toISOString()},c)));}
+
+var OW_STEPS = [
+  {label:'Welcome',render:function(){
+    return '<div style="text-align:center;padding:16px 0"><div style="font-size:48px;margin-bottom:16px">&#127754;</div><h2 style="color:var(--text1);margin-bottom:8px">Welcome to TWWP Ops</h2><p style="color:var(--text2);margin-bottom:20px">Let\'s set up your organisation in about 2 minutes.</p><div class="fr"><div class="fg"><label>Organisation Name</label><input id="ow-org-name" type="text" placeholder="The Wholey Water Project" value="'+escH(getOrgCfg().org_name||'')+'"></div><div class="fg"><label>Your Name</label><input id="ow-admin-name" type="text" placeholder="Kenny Samkin" value="'+escH(getOrgCfg().admin_name||'')+'"></div><div class="fg"><label>What does your organisation do?</label><textarea id="ow-purpose" rows="2" placeholder="Community reverse osmosis water filtration network...">'+escH(getOrgCfg().purpose||'')+'</textarea></div></div></div>';
+  },save:function(){
+    var c=getOrgCfg();c.org_name=(G('ow-org-name')||{}).value||c.org_name;c.admin_name=(G('ow-admin-name')||{}).value||c.admin_name;c.purpose=(G('ow-purpose')||{}).value||c.purpose;c.org_id=c.org_id||'twwp';saveOrgCfg(c);setSetupStatus('org_name',!!(c.org_name));
+  }},
+  {label:'Branding',render:function(){
+    var c=getOrgCfg();
+    return '<div><h3 style="color:var(--text1);margin-bottom:4px">Branding</h3><p style="color:var(--text2);font-size:12px;margin-bottom:16px">Customise how the app appears. (Optional — can skip.)</p><div class="fr"><div class="fg"><label>Display App Name</label><input id="ow-app-name" type="text" placeholder="TWWP Ops" value="'+escH(c.app_name||'')+'"></div><div class="fg"><label>Brand Colour</label><input id="ow-brand-colour" type="color" value="'+(c.brand_colour||'#00cec9')+'" style="width:100%;height:36px;border:1px solid var(--border);border-radius:6px;background:none;cursor:pointer"></div><div class="fg"><label>Logo (paste URL or upload)</label><input id="ow-logo-url" type="url" placeholder="https://...logo.png" value="'+escH(c.logo_url||'')+'"><input id="ow-logo-file" type="file" accept="image/*" style="margin-top:6px;font-size:11px" onchange="owLoadLogo(this)"></div>'+(c.logo_b64?'<img src="'+c.logo_b64+'" style="height:48px;border-radius:6px;margin-top:8px">':'')+'</div></div>';
+  },save:function(){
+    var c=getOrgCfg();c.app_name=(G('ow-app-name')||{}).value||c.app_name;c.brand_colour=(G('ow-brand-colour')||{}).value||c.brand_colour;c.logo_url=(G('ow-logo-url')||{}).value||c.logo_url;saveOrgCfg(c);setSetupStatus('branding',!!(c.app_name||c.brand_colour));
+  }},
+  {label:'First Location',render:function(){
+    var c=getOrgCfg();var fl=c.first_location||{};
+    return '<div><h3 style="color:var(--text1);margin-bottom:4px">First Location</h3><p style="color:var(--text2);font-size:12px;margin-bottom:16px">Add your first waterhouse or site. You can add more in Locations.</p><div class="fr"><div class="fg"><label>Site Name</label><input id="ow-loc-name" type="text" placeholder="WH1 — Raj\'s Place" value="'+escH(fl.name||'')+'"></div><div class="fg"><label>Address</label><input id="ow-loc-addr" type="text" placeholder="12 Example St, Auckland" value="'+escH(fl.address||'')+'"></div><div class="fg"><label>Guardian Name</label><input id="ow-loc-guardian" type="text" placeholder="Raj Kumar" value="'+escH(fl.guardian||'')+'"></div></div></div>';
+  },save:function(){
+    var c=getOrgCfg();var fl={name:(G('ow-loc-name')||{}).value,address:(G('ow-loc-addr')||{}).value,guardian:(G('ow-loc-guardian')||{}).value};c.first_location=fl;saveOrgCfg(c);
+    if(fl.name){var locs=S.get('locations');var exists=locs.find(function(l){return l.name===fl.name;});if(!exists){S.upsert('locations',{id:uid(),name:fl.name,address:fl.address,type:'waterhouse',contact_name:fl.guardian,created:new Date().toISOString()});}}
+    setSetupStatus('first_location',!!(fl.name));
+  }},
+  {label:'AI Assistant',render:function(){
+    var aiCfg=getAiCfg();
+    return '<div><h3 style="color:var(--text1);margin-bottom:4px">AI Assistant</h3><p style="color:var(--text2);font-size:12px;margin-bottom:16px">Paste an API key to enable AI autofill, classification, and chat.</p><div class="fr"><div class="fg"><label>Google Gemini Key (recommended — free tier)</label><input id="ow-gemini-key" type="password" placeholder="AIza..." value="'+escH(aiCfg.geminiKey||'')+'"></div><div class="fg"><label>Or Anthropic Key</label><input id="ow-anthropic-key" type="password" placeholder="sk-ant-..." value="'+escH(aiCfg.anthropicKey||'')+'"></div><div class="fg"><label>Or OpenAI Key</label><input id="ow-openai-key" type="password" placeholder="sk-..." value="'+escH(aiCfg.openaiKey||'')+'"></div><p style="font-size:11px;color:var(--text3)">Keys are stored in your browser\'s localStorage only — never sent to our servers.</p></div></div>';
+  },save:function(){
+    var cfg=getAiCfg();var g=(G('ow-gemini-key')||{}).value;var a=(G('ow-anthropic-key')||{}).value;var o=(G('ow-openai-key')||{}).value;if(g)cfg.geminiKey=g;if(a)cfg.anthropicKey=a;if(o)cfg.openaiKey=o;saveAiCfgToStore(cfg);setSetupStatus('ai_key',!!(cfg.geminiKey||cfg.anthropicKey||cfg.openaiKey));
+  }},
+  {label:'Integrations',render:function(){
+    return '<div><h3 style="color:var(--text1);margin-bottom:4px">Integrations</h3><p style="color:var(--text2);font-size:12px;margin-bottom:16px">Optional — all can be configured later in AI &amp; Integrations.</p><div class="fr"><div class="fg"><label>Rails API URL (for multi-device sync + auth)</label><input id="ow-rails-url" type="url" placeholder="https://twwp-ops-api.fly.dev" value="'+escH(getIntegration('rails-api')||'')+'"></div><div class="fg"><label>Google Drive Folder ID (for file sync)</label><input id="ow-drive-folder" type="text" placeholder="1AbCdEf..." value="'+escH(getIntegration('gdrive-folder')||'')+'"></div><div class="fg"><label>Cloudflare Worker URL (for OAuth proxy)</label><input id="ow-proxy-url" type="url" placeholder="https://worker.example.workers.dev" value="'+escH(getIntegration('proxy-url')||'')+'"></div></div></div>';
+  },save:function(){
+    var integrations=JSON.parse(localStorage.getItem('twwp_integrations_v1')||'{}');var r=(G('ow-rails-url')||{}).value;var d=(G('ow-drive-folder')||{}).value;var p=(G('ow-proxy-url')||{}).value;if(r)integrations['rails-api']=r;if(d)integrations['gdrive-folder']=d;if(p)integrations['proxy-url']=p;localStorage.setItem('twwp_integrations_v1',JSON.stringify(integrations));setSetupStatus('google_calendar',!!(getIntegration('gdrive-folder')));setSetupStatus('rails_api',!!(r));
+  }},
+  {label:'Team',render:function(){
+    return '<div><h3 style="color:var(--text1);margin-bottom:4px">Roles &amp; Team</h3><p style="color:var(--text2);font-size:12px;margin-bottom:16px">Add your first team member, or skip and do it later in Contacts.</p><div class="fr"><div class="fg"><label>Team Member Name</label><input id="ow-tm-name" type="text" placeholder="Jane Smith"></div><div class="fg"><label>Email</label><input id="ow-tm-email" type="email" placeholder="jane@example.com"></div><div class="fg"><label>Role</label><select id="ow-tm-role"><option value="guardian">Guardian</option><option value="trustee">Trustee</option><option value="technician">Technician</option><option value="admin">Admin</option><option value="volunteer">Volunteer</option></select></div><p style="font-size:11px;color:var(--text3)">You can add more team members in Contacts. Rail API user invites coming soon.</p></div></div>';
+  },save:function(){
+    var n=(G('ow-tm-name')||{}).value;var e=(G('ow-tm-email')||{}).value;var r=(G('ow-tm-role')||{}).value;if(n){S.upsert('contacts',{id:uid(),name:n,email:e,type:r,twwp_roles:[r],created:new Date().toISOString()});setSetupStatus('first_team_member',true);}
+  }},
+  {label:'Done',render:function(){
+    var c=getOrgCfg();var ss=getSetupStatus();var done=Object.values(ss).filter(Boolean).length;var total=Object.keys(ss).length;
+    return '<div style="text-align:center;padding:16px 0"><div style="font-size:48px;margin-bottom:16px">&#10003;</div><h2 style="color:var(--green);margin-bottom:8px">You\'re set up!</h2><p style="color:var(--text2);margin-bottom:20px">'+done+' of '+total+' setup items complete.'+(c.org_name?' Welcome, '+escH(c.org_name)+'!':'')+'</p><div style="background:var(--surface2);border-radius:8px;padding:12px;font-size:12px;color:var(--text2);margin-bottom:16px;text-align:left">You can always change settings in <strong>AI &amp; Integrations</strong> and add more locations in <strong>Locations</strong>. The Setup Status card on the Dashboard shows remaining items.</div></div>';
+  },save:function(){
+    localStorage.setItem('twwp_setup_complete','1');
+    updateSetupStatusCard();
+  }},
+];
+
+function owLoadLogo(inp){
+  var f=inp.files[0];if(!f)return;
+  var r=new FileReader();r.onload=function(e){var c=getOrgCfg();c.logo_b64=e.target.result;saveOrgCfg(c);};r.readAsDataURL(f);
+}
+
+function checkRunOnboarding(){
+  if(!localStorage.getItem('twwp_setup_complete')&&!localStorage.getItem('twwp_onboarding_skip')){
+    openOnboarding();
+  }
+}
+function openOnboarding(){
+  _owStep=1;_owData={};
+  var el=G('onboardingWizard');if(el){el.style.display='flex';}
+  renderOwStep();
+}
+function skipOnboarding(){
+  localStorage.setItem('twwp_onboarding_skip','1');
+  var el=G('onboardingWizard');if(el)el.style.display='none';
+}
+function renderOwStep(){
+  var step=OW_STEPS[_owStep-1];if(!step)return;
+  G('owContent').innerHTML=step.render();
+  G('owStepLabel').textContent='STEP '+_owStep+' OF '+_owTotal+' — '+step.label.toUpperCase();
+  G('owProgress').style.width=Math.round(_owStep/_owTotal*100)+'%';
+  G('owBack').style.visibility=_owStep>1?'visible':'hidden';
+  var nextBtn=G('owNext');
+  if(_owStep===_owTotal){nextBtn.textContent='Go to Dashboard ✓';nextBtn.onclick=function(){OW_STEPS[_owStep-1].save();var el=G('onboardingWizard');if(el)el.style.display='none';go('dashboard',G('ni-dashboard'));};}
+  else{nextBtn.textContent='Next →';nextBtn.onclick=function(){owStep(1);};}
+}
+function owStep(dir){
+  var step=OW_STEPS[_owStep-1];if(step&&step.save)step.save();
+  _owStep=Math.max(1,Math.min(_owTotal,_owStep+dir));
+  renderOwStep();
+}
+
+// ── Setup Status (Task 7) ────────────────────────────────────────────────────
+var SETUP_KEYS={org_name:'Organisation name',branding:'Branding & logo',first_location:'First location',ai_key:'AI API key',google_calendar:'Google Drive / Calendar',rails_api:'Rails API sync',first_team_member:'First team member',esp32_config:'ESP32 / IoT sensor',stripe_config:'Stripe payments'};
+function getSetupStatus(){try{return JSON.parse(localStorage.getItem('twwp_setup_status_v1')||'{}');}catch{return{};}}
+function setSetupStatus(key,val){var s=getSetupStatus();s[key]=val;localStorage.setItem('twwp_setup_status_v1',JSON.stringify(s));}
+
+function renderSetupStatusCard(){
+  var el=G('setupStatusCard');if(!el)return;
+  if(!isAdmin()){el.style.display='none';return;}
+  var ss=getSetupStatus();
+  var keys=Object.keys(SETUP_KEYS);
+  var done=keys.filter(function(k){return ss[k];}).length;
+  var pct=Math.round(done/keys.length*100);
+  var col=pct===100?'var(--green)':pct>60?'var(--cyan)':'var(--amber)';
+  var items=keys.map(function(k){
+    var ok=ss[k];
+    return '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px"><span style="color:'+(ok?'var(--green)':'var(--text3)')+'">'+( ok?'✓':'○')+'</span><span style="color:'+(ok?'var(--text1)':'var(--text3)')+'">'+SETUP_KEYS[k]+'</span>'+(ok?'':'<button class="btn btn-g btn-xs" onclick="openOnboarding()" style="margin-left:auto">Setup</button>')+'</div>';
+  }).join('');
+  el.innerHTML='<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><div style="font-weight:700;font-size:13px;color:var(--text1)">&#9881; Setup Status</div><div style="flex:1;height:5px;background:var(--surface2);border-radius:3px"><div style="width:'+pct+'%;height:100%;background:'+col+';border-radius:3px"></div></div><span style="font-size:11px;color:'+col+'">'+pct+'%</span><button class="btn btn-g btn-xs" onclick="openOnboarding()">Continue</button></div>'+items;
+  el.style.display='';
+}
+function updateSetupStatusCard(){renderSetupStatusCard();}
+
+// ── requiresSetup (Task 8) ───────────────────────────────────────────────────
+function requiresSetup(featureName, setupKey, wizardStep){
+  var ss=getSetupStatus();
+  if(ss[setupKey])return false; // already set up
+  if(confirm('To use '+featureName+', you need to complete setup first.\n\nOpen the setup wizard now?\n\n(Press Cancel to continue anyway)')){
+    _owStep=wizardStep||1;
+    openOnboarding();
+    return true;
+  }
+  return false; // Let user through anyway
+}
+
+// ── Org Config + Terminology (Task 9) ────────────────────────────────────────
+var DEFAULT_TERMINOLOGY={waterhouse:'Waterhouse',guardian:'Guardian',quencher:'Quencher',wh_id:'WH ID',locations_page:'Locations',monitor_page:'WH Monitor'};
+function getTerm(key){
+  var c=getOrgCfg();
+  var terms=Object.assign({},DEFAULT_TERMINOLOGY,(c.terminology||{}));
+  return terms[key]||DEFAULT_TERMINOLOGY[key]||key;
+}
+
+function initOrgConfig(){
+  // Apply terminology to sidebar labels
+  var locItem=G('ni-locations');
+  if(locItem){var lbl=locItem.querySelector('.sb-lbl');if(lbl)lbl.textContent=getTerm('locations_page');}
+  var monItem=G('ni-monitor');
+  if(monItem){
+    var lbl2=monItem.querySelector('.sb-lbl');if(lbl2)lbl2.textContent=getTerm('monitor_page');
+    monItem.setAttribute('data-tip',getTerm('monitor_page')+' — per-waterhouse gauge readings, period history, reports');
+  }
+  // Apply brand colour if set
+  var c=getOrgCfg();
+  if(c.brand_colour){document.documentElement.style.setProperty('--cyan',c.brand_colour);}
+}
+
+function renderTerminologyEditor(){
+  var el=G('terminologyEditor');if(!el)return;
+  var c=getOrgCfg();var terms=Object.assign({},DEFAULT_TERMINOLOGY,(c.terminology||{}));
+  el.innerHTML='<div style="font-weight:700;font-size:13px;color:var(--text1);margin-bottom:12px">Terminology</div>'+
+    Object.keys(DEFAULT_TERMINOLOGY).map(function(k){
+      return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><label style="font-size:11px;color:var(--text3);width:120px;flex-shrink:0">'+DEFAULT_TERMINOLOGY[k]+'</label><input type="text" class="term-inp" data-k="'+k+'" value="'+escH(terms[k]||DEFAULT_TERMINOLOGY[k])+'" style="flex:1;font-size:12px"></div>';
+    }).join('')+
+    '<button class="btn btn-p btn-sm" style="margin-top:8px" onclick="saveTerminology()">Save Labels</button>';
+}
+function saveTerminology(){
+  var c=getOrgCfg();if(!c.terminology)c.terminology={};
+  document.querySelectorAll('.term-inp').forEach(function(inp){c.terminology[inp.dataset.k]=inp.value.trim()||DEFAULT_TERMINOLOGY[inp.dataset.k];});
+  saveOrgCfg(c);initOrgConfig();showDbToast('Labels updated ✓');
+}
 
 // ── Global Tooltip System ──────────────────────────────────────────────────
 function initGlobalTooltip(){
