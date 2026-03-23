@@ -313,3 +313,8 @@ branding, users and config — without touching the code.
 - ✅ `[EXPLICIT]` C3.3: Source badge (Manual/Tap-Map Live) on sensor gauge header — DONE Sprint C
 - ✅ `[EXPLICIT]` C3.4: Sensor readings history table in WH Monitor — DONE Sprint C
 - ✅ `[EXPLICIT]` C7.1: Contacts pipeline kanban view (5 stages, move cards between columns) — DONE Sprint C
+- ✅ `[EXPLICIT]` C2.2: Sprint B missing devtasks fixed (fuzzy match) + fix_sprint_b_tasks.rb — DONE Sprint C
+- ✅ `[EXPLICIT]` C5: requiresSetup() wired: tap_map_sync (3 Tap-Map buttons), esp32_config (↓ ESP32 button), email_inbox (email send) — DONE Sprint C
+- ✅ `[EXPLICIT]` C6: getTerm() on page titles + Guardian labels; module toggles (Campaigns/Trustees/DocBuilder/R&D); logo + org_name in sidebar on load — DONE Sprint C
+- ✅ `[EXPLICIT]` C7.2: Jira connect (Save & Connect, project dropdown, Pull Issues, Push to Jira, status badge) — DONE Sprint C
+- ✅ `[EXPLICIT]` C8.2: scripts/sprint_c.rb created; fix_sprint_b_tasks.rb run successfully — DONE Sprint C

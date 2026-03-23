@@ -61,7 +61,7 @@ def merge_sprint_data(state)
   # Mark dev tasks complete
   devtasks = state['devtasks'] || []
   SPRINT_TASKS.each do |task|
-    existing = devtasks.find { |t| t['title'] == task[:title] }
+    existing = devtasks.find { |t| t['title'].to_s.downcase.include?(task[:title].to_s.downcase) }
     if existing
       existing.merge!('status' => 'done', 'completion_date' => TODAY, 'completion_note' => task[:note])
     else

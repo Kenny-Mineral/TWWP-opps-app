@@ -1,6 +1,6 @@
 # TWWP Ops App — Current State
 
-**Last updated:** 2026-03-24 (Sprint C — Calendar enhancements, Dev Tasks progress, WH Monitor readings, Contacts pipeline)
+**Last updated:** 2026-03-24 (Sprint C complete — C2 fuzzy sync, C5 requiresSetup wiring, C6 getTerm/modules/branding, C7.2 Jira connect, C8.2 sprint_c.rb)
 
 ---
 
@@ -56,6 +56,39 @@ Rails API at `https://twwp-ops-api.fly.dev`.
 - 5 columns: Lead → Prospect → Active Member → Guardian → Inactive
 - `pipeline_status` field on contact; defaults to 'Active Member' if unset
 - `setPipelineStage(contactId, stage)` moves cards between columns with logEvent audit
+
+### C2.2 — Sprint B missing devtasks fixed + fuzzy matching
+- `scripts/sprint_template.rb`: fuzzy `include?` matching (case-insensitive) replaces exact `==`
+- `scripts/fix_sprint_b_tasks.rb`: one-off script that found and marked "Project Management: rename and restructure" + "PM Board view + Trello integration" complete via live Rails API
+- JWT generated via `fly ssh console`, tasks marked complete 2026-03-24
+
+### C5 — requiresSetup() wired to remaining features
+- `SETUP_KEYS` extended: `tap_map_sync:'Tap-Map sync'`, `email_inbox:'Email inbox'`
+- `pullTapMapContacts`, `pullTapMapTaps`, `pullTapMapReadings`: all check `tap_map_sync` at entry
+- `fetchEsp32Data(btn)`: new function + "↓ ESP32" button in WH Monitor header; checks `esp32_config`
+- Email send (`sendEmail`, `sendAIReply`): changed from `rails_api` → `email_inbox` key
+- `saveEmailConfig()` now calls `setSetupStatus('email_inbox', !!(c.provider&&c.connected))`
+
+### C6 — getTerm(), module toggles, org branding on load
+- Page titles: `phEyLocations`, `phTitleLocations`, `phEyMonitor`, `phTitleMonitor` — IDs added, `initOrgConfig()` applies getTerm()
+- Guardian labels in location modal: `lGuardianNameLabel`, `lGuardianEmailLabel` — IDs added, updated from getTerm('guardian')
+- Org branding: `sbHex` and `sbName` IDs added; `initOrgConfig()` replaces hex with `<img>` if `logo_b64`/`logo_url` set, updates org name
+- Module toggles: `MODULE_DEFS` array (Campaigns, Trustees/Legal, Doc Builder, R&D); `applyModuleToggles()` hides/shows sidebar items; `renderModuleToggles()` renders checkboxes in AI tab; `saveModuleToggle()` persists to `org_config.modules`
+- Module toggles rendered in AI & Integrations → AI Models tab (Terminology & Org Config section)
+
+### C7.2 — Jira connect logic
+- Jira section in AI & Integrations → Project Tools: "Save & Connect" button, project selector dropdown, "Pull Issues" button
+- `connectJira(btn)`: calls Jira REST API `GET /rest/api/3/project` with Basic auth (email:token base64), populates project dropdown
+- `saveJiraProject()`: persists selected project key to `twwp_jira_v1`
+- `pullJiraIssues(btn)`: `GET /rest/api/3/search?jql=project={key}&maxResults=50`, stores to `twwp_jira_cards_v1`, adds to PM Board as read-only Jira-tagged cards
+- `pushTaskToJira(taskId)`: `POST /rest/api/3/issue` to create Jira issue from internal task; stores `jira_issue_key` on task
+- `updateJiraStatusBadge()`: green if project loaded, amber if credentials saved but not tested, grey if not configured; also restores project dropdown on modal open
+- PM Board: Jira cards shown alongside Trello and internal tasks; "↑ Jira" button on internal task cards
+- Note: Jira API calls are browser-direct; CORS may block in some Atlassian configurations — route via Cloudflare proxy or Rails API proxy if needed
+
+### C8.2 — Sprint C sync scripts
+- `scripts/sprint_c.rb`: marks 7 Sprint C devtasks complete, adds growth entry, calendar event, ledger entry; writes `docs/pending_sync.json` as fallback
+- `scripts/fix_sprint_b_tasks.rb`: one-off Sprint B repair script (fuzzy match for PM tabs + board)
 
 ---
 

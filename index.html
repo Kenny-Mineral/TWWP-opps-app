@@ -628,6 +628,7 @@ tbody tr:hover{background:var(--surface2);}
           <div style="border-top:1px solid var(--border);padding-top:16px">
             <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:block" data-tip="Customise terminology used throughout the app (e.g. rename Waterhouse)">Terminology &amp; Org Config</label>
             <div id="terminologyEditor"></div>
+            <div style="margin-top:16px" id="moduleTogglesEditor"></div>
             <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
               <button class="btn btn-g btn-sm" onclick="openOnboarding()" data-tip="Run the 7-step setup wizard">&#9881; Run Setup Wizard</button>
               <button class="btn btn-g btn-sm" onclick="localStorage.removeItem('twwp_setup_complete');localStorage.removeItem('twwp_onboarding_skip');openOnboarding()" data-tip="Reset and re-run the setup wizard from scratch">Redo Setup</button>
@@ -754,6 +755,17 @@ tbody tr:hover{background:var(--surface2);}
               <div class="fr">
                 <div class="fg" style="margin:0"><label data-tip="Your Atlassian account email">Email</label><input type="email" id="int-jira-email" placeholder="you@example.com" autocomplete="off"></div>
                 <div class="fg" style="margin:0"><label data-tip="Jira API token from id.atlassian.com">API Token</label><input type="password" id="int-jira-token" placeholder="ATATT3x..." autocomplete="off"></div>
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:4px">
+                <button class="btn btn-s btn-sm" onclick="connectJira(this)" data-tip="Test credentials and load your Jira projects">Save &amp; Connect</button>
+                <span id="jiraConnectResult" style="font-size:11px;color:var(--text3)"></span>
+              </div>
+              <div id="jiraProjectRow" style="display:none;margin-top:4px">
+                <div class="fg" style="margin:0"><label data-tip="Select the Jira project to sync with">Project</label><select id="jiraProjectSel" onchange="saveJiraProject()" style="width:100%"><option value="">Select project…</option></select></div>
+                <div style="display:flex;gap:8px;margin-top:8px">
+                  <button class="btn btn-s btn-sm" onclick="pullJiraIssues(this)" data-tip="Fetch open issues from selected Jira project and add to PM Board">Pull Issues</button>
+                  <span id="jiraPullResult" style="font-size:11px;color:var(--text3)"></span>
+                </div>
               </div>
             </div>
           </div>
@@ -1307,7 +1319,7 @@ tbody tr:hover{background:var(--surface2);}
         <div class="fr"><div class="fg"><label>Waterhouse ID</label><input type="text" id="l-whid" placeholder="WH-003"></div><div class="fg" style="position:relative"><label>Address / Area</label><input type="text" id="l-addr" placeholder="Start typing address..." autocomplete="off" oninput="addrSearch(this.value)" onblur="setTimeout(()=>{const d=G('addrDrop');if(d)d.style.display='none'},200)"><div id="addrDrop" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface2);border:1px solid var(--cyan);border-radius:0 0 8px 8px;z-index:500;max-height:200px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.4)"></div></div></div>
         <div class="fr"><div class="fg"><label>GPS Lat</label><input type="number" id="l-lat" placeholder="-36.8485" step="0.000001"></div><div class="fg"><label>GPS Lng</label><input type="number" id="l-lng" placeholder="174.7633" step="0.000001"></div></div>
         <div class="fg"><label>Tap Map Sync ID</label><input type="text" id="l-tmid" placeholder="Future tap map sync ID"></div>
-        <div class="fr"><div class="fg"><label>Guardian / Host Name</label><input type="text" id="l-gname" placeholder="e.g. Raj"></div><div class="fg"><label>Guardian Email</label><input type="email" id="l-gemail" placeholder="guardian@email.com"></div></div>
+        <div class="fr"><div class="fg"><label id="lGuardianNameLabel">Guardian / Host Name</label><input type="text" id="l-gname" placeholder="e.g. Raj"></div><div class="fg"><label id="lGuardianEmailLabel">Guardian Email</label><input type="email" id="l-gemail" placeholder="guardian@email.com"></div></div>
         <div class="fr3"><div class="fg"><label>Water Rate ($/m3)</label><input type="number" id="l-wrate" placeholder="3.54" step="0.01" value="3.54"></div><div class="fg"><label>VIP Member Target</label><input type="number" id="l-vtarget" placeholder="20" value="20"></div><div class="fg"><label>Setup Reward Threshold</label><input type="number" id="l-sreward" placeholder="15" value="15"></div></div>
       </div>
       <div class="fg"><label>Notes / Agreement</label><textarea id="l-notes" rows="3" placeholder="Host agreement terms, special instructions..."></textarea></div>
@@ -1356,9 +1368,9 @@ tbody tr:hover{background:var(--surface2);}
 <aside class="sb" id="sb">
   <div class="sb-top">
     <div class="sb-logo">
-      <div class="sb-hex">TW</div>
+      <div class="sb-hex" id="sbHex">TW</div>
       <div class="sb-brand">
-        <div class="sb-name">TWWP</div>
+        <div class="sb-name" id="sbName">TWWP</div>
         <div class="sb-sub">OPERATIONS v4</div>
         <div id="appVersion" style="font-size:9px;color:var(--text3);font-family:var(--mono);margin-top:2px">v4.2</div>
       </div>
@@ -1597,7 +1609,7 @@ tbody tr:hover{background:var(--surface2);}
 
 <!-- ====== LOCATIONS PAGE ====== -->
 <div class="page" id="page-locations">
-  <div class="ph"><div><div class="ph-ey">Locations</div><div class="ph-title">Waterhouses &amp; Sites</div></div><div class="ph-right"><button class="btn btn-s btn-sm" onclick="expLocJSON()">Export JSON</button><button class="btn btn-s btn-sm" id="tapMapTapsBtn" data-tip="Sync Tap-Map taps into Locations as Waterhouses — deduplicates by name" onclick="pullTapMapTaps(this)">&#8595; Tap-Map Taps</button><button class="btn btn-p btn-sm" data-tip="Add a new waterhouse or site location" onclick="openLocMo()">+ Add Location</button></div></div>
+  <div class="ph"><div><div class="ph-ey" id="phEyLocations">Locations</div><div class="ph-title" id="phTitleLocations">Waterhouses &amp; Sites</div></div><div class="ph-right"><button class="btn btn-s btn-sm" onclick="expLocJSON()">Export JSON</button><button class="btn btn-s btn-sm" id="tapMapTapsBtn" data-tip="Sync Tap-Map taps into Locations as Waterhouses — deduplicates by name" onclick="pullTapMapTaps(this)">&#8595; Tap-Map Taps</button><button class="btn btn-p btn-sm" data-tip="Add a new waterhouse or site location" onclick="openLocMo()">+ Add Location</button></div></div>
   <div class="pb">
     <div class="helper-bubble"><div class="hb-icon">&#127968;</div><div><strong>Locations</strong> includes all Waterhouses, stock rooms, and test benches. Each Waterhouse can have a Guardian assigned, water rate, and VIP member target. Location data feeds into Monitor, Reports and Member Display.</div></div>
     <div class="pills" id="locTypePills" style="margin-bottom:20px"><div class="pill on" data-t="" onclick="setPill(this,'locTypePills','locTF');renderLocs()">All</div><div class="pill" data-t="Waterhouse" onclick="setPill(this,'locTypePills','locTF');renderLocs()">Waterhouse</div><div class="pill" data-t="Stock" onclick="setPill(this,'locTypePills','locTF');renderLocs()">Stock</div><div class="pill" data-t="Test Bench" onclick="setPill(this,'locTypePills','locTF');renderLocs()">Test Bench</div><div class="pill" data-t="Sold" onclick="setPill(this,'locTypePills','locTF');renderLocs()">Sold</div></div>
@@ -1785,8 +1797,8 @@ tbody tr:hover{background:var(--surface2);}
 
 <!-- ====== MONITOR PAGE ====== -->
 <div class="page" id="page-monitor">
-  <div class="ph"><div><div class="ph-ey">Operations</div><div class="ph-title">WH Monitor</div></div>
-    <div class="ph-right"><select id="monWhSel" onchange="renderMonitor()" style="min-width:180px"><option value="">Select Waterhouse...</option></select><button class="btn btn-s btn-sm" id="tapMapReadingsBtn" data-tip="Pull latest sensor readings from Tap-Map — matches by tap_id on each Waterhouse" onclick="pullTapMapReadings(this)">&#8595; Live Readings</button><button class="btn btn-s btn-sm" onclick="openMonLogMo()">+ Log Period</button><button class="btn btn-g btn-sm" data-tip="Add a manual sensor reading for this waterhouse" onclick="openManualReadingMo()">+ Reading</button><button class="btn btn-g btn-sm" onclick="genMonReceipt()">Receipt</button></div>
+  <div class="ph"><div><div class="ph-ey" id="phEyMonitor">Operations</div><div class="ph-title" id="phTitleMonitor">WH Monitor</div></div>
+    <div class="ph-right"><select id="monWhSel" onchange="renderMonitor()" style="min-width:180px"><option value="">Select Waterhouse...</option></select><button class="btn btn-s btn-sm" id="tapMapReadingsBtn" data-tip="Pull latest sensor readings from Tap-Map — matches by tap_id on each Waterhouse" onclick="pullTapMapReadings(this)">&#8595; Live Readings</button><button class="btn btn-s btn-sm" data-tip="Pull a live reading directly from the ESP32 sensor device — requires ESP32 IP in Infrastructure settings" onclick="fetchEsp32Data(this)">&#8595; ESP32</button><button class="btn btn-s btn-sm" onclick="openMonLogMo()">+ Log Period</button><button class="btn btn-g btn-sm" data-tip="Add a manual sensor reading for this waterhouse" onclick="openManualReadingMo()">+ Reading</button><button class="btn btn-g btn-sm" onclick="genMonReceipt()">Receipt</button></div>
   </div>
   <div class="pb"><div id="monitorDash"></div></div>
 </div>
@@ -4513,7 +4525,7 @@ function switchPMTab(el){
     renderPMBoard();
   }
   if(el.dataset.t==='timeline') renderPMTimeline();
-  if(el.dataset.t==='integrations') renderTrelloStatus();
+  if(el.dataset.t==='integrations'){renderTrelloStatus();updateJiraStatusBadge();}
 }
 
 // ============================================================
@@ -4526,7 +4538,8 @@ function renderPMBoard(){
   var projFil=G('boardProjFil')?.value||'';
   var allTasks=S.get('tasks');
   var trelloItems=JSON.parse(localStorage.getItem('twwp_trello_cards_v1')||'[]');
-  var tasks=allTasks.concat(trelloItems);
+  var jiraItems=JSON.parse(localStorage.getItem('twwp_jira_cards_v1')||'[]');
+  var tasks=allTasks.concat(trelloItems).concat(jiraItems);
   if(projFil)tasks=tasks.filter(function(t){return t.project_id===projFil||t.project_name===projFil;});
 
   var COLS=[
@@ -4543,18 +4556,21 @@ function renderPMBoard(){
     html+='<div class="kanban-col" id="kb-col-'+col.id+'" ondragover="event.preventDefault()" ondrop="onKbDrop(event,\''+col.id+'\')" style="min-width:220px;flex:1;background:var(--surface2);border-radius:12px;padding:12px">';
     html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><span style="font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--text2)">'+col.label+'</span><span class="b '+col.cls+'">'+colTasks.length+'</span></div>';
     colTasks.forEach(function(t){
-      var isTrello=t._source==='trello';
+      var isTrello=t._source==='trello';var isJira=t._source==='jira';
       var priColor={low:'var(--text3)',normal:'var(--cyan)',high:'var(--amber)',urgent:'var(--red)'}[t.priority||'normal']||'var(--cyan)';
-      html+='<div class="kanban-card" draggable="'+(!isTrello)+'" data-task-id="'+esc(t.id)+'" onmousedown="if(!\''+isTrello+'\')_dragTaskId=\''+esc(t.id)+'\'" ondragstart="onKbDragStart(event,\''+esc(t.id)+'\')" style="background:var(--surface);border-radius:8px;padding:10px;margin-bottom:8px;cursor:'+(isTrello?'default':'grab')+';border-left:3px solid '+priColor+'">';
+      var isExternal=isTrello||isJira;
+      html+='<div class="kanban-card" draggable="'+(!isExternal)+'" data-task-id="'+esc(t.id)+'" onmousedown="if(!\''+isExternal+'\')_dragTaskId=\''+esc(t.id)+'\'" ondragstart="onKbDragStart(event,\''+esc(t.id)+'\')" style="background:var(--surface);border-radius:8px;padding:10px;margin-bottom:8px;cursor:'+(isExternal?'default':'grab')+';border-left:3px solid '+priColor+'">';
       html+='<div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px">'+esc(t.title||t.name||'Untitled')+'</div>';
       if(isTrello)html+='<span class="b" style="background:rgba(0,121,191,.15);color:#0079BF;border:1px solid #0079BF44;font-size:9px">Trello</span> ';
+      if(isJira)html+='<a href="'+escH(t.url||'#')+'" target="_blank" style="text-decoration:none"><span class="b" style="background:rgba(0,82,204,.15);color:#0052CC;border:1px solid #0052CC44;font-size:9px">Jira</span></a> ';
       if(t.assignee||t.owner)html+='<div style="font-size:10px;color:var(--text3)">'+esc(t.assignee||t.owner)+'</div>';
       if(t.due_date||t.due)html+='<div style="font-size:10px;color:var(--amber)">Due: '+esc(t.due_date||t.due)+'</div>';
-      if(!isTrello){
+      if(!isExternal){
         html+='<div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap">';
         html+='<span style="font-size:9px;font-weight:700;color:'+priColor+'">'+((t.priority||'normal').toUpperCase())+'</span>';
         if(t.project_id){var proj=S.find('projects',t.project_id);if(proj)html+='<span class="b b-gy" style="font-size:9px">'+esc(proj.name)+'</span>';}
         html+='<button class="btn btn-p btn-xs" data-tip="Push this task to Trello" onclick="pushTaskToTrello(\''+esc(t.id)+'\')" style="margin-left:auto;font-size:9px">&#8593; Trello</button>';
+        html+='<button class="btn btn-s btn-xs" data-tip="Create Jira issue from this task" onclick="pushTaskToJira(\''+esc(t.id)+'\')" style="font-size:9px">&#8593; Jira</button>';
         html+='</div>';
       }
       html+='</div>';
@@ -4724,9 +4740,133 @@ function disconnectTrello(){
 }
 
 // ============================================================
+// JIRA INTEGRATION — C7.2
+// ============================================================
+function getJiraCfg(){
+  try{return JSON.parse(localStorage.getItem('twwp_jira_v1')||'{}');}catch{return{};}
+}
+function saveJiraCfg(c){localStorage.setItem('twwp_jira_v1',JSON.stringify(c));}
+
+function updateJiraStatusBadge(){
+  var badge=G('intJiraStatusBadge');if(!badge)return;
+  var cfg=getJiraCfg();
+  if(cfg.connected&&cfg.project_key){badge.textContent='Connected';badge.className='b b-gr';}
+  else if(cfg.token){badge.textContent='Credentials saved';badge.className='b b-am';}
+  else{badge.textContent='Not connected';badge.className='b b-gy';}
+  // Restore project dropdown if already connected
+  var row=G('jiraProjectRow');
+  var sel=G('jiraProjectSel');
+  if(cfg.projects&&cfg.projects.length){
+    if(row)row.style.display='block';
+    if(sel){sel.innerHTML='<option value="">Select project…</option>'+cfg.projects.map(function(p){return '<option value="'+escH(p.key)+'" '+(p.key===cfg.project_key?'selected':'')+'>'+escH(p.name)+' ('+escH(p.key)+')</option>';}).join('');}
+  } else {
+    if(row)row.style.display='none';
+  }
+}
+
+async function connectJira(btn){
+  var site=(G('int-jira-url')||{}).value?.trim();
+  var email=(G('int-jira-email')||{}).value?.trim();
+  var token=(G('int-jira-token')||{}).value?.trim();
+  var result=G('jiraConnectResult');
+  if(!site||!email||!token){if(result)result.textContent='Fill in all three fields first.';return;}
+  if(btn)btn.textContent='Connecting…';
+  if(result)result.textContent='';
+  try{
+    var auth=btoa(email+':'+token);
+    var host=site.replace(/^https?:\/\//,'');
+    var url='https://'+host+'/rest/api/3/project';
+    var res=await fetch(url,{headers:{Authorization:'Basic '+auth,Accept:'application/json'}});
+    if(!res.ok){var err=await res.text();throw new Error('Jira returned '+res.status+': '+err.slice(0,120));}
+    var projects=await res.json();
+    if(!Array.isArray(projects))projects=projects.values||[];
+    // Save credentials
+    var cfg={site:host,email,token,projects:projects.map(function(p){return{key:p.key,name:p.name,id:p.id};}),connected:true};
+    saveJiraCfg(cfg);
+    // Populate project dropdown
+    var sel=G('jiraProjectSel');
+    if(sel){sel.innerHTML='<option value="">Select project…</option>'+projects.map(function(p){return '<option value="'+escH(p.key)+'">'+escH(p.name)+' ('+escH(p.key)+')</option>';}).join('');}
+    var row=G('jiraProjectRow');if(row)row.style.display='block';
+    updateJiraStatusBadge();
+    if(result)result.textContent='✓ '+projects.length+' projects loaded';
+    logEvent('integration','connect','Jira connected: '+projects.length+' projects found at '+host);
+  }catch(e){
+    if(result)result.textContent='✗ '+e.message+' (CORS? Try via Rails proxy)';
+  }finally{if(btn)btn.textContent='Save & Connect';}
+}
+
+function saveJiraProject(){
+  var sel=G('jiraProjectSel');if(!sel)return;
+  var key=sel.value;
+  var cfg=getJiraCfg();
+  var proj=(cfg.projects||[]).find(function(p){return p.key===key;});
+  cfg.project_key=key;
+  cfg.project_name=proj?proj.name:key;
+  saveJiraCfg(cfg);
+  updateJiraStatusBadge();
+}
+
+async function pullJiraIssues(btn){
+  var cfg=getJiraCfg();
+  if(!cfg.connected||!cfg.project_key){showDbToast('Connect Jira and select a project first',true);return;}
+  if(btn)btn.textContent='Pulling…';
+  var result=G('jiraPullResult');if(result)result.textContent='';
+  try{
+    var auth=btoa(cfg.email+':'+cfg.token);
+    var jql=encodeURIComponent('project='+cfg.project_key+' ORDER BY updated DESC');
+    var url='https://'+cfg.site+'/rest/api/3/search?jql='+jql+'&maxResults=50&fields=summary,status,assignee,priority,duedate';
+    var res=await fetch(url,{headers:{Authorization:'Basic '+auth,Accept:'application/json'}});
+    if(!res.ok)throw new Error('Jira returned '+res.status);
+    var data=await res.json();
+    var issues=(data.issues||[]);
+    var existing=JSON.parse(localStorage.getItem('twwp_jira_cards_v1')||'[]');
+    var existingKeys=new Set(existing.map(function(i){return i.jira_key;}));
+    var added=0;
+    issues.forEach(function(iss){
+      if(existingKeys.has(iss.key))return;
+      existing.push({
+        id:'jira_'+iss.key,jira_key:iss.key,_source:'jira',
+        title:'['+iss.key+'] '+(iss.fields.summary||''),
+        status:(iss.fields.status?.name||'').toLowerCase().replace(/\s+/g,'_'),
+        assignee:iss.fields.assignee?.displayName||'',
+        priority:(iss.fields.priority?.name||'normal').toLowerCase(),
+        due_date:iss.fields.duedate||'',
+        url:'https://'+cfg.site+'/browse/'+iss.key
+      });
+      added++;
+    });
+    localStorage.setItem('twwp_jira_cards_v1',JSON.stringify(existing));
+    if(result)result.textContent='✓ '+added+' new issues added';
+    showDbToast('Pulled '+issues.length+' Jira issues ('+added+' new)');
+    logEvent('integration','sync','Jira pull: '+added+' new issues from '+cfg.project_key);
+  }catch(e){
+    if(result)result.textContent='✗ '+e.message;
+    showDbToast('Jira pull failed: '+e.message,true);
+  }finally{if(btn)btn.textContent='Pull Issues';}
+}
+
+async function pushTaskToJira(taskId){
+  var cfg=getJiraCfg();
+  if(!cfg.connected||!cfg.project_key){showDbToast('Connect Jira and select a project first',true);return;}
+  var task=S.find('tasks',taskId);if(!task){showDbToast('Task not found',true);return;}
+  try{
+    var auth=btoa(cfg.email+':'+cfg.token);
+    var body={fields:{project:{key:cfg.project_key},summary:task.title||task.name||'Task',description:{type:'doc',version:1,content:[{type:'paragraph',content:[{type:'text',text:task.notes||task.desc||''}]}]},issuetype:{name:'Task'}}};
+    var res=await fetch('https://'+cfg.site+'/rest/api/3/issue',{method:'POST',headers:{Authorization:'Basic '+auth,'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify(body)});
+    if(!res.ok){var err=await res.json();throw new Error(err.errorMessages?err.errorMessages.join(', '):'HTTP '+res.status);}
+    var created=await res.json();
+    // Store Jira issue key on the task
+    task.jira_issue_key=created.key;S.upsert('tasks',task);
+    showDbToast('Created Jira issue: '+created.key);
+    logEvent('task','push','Pushed task "'+task.title+'" to Jira as '+created.key);
+  }catch(e){showDbToast('Jira push failed: '+e.message,true);}
+}
+
+// ============================================================
 // TAP-MAP SYNC — B3: Pull from Tap-Map buttons
 // ============================================================
 async function pullTapMapContacts(btn){
+  if(requiresSetup('Tap-Map sync','tap_map_sync',1))return;
   if(!isRailsConnected()){showDbToast('Rails API not connected',true);return;}
   if(btn)btn.textContent='Loading...';
   try{
@@ -4762,6 +4902,7 @@ async function pullTapMapContacts(btn){
 }
 
 async function pullTapMapTaps(btn){
+  if(requiresSetup('Tap-Map sync','tap_map_sync',1))return;
   if(!isRailsConnected()){showDbToast('Rails API not connected',true);return;}
   if(btn)btn.textContent='Loading...';
   try{
@@ -4796,6 +4937,7 @@ async function pullTapMapTaps(btn){
 }
 
 async function pullTapMapReadings(btn){
+  if(requiresSetup('Tap-Map sync','tap_map_sync',1))return;
   if(!isRailsConnected()){showDbToast('Rails API not connected',true);return;}
   if(btn)btn.textContent='Loading...';
   try{
@@ -4815,6 +4957,26 @@ async function pullTapMapReadings(btn){
     showDbToast('Pulled '+readings.length+' readings — '+matched+' waterhouses have live data');
   }catch(e){showDbToast('Live readings pull failed: '+e.message,true);}
   finally{if(btn)btn.textContent='↓ Live Readings';}
+}
+
+async function fetchEsp32Data(btn){
+  if(requiresSetup('ESP32 sensor data','esp32_config',5))return;
+  var ip=getIntegration('esp32-ip');
+  if(!ip){showDbToast('No ESP32 IP set — add it in AI & Integrations → Infrastructure',true);return;}
+  if(btn)btn.textContent='Loading...';
+  try{
+    var res=await fetch('http://'+ip+'/data');
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    var data=await res.json();
+    var now=new Date().toISOString();
+    var whId=G('monWhSel')?.value||null;
+    var readings=JSON.parse(localStorage.getItem('twwp_tap_readings_v1')||'[]');
+    readings.unshift({id:uid(),source:'esp32',tds:data.tds||data.TDS||null,ec:data.ec||data.EC||null,ph:data.ph||data.pH||null,orp:data.orp||data.ORP||null,wh_id:whId,ts:now,created:now});
+    localStorage.setItem('twwp_tap_readings_v1',JSON.stringify(readings.slice(0,500)));
+    logEvent('monitor','sync','ESP32 reading saved for '+(whId||'unknown WH'));
+    renderMonitor();showDbToast('ESP32 reading saved ✓');
+  }catch(e){showDbToast('ESP32 fetch failed: '+e.message+' (check IP and device is online)',true);}
+  finally{if(btn)btn.textContent='↓ ESP32';}
 }
 
 function openManualReadingMo(){
@@ -5297,7 +5459,7 @@ function initIntegrationsTabs(){
     if(tb){if(tc.api_key&&tc.token){tb.textContent='Connected';tb.className='b b-gr';}else{tb.textContent='Not connected';tb.className='b b-gy';}}
   }catch(e){}
 }
-function openApiMo(){const cfg=getAiCfg();const provider=cfg.provider||'gemini';const keys=cfg.keys||{};selectProvider(provider,true);['gemini','anthropic','openai','openrouter'].forEach(p=>{const el=G('ak-'+p);if(el)el.value=keys[p]||'';});if(G('ak-stripe-pub'))G('ak-stripe-pub').value=keys['stripe-pub']||'';if(G('ak-stripe-secret'))G('ak-stripe-secret').value=keys['stripe-secret']||'';if(G('af-autofill'))G('af-autofill').checked=cfg.features?cfg.features.autofill!==false:true;if(G('af-reports'))G('af-reports').checked=cfg.features?cfg.features.reports!==false:true;if(G('af-helper'))G('af-helper').checked=cfg.features?cfg.features.helper!==false:true;if(G('af-devnotes'))G('af-devnotes').checked=cfg.devNotes!==false;loadIntegrations();renderFeatureModelRows();updateOAuthUI();renderTerminologyEditor();initIntegrationsTabs();OM('apiMo');}
+function openApiMo(){const cfg=getAiCfg();const provider=cfg.provider||'gemini';const keys=cfg.keys||{};selectProvider(provider,true);['gemini','anthropic','openai','openrouter'].forEach(p=>{const el=G('ak-'+p);if(el)el.value=keys[p]||'';});if(G('ak-stripe-pub'))G('ak-stripe-pub').value=keys['stripe-pub']||'';if(G('ak-stripe-secret'))G('ak-stripe-secret').value=keys['stripe-secret']||'';if(G('af-autofill'))G('af-autofill').checked=cfg.features?cfg.features.autofill!==false:true;if(G('af-reports'))G('af-reports').checked=cfg.features?cfg.features.reports!==false:true;if(G('af-helper'))G('af-helper').checked=cfg.features?cfg.features.helper!==false:true;if(G('af-devnotes'))G('af-devnotes').checked=cfg.devNotes!==false;loadIntegrations();renderFeatureModelRows();updateOAuthUI();renderTerminologyEditor();renderModuleToggles();initIntegrationsTabs();updateJiraStatusBadge();OM('apiMo');}
 function saveApiKey(){const cfg=getAiCfg();const selectedBtn=document.querySelector('.provider-btn.on');cfg.provider=selectedBtn?selectedBtn.dataset.p:'gemini';cfg.keys=cfg.keys||{};['gemini','anthropic','openai','openrouter'].forEach(p=>{const el=G('ak-'+p);if(!el)return;const v=el.value.trim();if(v)cfg.keys[p]=v;else delete cfg.keys[p];});if(G('ak-stripe-pub')?.value)cfg.keys['stripe-pub']=G('ak-stripe-pub').value;if(G('ak-stripe-secret')?.value)cfg.keys['stripe-secret']=G('ak-stripe-secret').value;cfg.features={autofill:G('af-autofill')?G('af-autofill').checked!==false:true,reports:G('af-reports')?G('af-reports').checked!==false:true,helper:G('af-helper')?G('af-helper').checked!==false:true};cfg.devNotes=G('af-devnotes')?G('af-devnotes').checked:true;saveFeatureModels();saveAiCfgToStore(cfg);saveIntegrations();var sb=G('intSaveBtn');if(sb){var orig=sb.textContent;sb.textContent='Saved \u2713';sb.style.background='var(--green)';sb.style.color='#000';setTimeout(function(){sb.textContent=orig;sb.style.background='';sb.style.color='';CM('apiMo');},900);}else{CM('apiMo');}}
 function selectProvider(p,silent){document.querySelectorAll('.provider-btn').forEach(b=>{b.classList.toggle('on',b.dataset.p===p);});['gemini','anthropic','openai','openrouter'].forEach(id=>{const row=G('akr-'+id);if(row)row.style.display=id===p?'block':'none';});const orModel=G('akr-openrouter-model');if(orModel)orModel.style.display=p==='openrouter'?'block':'none';}
 
@@ -13506,7 +13668,7 @@ function saveEmail(){
 }
 
 async function sendEmail(id){
-  if(requiresSetup('Email sending','rails_api',5))return;
+  if(requiresSetup('Email sending','email_inbox',5))return;
   var email=S.find('emailRegistry',id);if(!email)return;
   var railsUrl=getIntegration('rails-api-url')||localStorage.getItem('twwp_rails_api_url')||'';
   if(!railsUrl){showDbToast('Rails API not configured. Set URL in AI & Integrations.',true);return;}
@@ -13544,6 +13706,7 @@ function getEmailConfig(){try{return JSON.parse(localStorage.getItem('twwp_email
 function saveEmailConfig(c){localStorage.setItem('twwp_email_config_v1',JSON.stringify(Object.assign({updated:new Date().toISOString()},c)));
   // Also persist into org_config for portability
   var cfg=getOrgCfg();cfg.email_config=c;saveOrgCfg(cfg);
+  setSetupStatus('email_inbox',!!(c.provider&&c.connected));
 }
 
 var _epSelected=null;
@@ -13962,7 +14125,7 @@ async function sendAiReply(){
   if(!replyBody){showDbToast('Reply body is empty.',true);return;}
   var msgs=getInboxMessages();
   var msg=msgs.find(function(m){return m.id===_currentThreadId;});if(!msg)return;
-  if(requiresSetup('Email sending','rails_api',5))return;
+  if(requiresSetup('Email sending','email_inbox',5))return;
   var railsUrl=getIntegration('rails-api-url')||localStorage.getItem('twwp_rails_api_url')||'';
   if(!railsUrl){showDbToast('Rails API not configured.',true);return;}
   var jwt=JSON.parse(sessionStorage.getItem('twwp_rails_session')||'{}').token||'';
@@ -14346,7 +14509,7 @@ function owStep(dir){
 }
 
 // ── Setup Status (Task 7) ────────────────────────────────────────────────────
-var SETUP_KEYS={org_name:'Organisation name',branding:'Branding & logo',first_location:'First location',ai_key:'AI API key',google_calendar:'Google Drive / Calendar',rails_api:'Rails API sync',first_team_member:'First team member',esp32_config:'ESP32 / IoT sensor',stripe_config:'Stripe payments'};
+var SETUP_KEYS={org_name:'Organisation name',branding:'Branding & logo',first_location:'First location',ai_key:'AI API key',google_calendar:'Google Drive / Calendar',rails_api:'Rails API sync',first_team_member:'First team member',esp32_config:'ESP32 / IoT sensor',stripe_config:'Stripe payments',tap_map_sync:'Tap-Map sync',email_inbox:'Email inbox'};
 function getSetupStatus(){try{return JSON.parse(localStorage.getItem('twwp_setup_status_v1')||'{}');}catch{return{};}}
 function setSetupStatus(key,val){var s=getSetupStatus();s[key]=val;localStorage.setItem('twwp_setup_status_v1',JSON.stringify(s));}
 
@@ -14388,7 +14551,8 @@ function getTerm(key){
 }
 
 function initOrgConfig(){
-  // Apply terminology to sidebar labels
+  var c=getOrgCfg();
+  // Sidebar labels
   var locItem=G('ni-locations');
   if(locItem){var lbl=locItem.querySelector('.sb-lbl');if(lbl)lbl.textContent=getTerm('locations_page');}
   var monItem=G('ni-monitor');
@@ -14396,9 +14560,61 @@ function initOrgConfig(){
     var lbl2=monItem.querySelector('.sb-lbl');if(lbl2)lbl2.textContent=getTerm('monitor_page');
     monItem.setAttribute('data-tip',getTerm('monitor_page')+' — per-waterhouse gauge readings, period history, reports');
   }
-  // Apply brand colour if set
-  var c=getOrgCfg();
+  // Page titles
+  var pte=G('phEyLocations');if(pte)pte.textContent=getTerm('locations_page');
+  var ptt=G('phTitleLocations');if(ptt)ptt.textContent=getTerm('waterhouse')+' Sites';
+  var pme=G('phEyMonitor');if(pme)pme.textContent='Operations';
+  var pmt=G('phTitleMonitor');if(pmt)pmt.textContent=getTerm('monitor_page');
+  // Guardian field labels in location modal
+  var gl=G('lGuardianNameLabel');if(gl)gl.textContent=getTerm('guardian')+' / Host Name';
+  var ge=G('lGuardianEmailLabel');if(ge)ge.textContent=getTerm('guardian')+' Email';
+  // Brand colour
   if(c.brand_colour){document.documentElement.style.setProperty('--cyan',c.brand_colour);}
+  // Sidebar logo + org name
+  var sbHex=G('sbHex');var sbName=G('sbName');
+  if(sbHex){
+    if(c.logo_b64){sbHex.innerHTML='<img src="'+c.logo_b64+'" style="width:32px;height:32px;object-fit:contain;border-radius:6px">';}
+    else if(c.logo_url){sbHex.innerHTML='<img src="'+escH(c.logo_url)+'" style="width:32px;height:32px;object-fit:contain;border-radius:6px" onerror="this.parentElement.textContent=\'TW\'">';}
+  }
+  if(sbName&&c.org_name){sbName.textContent=c.org_name.length>12?c.org_name.slice(0,12)+'…':c.org_name;}
+  // Module toggles
+  applyModuleToggles();
+}
+
+var MODULE_DEFS=[
+  {key:'campaigns',label:'Campaigns',sbId:'ni-campaigns'},
+  {key:'ppsr',label:'Trustees / Legal',sbId:'ni-trustees'},
+  {key:'docbuilder',label:'Doc Builder',sbId:'ni-docbuilder'},
+  {key:'rd',label:'R&D',sbId:'ni-rd'},
+];
+
+function applyModuleToggles(){
+  var c=getOrgCfg();var modules=c.modules||{};
+  MODULE_DEFS.forEach(function(m){
+    var el=G(m.sbId);if(!el)return;
+    // Default to enabled if not explicitly set to false
+    var enabled=modules[m.key]!==false;
+    el.style.display=enabled?'':'none';
+  });
+}
+
+function renderModuleToggles(){
+  var el=G('moduleTogglesEditor');if(!el)return;
+  var c=getOrgCfg();var modules=c.modules||{};
+  el.innerHTML='<div style="font-weight:700;font-size:13px;color:var(--text1);margin-bottom:12px">Module Visibility</div>'+
+    MODULE_DEFS.map(function(m){
+      var enabled=modules[m.key]!==false;
+      return '<label style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);cursor:pointer">'+
+        '<span style="font-size:12px;color:var(--text)">'+m.label+'</span>'+
+        '<input type="checkbox" data-mk="'+m.key+'" '+(enabled?'checked':'')+' onchange="saveModuleToggle(this)" style="width:16px;height:16px;accent-color:var(--cyan)">'+
+        '</label>';
+    }).join('');
+}
+
+function saveModuleToggle(inp){
+  var c=getOrgCfg();if(!c.modules)c.modules={};
+  c.modules[inp.dataset.mk]=inp.checked;
+  saveOrgCfg(c);applyModuleToggles();
 }
 
 function renderTerminologyEditor(){
