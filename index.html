@@ -3659,6 +3659,7 @@ async function doLogin(){
           org_id:data.user.org_id,
           connected_at:new Date().toISOString()
         }));
+        localStorage.setItem('twwp_rails_jwt', data.token);
         const displayName=data.user.email.split('@')[0]||'Admin';
         sessionStorage.setItem(SK,JSON.stringify({ok:true,user:displayName,role:data.user.role,org_id:data.user.org_id}));
         sessionStorage.setItem('twwp_session_start', Date.now().toString());
@@ -3706,14 +3707,15 @@ async function doLogout(){
     msg.textContent='Saving backup to Drive...';
     document.body.appendChild(msg);
     driveAutoBackup().then(function(){
-      sessionStorage.removeItem(SK);
+      sessionStorage.removeItem(SK);localStorage.removeItem('twwp_rails_jwt');
       location.reload();
     }).catch(function(){
-      sessionStorage.removeItem(SK);
+      sessionStorage.removeItem(SK);localStorage.removeItem('twwp_rails_jwt');
       location.reload();
     });
   } else {
     sessionStorage.removeItem(SK);
+    localStorage.removeItem('twwp_rails_jwt');
     location.reload();
   }
 }
@@ -13866,6 +13868,7 @@ async function handleRailsAPICallback(){
     email: decodeURIComponent(email || ''),
     connected_at: new Date().toISOString()
   }));
+  localStorage.setItem('twwp_rails_jwt', sessionToken);
 
   // Show success
   var t = document.createElement('div');
@@ -13910,6 +13913,7 @@ async function railsAPIRequest(method, path, body){
   var res = await fetch(apiUrl.replace(/\/$/, '') + path, opts);
   if(res.status === 401){
     localStorage.removeItem('twwp_rails_session');
+    localStorage.removeItem('twwp_rails_jwt');
     throw new Error('Session expired — please reconnect.');
   }
   return res;

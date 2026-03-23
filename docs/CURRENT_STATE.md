@@ -1,6 +1,6 @@
 # TWWP Ops App — Current State
 
-**Last updated:** 2026-03-24 (Sprint D complete — D1–D9: onboarding, user management, email service, email providers, Stripe, VIP contacts, waitlist, blog management, AI news scraper)
+**Last updated:** 2026-03-24 (Sprint D complete + hotfix: twwp_rails_jwt now written on login so D2–D9 API calls authenticate correctly)
 
 ---
 
